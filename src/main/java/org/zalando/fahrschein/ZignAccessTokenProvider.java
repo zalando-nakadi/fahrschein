@@ -1,0 +1,47 @@
+package org.zalando.fahrschein;
+
+import com.google.common.base.Charsets;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.io.CharStreams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
+import java.util.concurrent.TimeUnit;
+
+public class ZignAccessTokenProvider implements AccessTokenProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(ZignAccessTokenProvider.class);
+
+    private LoadingCache<String, String> zignCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(5, TimeUnit.MINUTES)
+            .build(new CacheLoader<String, String>() {
+                @Override
+                public String load(final String key) throws Exception {
+                    return zign();
+                }
+            });
+
+
+    private static String zign() {
+        try {
+            LOG.info("Refreshing token from zign...");
+            final Process zign = new ProcessBuilder("zign", "token", "uid").start();
+            try (final InputStream inputStream = zign.getInputStream()) {
+                return CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8)).trim();
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    @Override
+    public String getAccessToken() {
+        return zignCache.getUnchecked("");
+    }
+
+}
