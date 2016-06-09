@@ -6,6 +6,20 @@
     public class Main {
         private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
+        public static class SalesOrderPlaced {
+            private final SalesOrder salesOrder;
+
+            @JsonCreator
+            public SalesOrderPlaced(SalesOrder salesOrder) {
+                this.salesOrder = salesOrder;
+            }
+
+            public SalesOrder getSalesOrder() {
+                return salesOrder;
+            }
+        }
+
+
         public static class SalesOrder {
             private final String orderNumber;
 
@@ -20,7 +34,8 @@
         }
 
         public static void main(String[] args) throws MalformedURLException {
-            final URL url = new URL("https://nakadi.example.com/event-types/sales-order-service.order-placed/events");
+            final URL url = new URL("https://nakadi.example.com/");
+            final String eventName = "sales-order-service.order-placed";
 
             final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -51,13 +66,17 @@
 
             final InMemoryCursorManager cursorManager = new InMemoryCursorManager();
             final AccessTokenProvider tokenProvider = new ZignAccessTokenProvider();
-            final ExponentialBackoffInputStreamSupplier inputStreamSupplier = new ExponentialBackoffInputStreamSupplier(new UrlInputStreamSupplier(url), new ExponentialBackoffStrategy());
             final ConnectionParameters connectionParameters = new ConnectionParameters();
 
-            cursorManager.onSuccess(new Cursor("0", "BEGIN"));
+            final NakadiClient nakadiClient = new NakadiClient(baseUrl, connectionParameters, tokenProvider, objectMapper);
+            final List<Partition> partitions = nakadiClient.getPartitions(eventName);
 
-            final NakadiReader<SalesOrderPlaced> salesOrderNakadiClient = new NakadiReader<>(inputStreamSupplier, connectionParameters, tokenProvider, cursorManager, objectMapper, SalesOrderPlaced.class, listener);
+            for (Partition partition : partitions) {
+                LOG.info("Partition [{}] has oldest offset [{}] and newest offset [{}]", partition.getPartition(), partition.getOldestAvailableOffset(), partition.getNewestAvailableOffset());
+            }
 
-            salesOrderNakadiClient.run();
+            cursorManager.fromOldestAvailableOffset(partitions);
+
+            nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, cursorManager);
         }
     }

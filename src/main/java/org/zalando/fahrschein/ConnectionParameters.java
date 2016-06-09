@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,6 +41,19 @@ public class ConnectionParameters {
         final Map<String, String> newHeaders = new LinkedHashMap<>(headers);
         newHeaders.putAll(headers);
         return new ConnectionParameters(connectTimeout, readTimeout, newHeaders, errorCount);
+    }
+    public ConnectionParameters withHeader(final String header, @Nullable final String value) {
+        final Map<String, String> newHeaders = new LinkedHashMap<>(headers);
+        if (value == null) {
+            newHeaders.remove(header);
+        } else {
+            newHeaders.put(header, value);
+        }
+        return new ConnectionParameters(connectTimeout, readTimeout, newHeaders, errorCount);
+    }
+
+    public ConnectionParameters withAuthorization(String authorizationHeader) {
+        return withHeader("Authorization", authorizationHeader);
     }
 
     public ConnectionParameters withErrorCount(int errorCount) {

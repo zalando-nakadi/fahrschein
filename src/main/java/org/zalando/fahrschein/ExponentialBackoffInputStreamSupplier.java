@@ -12,7 +12,7 @@ public class ExponentialBackoffInputStreamSupplier implements InputStreamSupplie
     private final InputStreamSupplier delegate;
     private final ExponentialBackoffStrategy exponentialBackoffStrategy;
 
-    public ExponentialBackoffInputStreamSupplier(InputStreamSupplier delegate, ExponentialBackoffStrategy exponentialBackoffStrategy) {
+    public ExponentialBackoffInputStreamSupplier(final InputStreamSupplier delegate, final ExponentialBackoffStrategy exponentialBackoffStrategy) {
         this.delegate = delegate;
         this.exponentialBackoffStrategy = exponentialBackoffStrategy;
     }

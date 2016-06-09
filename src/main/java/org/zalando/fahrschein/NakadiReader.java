@@ -61,7 +61,7 @@ public class NakadiReader<T> {
                 .collect(joining(",", "[", "]"));
     }
 
-    private Map<String, String> headers() {
+    private Map<String, String> cursorHeader() {
         final Map<String, String> headers = new HashMap<>();
 
 
@@ -69,13 +69,16 @@ public class NakadiReader<T> {
         if (!cursors.isEmpty()) {
             headers.put("X-Nakadi-Cursors", formatCursors(cursors));
         }
-        headers.put("Authorization", "Bearer ".concat(accessTokenProvider.getAccessToken()));
 
         return headers;
     }
 
     private InputStream open(int errorCount) throws IOException, InterruptedException {
-        return inputStreamSupplier.open(connectionParameters.withErrorCount(errorCount).withHeaders(headers()));
+        final ConnectionParameters connectionParameters =
+                this.connectionParameters.withErrorCount(errorCount)
+                                         .withHeaders(cursorHeader())
+                                         .withAuthorization("Bearer ".concat(accessTokenProvider.getAccessToken()));
+        return inputStreamSupplier.open(connectionParameters);
     }
 
     private void processBatch(Batch<T> batch) throws EventProcessingException {
@@ -130,7 +133,6 @@ public class NakadiReader<T> {
         final List<T> events = new ArrayList<>();
 
         while (jsonParser.nextToken() == JsonToken.START_OBJECT) {
-            //final T event = objectMapper.readValue(jsonParser, eventClass);
             final T event = objectReader.readValue(jsonParser, eventClass);
             events.add(event);
         }
