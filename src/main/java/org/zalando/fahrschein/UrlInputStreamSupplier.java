@@ -9,10 +9,20 @@ import org.zalando.problem.ProblemModule;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
 
 public class UrlInputStreamSupplier implements InputStreamSupplier {
+
+    private static final Set<String> PROBLEM_CONTENT_TYPES = new HashSet<>(asList("application/json", "application/problem+json"));
+    private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
+
 
     private final URL endpoint;
     private ObjectMapper objectMapper;
@@ -53,8 +63,13 @@ public class UrlInputStreamSupplier implements InputStreamSupplier {
         if (responseCode >= 200 && responseCode <= 299) {
             return urlConnection.getInputStream();
         } else {
-            final IOProblem problem = objectMapper.readValue(urlConnection.getErrorStream(), IOProblem.class);
-            throw problem;
+            final String contentType = urlConnection.getContentType();
+
+            if (PROBLEM_CONTENT_TYPES.contains(contentType)) {
+                throw objectMapper.readValue(urlConnection.getErrorStream(), IOProblem.class);
+            } else {
+                throw new IOProblem(DEFAULT_PROBLEM_TYPE, urlConnection.getResponseMessage(), responseCode, Optional.<String>empty(), Optional.<URI>empty());
+            }
         }
     }
 }
