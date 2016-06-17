@@ -8,19 +8,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InMemoryCursorManager implements CursorManager {
-    private final Map<String, Cursor> cursorByPartition = new HashMap<>();
+    private final Map<String, Map<String, Cursor>> partitionsByEventName = new HashMap<>();
 
     @Override
-    public void onSuccess(Cursor cursor) {
-        cursorByPartition.put(cursor.getPartition(), cursor);
+    public void onSuccess(String eventName, Cursor cursor) {
+        partitionsByEventName.computeIfAbsent(eventName, key -> new HashMap<>()).put(cursor.getPartition(), cursor);
     }
 
     @Override
-    public void onError(Cursor cursor, EventProcessingException e) {
+    public void onError(String eventName, Cursor cursor, EventProcessingException e) {
     }
 
     @Override
-    public Collection<Cursor> getCursors() {
-        return Collections.unmodifiableCollection(cursorByPartition.values());
+    public Collection<Cursor> getCursors(String eventName) {
+        return Collections.unmodifiableCollection(partitionsByEventName.get(eventName).values());
     }
 }

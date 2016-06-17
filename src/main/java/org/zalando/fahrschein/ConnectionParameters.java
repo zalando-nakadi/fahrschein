@@ -42,6 +42,7 @@ public class ConnectionParameters {
         newHeaders.putAll(headers);
         return new ConnectionParameters(connectTimeout, readTimeout, newHeaders, errorCount);
     }
+
     public ConnectionParameters withHeader(final String header, @Nullable final String value) {
         final Map<String, String> newHeaders = new LinkedHashMap<>(headers);
         if (value == null) {

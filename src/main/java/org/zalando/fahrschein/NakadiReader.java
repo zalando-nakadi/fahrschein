@@ -24,7 +24,7 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.joining;
 
-public class NakadiReader<T> {
+public class NakadiReader<T> implements Runnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
 
@@ -35,15 +35,17 @@ public class NakadiReader<T> {
 
     private final ObjectMapper objectMapper;
 
+    private final String eventName;
     private final Class<T> eventClass;
     private final Listener<T> listener;
 
-    public NakadiReader(InputStreamSupplier inputStreamSupplier, ConnectionParameters connectionParameters, AccessTokenProvider accessTokenProvider, CursorManager cursorManager, ObjectMapper objectMapper, Class<T> eventClass, Listener<T> listener) {
+    public NakadiReader(InputStreamSupplier inputStreamSupplier, ConnectionParameters connectionParameters, AccessTokenProvider accessTokenProvider, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Class<T> eventClass, Listener<T> listener) {
         this.inputStreamSupplier = inputStreamSupplier;
         this.connectionParameters = connectionParameters;
         this.accessTokenProvider = accessTokenProvider;
         this.cursorManager = cursorManager;
         this.objectMapper = objectMapper;
+        this.eventName = eventName;
         this.eventClass = eventClass;
         this.listener = listener;
     }
@@ -65,7 +67,7 @@ public class NakadiReader<T> {
         final Map<String, String> headers = new HashMap<>();
 
 
-        final Collection<Cursor> cursors = cursorManager.getCursors();
+        final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
         if (!cursors.isEmpty()) {
             headers.put("X-Nakadi-Cursors", formatCursors(cursors));
         }
@@ -85,9 +87,9 @@ public class NakadiReader<T> {
         final Cursor cursor = batch.getCursor();
         try {
             listener.onEvent(batch.getEvents());
-            cursorManager.onSuccess(cursor);
+            cursorManager.onSuccess(eventName, cursor);
         } catch (EventProcessingException e) {
-            cursorManager.onError(cursor, e);
+            cursorManager.onError(eventName, cursor, e);
             throw e;
         }
     }
