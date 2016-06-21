@@ -26,6 +26,10 @@ public class IOProblem extends IOException implements Problem {
         this.instance = instance;
     }
 
+    public IOProblem(URI type, String title, int status) {
+        this(type, title, status, Optional.<String>empty(), Optional.<URI>empty());
+    }
+
     private static String formatMessage(URI type, String title, int status, Optional<String> detail, Optional<URI> instance) {
         return "Problem " + type + ": " + title + "(status " + status + ", detail " + detail.orElse(null) + ", instance " + instance.orElse(null) + ")";
     }

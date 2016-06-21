@@ -5,82 +5,74 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.google.gag.annotation.remark.Hack;
+import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
-import static java.util.stream.Collectors.joining;
+import static java.util.Collections.singletonList;
 
-public class NakadiReader<T> implements Runnable {
+public class NakadiReader<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
 
-    private final InputStreamSupplier inputStreamSupplier;
-    private final ConnectionParameters connectionParameters;
-    private final AccessTokenProvider accessTokenProvider;
+    private final URI uri;
+    private final ClientHttpRequestFactory clientHttpRequestFactory;
+    private final ExponentialBackoffStrategy exponentialBackoffStrategy;
     private final CursorManager cursorManager;
 
     private final ObjectMapper objectMapper;
 
     private final String eventName;
+    private final Optional<Subscription> subscription;
     private final Class<T> eventClass;
     private final Listener<T> listener;
 
-    public NakadiReader(InputStreamSupplier inputStreamSupplier, ConnectionParameters connectionParameters, AccessTokenProvider accessTokenProvider, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Class<T> eventClass, Listener<T> listener) {
-        this.inputStreamSupplier = inputStreamSupplier;
-        this.connectionParameters = connectionParameters;
-        this.accessTokenProvider = accessTokenProvider;
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, ExponentialBackoffStrategy exponentialBackoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
+        this.uri = uri;
+        this.clientHttpRequestFactory = clientHttpRequestFactory;
+        this.exponentialBackoffStrategy = exponentialBackoffStrategy;
         this.cursorManager = cursorManager;
         this.objectMapper = objectMapper;
         this.eventName = eventName;
+        this.subscription = subscription;
         this.eventClass = eventClass;
         this.listener = listener;
+
+        checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())));
     }
 
-    private String formatCursor(Cursor cursor) {
-        return String.format("{\"partition\":\"%s\",\"offset\":\"%s\"}", cursor.getPartition(), cursor.getOffset());
+    private JsonParser open(JsonFactory jsonFactory, int errorCount) throws IOException, InterruptedException, ExponentialBackoffException {
+        return exponentialBackoffStrategy.call(errorCount, () -> open0(jsonFactory));
     }
 
-    @Hack("Should use proper json library")
-    private String formatCursors(Collection<Cursor> cursors) {
-
-        return cursors
-                .stream()
-                .map(this::formatCursor)
-                .collect(joining(",", "[", "]"));
-    }
-
-    private Map<String, String> cursorHeader() {
-        final Map<String, String> headers = new HashMap<>();
-
-
-        final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
-        if (!cursors.isEmpty()) {
-            headers.put("X-Nakadi-Cursors", formatCursors(cursors));
+    private JsonParser open0(final JsonFactory jsonFactory) throws IOException, InterruptedException {
+        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
+        if (!subscription.isPresent()) {
+            final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
+            if (!cursors.isEmpty()) {
+                final String value = objectMapper.writeValueAsString(cursors);
+                request.getHeaders().put("X-Nakadi-Cursors", singletonList(value));
+            }
         }
+        final ClientHttpResponse response = request.execute();
 
-        return headers;
-    }
-
-    private InputStream open(int errorCount) throws IOException, InterruptedException {
-        final ConnectionParameters connectionParameters =
-                this.connectionParameters.withErrorCount(errorCount)
-                                         .withHeaders(cursorHeader())
-                                         .withAuthorization("Bearer ".concat(accessTokenProvider.getAccessToken()));
-        return inputStreamSupplier.open(connectionParameters);
+        return jsonFactory.createParser(response.getBody());
     }
 
     private void processBatch(Batch<T> batch) throws EventProcessingException {
@@ -142,36 +134,33 @@ public class NakadiReader<T> implements Runnable {
         return events;
     }
 
-    public void run() {
+    public void run() throws IOException, ExponentialBackoffException {
 
         final JsonFactory jsonFactory = objectMapper.copy().getFactory().configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         final ObjectReader objectReader = objectMapper.reader().forType(eventClass);
 
-        InputStream inputStream;
+        JsonParser jsonParser;
 
         try {
-            inputStream = open(0);
+            jsonParser = open(jsonFactory, 0);
         } catch (InterruptedException e) {
             LOG.warn("Interrupted during initial connection");
             Thread.currentThread().interrupt();
             return;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
+
 
         int errorCount = 0;
 
         while (true) {
             try {
-                final JsonParser jsonParser = jsonFactory.createParser(inputStream);
-
                 JsonToken token;
                 String field;
 
                 token = jsonParser.nextToken();
-                checkState(token == JsonToken.START_OBJECT);
+                checkState(token == JsonToken.START_OBJECT, "Expected [%s] but got [%s]", JsonToken.START_OBJECT, token);
                 field = jsonParser.nextFieldName();
-                checkState("cursor".equals(field));
+                checkState("cursor".equals(field), "Expected [cursor] field but got [%s]", field);
 
                 final Cursor cursor = readCursor(jsonParser);
 
@@ -180,12 +169,12 @@ public class NakadiReader<T> implements Runnable {
                 token = jsonParser.nextToken();
                 if (token != JsonToken.END_OBJECT) {
                     field = jsonParser.getCurrentName();
-                    checkState("events".equals(field));
+                    checkState("events".equals(field), "Expected [event] field but got [%s]", field);
 
                     final List<T> events = readEvents(objectReader, jsonParser);
 
                     token = jsonParser.nextToken();
-                    checkState(token == JsonToken.END_OBJECT);
+                    checkState(token == JsonToken.END_OBJECT, "Expected [%s] but got [%s]", JsonToken.END_OBJECT, token);
 
                     final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
 
@@ -198,21 +187,19 @@ public class NakadiReader<T> implements Runnable {
                 LOG.warn("Got [{}] while reading events", e.getClass().getSimpleName(), e);
                 try {
                     LOG.debug("Trying to close input stream");
-                    inputStream.close();
+                    jsonParser.close();
                 } catch (IOException e1) {
                     LOG.warn("Could not close input stream on IOException");
                 }
 
                 try {
                     LOG.info("Reconnecting after [{}] errors", errorCount);
-                    inputStream = open(errorCount);
+                    jsonParser = open(jsonFactory, errorCount);
                 } catch (InterruptedException e1) {
                     LOG.warn("Interrupted during reconnection");
 
                     Thread.currentThread().interrupt();
                     return;
-                } catch (IOException e1) {
-                    throw new UncheckedIOException(e);
                 }
 
                 errorCount++;
