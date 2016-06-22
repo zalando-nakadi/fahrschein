@@ -2,30 +2,36 @@ package org.zalando.fahrschein;
 
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
+import org.zalando.fahrschein.domain.Subscription;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public interface CursorManager {
-    void onSuccess(String eventName, Cursor cursor);
-    void onError(String eventName, Cursor cursor, EventProcessingException throwable);
-    Collection<Cursor> getCursors(String eventName);
+    void onSuccess(String eventName, Cursor cursor) throws IOException;
+    void onError(String eventName, Cursor cursor, Throwable throwable) throws IOException;
+    Collection<Cursor> getCursors(String eventName) throws IOException;
 
-    default void fromNewestAvailableOffsets(String eventName, List<Partition> partitions) {
+    default void addSubscription(Subscription subscription) {
+
+    }
+
+    default void fromNewestAvailableOffsets(String eventName, List<Partition> partitions) throws IOException {
         for (Partition partition : partitions) {
             onSuccess(eventName, new Cursor(partition.getPartition(), partition.getNewestAvailableOffset()));
         }
     }
 
-    default void fromOldestAvailableOffset(String eventName, List<Partition> partitions) {
+    default void fromOldestAvailableOffset(String eventName, List<Partition> partitions) throws IOException {
         for (Partition partition : partitions) {
             onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
         }
     }
 
-    default void updatePartitions(String eventName, List<Partition> partitions) {
+    default void updatePartitions(String eventName, List<Partition> partitions) throws IOException {
         final Map<String, Cursor> cursorsByPartition = getCursors(eventName).stream().collect(Collectors.toMap(Cursor::getPartition, c -> c));
 
         for (Partition partition : partitions) {

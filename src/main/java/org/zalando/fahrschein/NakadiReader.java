@@ -77,14 +77,14 @@ public class NakadiReader<T> implements IORunnable {
         return request.execute();
     }
 
-    private void processBatch(Batch<T> batch) throws EventProcessingException {
+    private void processBatch(Batch<T> batch) throws IOException {
         final Cursor cursor = batch.getCursor();
         try {
             listener.onEvent(batch.getEvents());
             cursorManager.onSuccess(eventName, cursor);
-        } catch (EventProcessingException e) {
-            cursorManager.onError(eventName, cursor, e);
-            throw e;
+        } catch (Throwable throwable) {
+            cursorManager.onError(eventName, cursor, throwable);
+            throw throwable;
         }
     }
 

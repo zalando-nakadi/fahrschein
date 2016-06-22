@@ -16,7 +16,6 @@ import org.zalando.fahrschein.domain.Subscription;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,54 +41,46 @@ public class ManagedCursorManager implements CursorManager {
         this.subscriptions = new HashMap<>();
     }
 
-    public void addSubscriptions(Subscription subscription) {
+    @Override
+    public void addSubscription(Subscription subscription) {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
         subscriptions.put(eventName, subscription);
     }
 
     @Override
-    public void onSuccess(String eventName, Cursor cursor) {
+    public void onSuccess(String eventName, Cursor cursor) throws IOException {
         final Subscription subscription = subscriptions.get(eventName);
-        try {
-            final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscription.getId()));
+        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscription.getId()));
 
-            final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.PUT);
-            try (OutputStream os = request.getBody()) {
-                objectMapper.writeValue(os, Collections.singleton(cursor));
+        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.PUT);
+        try (OutputStream os = request.getBody()) {
+            objectMapper.writeValue(os, Collections.singleton(cursor));
+        }
+
+        try (final ClientHttpResponse response = request.execute()) {
+
+            if (response.getStatusCode().value() == HttpStatus.NO_CONTENT.value()) {
+                LOG.warn("Cursor for event [{}] in partition [{}] with offset [{}] was already committed", eventName, cursor.getPartition(), cursor.getOffset());
             }
-
-            try (final ClientHttpResponse response = request.execute()) {
-
-                if (response.getStatusCode().value() == HttpStatus.NO_CONTENT.value()) {
-                    LOG.warn("Cursor for event [{}] in partition [{}] with offset [{}] was already committed", eventName, cursor.getPartition(), cursor.getOffset());
-                }
-            }
-
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
     }
 
     @Override
-    public void onError(String eventName, Cursor cursor, EventProcessingException throwable) {
+    public void onError(String eventName, Cursor cursor, Throwable throwable) {
 
     }
 
     @Override
-    public Collection<Cursor> getCursors(String eventName) {
+    public Collection<Cursor> getCursors(String eventName) throws IOException {
         final Subscription subscription = subscriptions.get(eventName);
-        try {
-            final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscription.getId()));
+        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscription.getId()));
 
-            final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.GET);
+        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.GET);
 
-            try (final ClientHttpResponse response = request.execute()) {
-                try (InputStream is = response.getBody()) {
-                    return objectMapper.readValue(is, LIST_OF_CURSORS);
-                }
+        try (final ClientHttpResponse response = request.execute()) {
+            try (InputStream is = response.getBody()) {
+                return objectMapper.readValue(is, LIST_OF_CURSORS);
             }
-        } catch (IOException res) {
-            throw new UncheckedIOException(res);
         }
     }
 }

@@ -1,5 +1,7 @@
 package org.zalando.fahrschein;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.domain.Cursor;
 
 import java.util.Collection;
@@ -8,6 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class InMemoryCursorManager implements CursorManager {
+
+    private static final Logger LOG = LoggerFactory.getLogger(InMemoryCursorManager.class);
+
     private final Map<String, Map<String, Cursor>> partitionsByEventName = new HashMap<>();
 
     @Override
@@ -16,7 +21,8 @@ public class InMemoryCursorManager implements CursorManager {
     }
 
     @Override
-    public void onError(String eventName, Cursor cursor, EventProcessingException e) {
+    public void onError(String eventName, Cursor cursor, Throwable throwable) {
+        LOG.warn("Exception while processing events for [{}] on partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset(), throwable);
     }
 
     @Override

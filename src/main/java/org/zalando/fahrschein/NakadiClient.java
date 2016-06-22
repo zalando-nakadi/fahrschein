@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
@@ -51,13 +52,18 @@ public class NakadiClient {
 
         final URI uri = baseUri.resolve("/subscriptions");
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.POST);
+
+        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
         try (final OutputStream os = request.getBody()) {
             objectMapper.writeValue(os, subscription);
         }
 
         try (final ClientHttpResponse response = request.execute()) {
             try (final InputStream is = response.getBody()) {
-                return objectMapper.readValue(is, Subscription.class);
+                final Subscription subscriptionResponse = objectMapper.readValue(is, Subscription.class);
+                cursorManager.addSubscription(subscriptionResponse);
+                return subscriptionResponse;
             }
         }
     }

@@ -38,7 +38,7 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
         if (!statusCode.is2xxSuccessful()) {
 
             final MediaType contentType = response.getHeaders().getContentType();
-            if (PROBLEM_CONTENT_TYPES.contains(contentType.getType())) {
+            if (contentType != null && PROBLEM_CONTENT_TYPES.contains(contentType.getType())) {
                 try (InputStream is = response.getBody()) {
                     final IOProblem problem = objectMapper.readValue(is, IOProblem.class);
                     if (problem != null) {
