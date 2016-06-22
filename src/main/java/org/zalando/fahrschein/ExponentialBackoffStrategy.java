@@ -3,7 +3,7 @@ package org.zalando.fahrschein;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Callable;
+import java.io.IOException;
 
 public class ExponentialBackoffStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(ExponentialBackoffStrategy.class);
@@ -32,18 +32,17 @@ public class ExponentialBackoffStrategy {
         return Math.min((long)(initialDelay*Math.pow(backoffFactor, count)), maxDelay);
     }
 
-
-    private void sleepForRetries(int count) throws InterruptedException {
+    private void sleepForRetries(final int count) throws InterruptedException {
         final long delay = calculateDelay(count);
         LOG.info("Retry [{}], sleeping for [{}] milliseconds", count, delay);
         Thread.sleep(delay);
     }
 
-    public <T> T call(Callable<T> callable) throws ExponentialBackoffException, InterruptedException {
+    public <T> T call(final IOCallable<T> callable) throws ExponentialBackoffException, InterruptedException {
         return call(0, callable);
     }
 
-    public <T> T call(int initialCount, Callable<T> callable) throws ExponentialBackoffException, InterruptedException{
+    public <T> T call(final int initialCount, final IOCallable<T> callable) throws ExponentialBackoffException, InterruptedException{
         int count = initialCount;
 
         if (count > 0) {
@@ -54,7 +53,7 @@ public class ExponentialBackoffStrategy {
             try {
                 LOG.trace("Try [{}]", count);
                 return callable.call();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 LOG.warn("Got [{}]", e.getClass().getSimpleName(), e);
                 count++;
 

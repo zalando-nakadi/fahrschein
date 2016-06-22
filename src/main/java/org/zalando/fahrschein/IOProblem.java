@@ -18,7 +18,7 @@ public class IOProblem extends IOException implements Problem {
 
     @JsonCreator
     public IOProblem(@JsonProperty("type") URI type, @JsonProperty("title") String title, @JsonProperty("status") int status, @JsonProperty("detail") Optional<String> detail, @JsonProperty("instance") Optional<URI> instance) {
-        super(formatMessage(type, title, status, detail, instance));
+        super(formatMessage(type, title, status));
         this.type = type;
         this.title = title;
         this.status = Response.Status.fromStatusCode(status);
@@ -30,8 +30,8 @@ public class IOProblem extends IOException implements Problem {
         this(type, title, status, Optional.<String>empty(), Optional.<URI>empty());
     }
 
-    private static String formatMessage(URI type, String title, int status, Optional<String> detail, Optional<URI> instance) {
-        return "Problem " + type + ": " + title + "(status " + status + ", detail " + detail.orElse(null) + ", instance " + instance.orElse(null) + ")";
+    private static String formatMessage(URI type, String title, int status) {
+        return String.format("Problem [%s]: Status %d [%s]", type, status, title);
     }
 
     @Override

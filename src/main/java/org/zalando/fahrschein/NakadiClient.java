@@ -64,7 +64,8 @@ public class NakadiClient {
 
     public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, ExponentialBackoffException {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
-        final URI uri = baseUri.resolve(String.format("/subscriptions/%s", subscription.getId()));
+        final String queryString = streamParameters.toQueryString();
+        final URI uri = baseUri.resolve(String.format("/subscriptions/%s?%s", subscription.getId(), queryString));
 
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, exponentialBackoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
 

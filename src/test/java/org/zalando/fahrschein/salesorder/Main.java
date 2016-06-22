@@ -24,6 +24,7 @@ import org.zalando.fahrschein.InMemoryCursorManager;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
+import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
@@ -39,7 +40,7 @@ public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException, ExponentialBackoffException {
-        final URI baseUri = new URI("https://nakadi.example.com/");
+        final URI baseUri = new URI("https://nakadi-sandbox.aruha-test.zalan.do/");
         final String eventName = "sales-order-service.order-placed";
 
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -85,7 +86,10 @@ public class Main {
 
         final AccessTokenProvider tokenProvider = new ZignAccessTokenProvider();
 
-        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(new SimpleClientHttpRequestFactory(), objectMapper), tokenProvider);
+        final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
+        requestFactoryDelegate.setConnectTimeout(400);
+        requestFactoryDelegate.setReadTimeout(60*1000);
+        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate, objectMapper), tokenProvider);
 
         final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
 
@@ -102,6 +106,6 @@ public class Main {
         cursorManager.fromOldestAvailableOffset(eventName, partitions);
 
 
-        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener);
+        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, new StreamParameters().withStreamTimeout(5 * 60));
     }
 }

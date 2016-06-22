@@ -27,7 +27,7 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonList;
 
-public class NakadiReader<T> {
+public class NakadiReader<T> implements IORunnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
 
@@ -57,11 +57,15 @@ public class NakadiReader<T> {
         checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())));
     }
 
-    private JsonParser open(JsonFactory jsonFactory, int errorCount) throws IOException, InterruptedException, ExponentialBackoffException {
-        return exponentialBackoffStrategy.call(errorCount, () -> open0(jsonFactory));
+    private ClientHttpResponse openStream(int errorCount) throws InterruptedException, IOException {
+        try {
+            return exponentialBackoffStrategy.call(errorCount, this::openStream);
+        } catch (ExponentialBackoffException e) {
+            throw e.getCause();
+        }
     }
 
-    private JsonParser open0(final JsonFactory jsonFactory) throws IOException, InterruptedException {
+    private ClientHttpResponse openStream() throws IOException {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         if (!subscription.isPresent()) {
             final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
@@ -70,9 +74,7 @@ public class NakadiReader<T> {
                 request.getHeaders().put("X-Nakadi-Cursors", singletonList(value));
             }
         }
-        final ClientHttpResponse response = request.execute();
-
-        return jsonFactory.createParser(response.getBody());
+        return request.execute();
     }
 
     private void processBatch(Batch<T> batch) throws EventProcessingException {
@@ -134,21 +136,14 @@ public class NakadiReader<T> {
         return events;
     }
 
-    public void run() throws IOException, ExponentialBackoffException {
+    @Override
+    public void run() throws IOException {
 
         final JsonFactory jsonFactory = objectMapper.copy().getFactory().configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         final ObjectReader objectReader = objectMapper.reader().forType(eventClass);
 
-        JsonParser jsonParser;
-
-        try {
-            jsonParser = open(jsonFactory, 0);
-        } catch (InterruptedException e) {
-            LOG.warn("Interrupted during initial connection");
-            Thread.currentThread().interrupt();
-            return;
-        }
-
+        ClientHttpResponse response = openStream();
+        JsonParser jsonParser = jsonFactory.createParser(response.getBody());
 
         int errorCount = 0;
 
@@ -158,6 +153,9 @@ public class NakadiReader<T> {
                 String field;
 
                 token = jsonParser.nextToken();
+                if (token == null) {
+                    throw new IOException("Stream was closed");
+                }
                 checkState(token == JsonToken.START_OBJECT, "Expected [%s] but got [%s]", JsonToken.START_OBJECT, token);
                 field = jsonParser.nextFieldName();
                 checkState("cursor".equals(field), "Expected [cursor] field but got [%s]", field);
@@ -186,15 +184,19 @@ public class NakadiReader<T> {
 
                 LOG.warn("Got [{}] while reading events", e.getClass().getSimpleName(), e);
                 try {
-                    LOG.debug("Trying to close input stream");
+                    LOG.debug("Trying to close json parser");
                     jsonParser.close();
                 } catch (IOException e1) {
-                    LOG.warn("Could not close input stream on IOException");
+                    LOG.warn("Could not close json parser on IOException");
+                } finally {
+                    LOG.debug("Trying to close response");
+                    response.close();
                 }
 
                 try {
                     LOG.info("Reconnecting after [{}] errors", errorCount);
-                    jsonParser = open(jsonFactory, errorCount);
+                    response = openStream(errorCount);
+                    jsonParser = jsonFactory.createParser(response.getBody());
                 } catch (InterruptedException e1) {
                     LOG.warn("Interrupted during reconnection");
 
