@@ -38,7 +38,7 @@ public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException, ExponentialBackoffException {
-        final URI baseUri = new URI("https://nakadi-sandbox-25.aruha-test.zalan.do");
+        final URI baseUri = new URI("https://nakadi-sandbox-24.aruha-test.zalan.do");
         final String eventName = "sales-order-service.order-placed";
 
         final ObjectMapper objectMapper = new ObjectMapper();
