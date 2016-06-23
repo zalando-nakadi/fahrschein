@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
@@ -53,6 +54,9 @@ public class ManagedCursorManager implements CursorManager {
         final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscription.getId()));
 
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.PUT);
+
+        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
         try (OutputStream os = request.getBody()) {
             objectMapper.writeValue(os, Collections.singleton(cursor));
         }
@@ -61,6 +65,8 @@ public class ManagedCursorManager implements CursorManager {
 
             if (response.getStatusCode().value() == HttpStatus.NO_CONTENT.value()) {
                 LOG.warn("Cursor for event [{}] in partition [{}] with offset [{}] was already committed", eventName, cursor.getPartition(), cursor.getOffset());
+            } else if (response.getStatusCode().is2xxSuccessful()) {
+                LOG.debug("Successfully committed cursor for event [{}] in partition [{}] with offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
             }
         }
     }
