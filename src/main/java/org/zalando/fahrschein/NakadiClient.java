@@ -3,6 +3,8 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
@@ -20,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class NakadiClient {
+    private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
+
     private static final TypeReference<List<Partition>> LIST_OF_PARTITIONS = new TypeReference<List<Partition>>() {
     };
 
@@ -62,6 +66,7 @@ public class NakadiClient {
         try (final ClientHttpResponse response = request.execute()) {
             try (final InputStream is = response.getBody()) {
                 final Subscription subscriptionResponse = objectMapper.readValue(is, Subscription.class);
+                LOG.info("Created subscription for event {} with id [{}]", subscription.getEventTypes(), subscriptionResponse.getId());
                 cursorManager.addSubscription(subscriptionResponse);
                 return subscriptionResponse;
             }
@@ -71,7 +76,7 @@ public class NakadiClient {
     public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, ExponentialBackoffException {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
         final String queryString = streamParameters.toQueryString();
-        final URI uri = baseUri.resolve(String.format("/subscriptions/%s?%s", subscription.getId(), queryString));
+        final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, exponentialBackoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
 
