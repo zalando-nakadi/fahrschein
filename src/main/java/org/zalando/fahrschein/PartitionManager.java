@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public interface PartitionManager {
-    List<Partition> getPartitions();
-
     boolean lockPartition(String consumerName, String eventName, String partition, String lockedBy, long timeout, TimeUnit timeoutUnit);
     void unlockPartition(String consumerName, String eventName, String partition, String lockedBy);
 

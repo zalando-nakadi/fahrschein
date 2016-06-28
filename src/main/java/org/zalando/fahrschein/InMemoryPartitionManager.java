@@ -1,8 +1,5 @@
 package org.zalando.fahrschein;
 
-import org.zalando.fahrschein.domain.Partition;
-
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -46,11 +43,6 @@ public class InMemoryPartitionManager implements PartitionManager {
     }
 
     private final ConcurrentHashMap<LockKey, LockInfo> locks = new ConcurrentHashMap<>();
-
-    @Override
-    public List<Partition> getPartitions() {
-        return null;
-    }
 
     @Override
     public boolean lockPartition(String consumerName, String eventName, String partition, String lockedBy, long timeout, TimeUnit timeoutUnit) {

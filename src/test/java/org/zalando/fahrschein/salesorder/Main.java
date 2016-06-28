@@ -68,7 +68,6 @@ public class Main {
             }
         };
 
-        //final CursorManager cursorManager = new InMemoryCursorManager();
 
         /*
         HikariConfig hikariConfig = new HikariConfig();
@@ -89,6 +88,7 @@ public class Main {
         requestFactoryDelegate.setReadTimeout(60*1000);
         final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate, objectMapper), tokenProvider);
 
+        //final CursorManager cursorManager = new InMemoryCursorManager();
         final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
 
         final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
@@ -102,13 +102,15 @@ public class Main {
             LOG.info("Partition [{}] has oldest offset [{}] and newest offset [{}]", partition.getPartition(), partition.getOldestAvailableOffset(), partition.getNewestAvailableOffset());
         }
 
+        cursorManager.fromOldestAvailableOffset(eventName, partitions);
         */
-        //cursorManager.fromOldestAvailableOffset(eventName, partitions);
 
+        final StreamParameters streamParameters = new StreamParameters().withStreamTimeout(5 * 60);
 
         final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", eventName, "fahrschein-demo-sales-order-placed");
+        nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
 
-        //nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, new StreamParameters().withStreamTimeout(5 * 60));
-        nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, new StreamParameters().withStreamTimeout(5 * 60));
+        //nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters);
+
     }
 }

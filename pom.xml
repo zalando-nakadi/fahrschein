@@ -234,6 +234,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>4.1.6.RELEASE</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- jackson modules used for tests and examples -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
