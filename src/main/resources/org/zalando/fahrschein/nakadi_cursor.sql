@@ -72,25 +72,18 @@ BEGIN
 
      IF l_prev_locked_by IS NULL OR l_prev_locked_until < now() THEN
 
-             WITH updated AS (UPDATE nakadi_cursor nc
-                             SET nc_locked_by = p_locked_by,
-                                 nc_locked_until = l_locked_until
-                           WHERE nc_consumer_name = p_consumer_name
-                             AND nc_event_name = p_event_name
-                             AND nc_partition = p_partition
-                          RETURNING nc_consumer_name, nc_event_name, nc_partition),
-                   inserted AS (INSERT INTO nakadi_cursor (nc_consumer_name, nc_event_name, nc_partition, nc_locked_by, nc_locked_until)
-                                SELECT p_consumer_name, p_event_name, p_partition, p_locked_by, l_locked_until
-                                 WHERE NOT EXISTS (SELECT 1
-                                                     FROM updated up
-                                                    WHERE up.nc_event_name = p_event_name
-                                                      AND up.nc_consumer_name = p_consumer_name
-                                                      AND up.nc_partition = p_partition)
+               WITH updated AS (UPDATE nakadi_cursor nc
+                                   SET nc_locked_by = p_locked_by,
+                                       nc_locked_until = l_locked_until
+                                 WHERE nc_consumer_name = p_consumer_name
+                                   AND nc_event_name = p_event_name
+                                   AND nc_partition = p_partition
                                 RETURNING nc_consumer_name, nc_event_name, nc_partition)
-             SELECT COUNT(1) FROM (SELECT * FROM updated UNION ALL SELECT * FROM inserted) results
-               INTO l_locked_rows;
+             INSERT INTO nakadi_cursor (nc_consumer_name, nc_event_name, nc_partition, nc_locked_by, nc_locked_until)
+             SELECT p_consumer_name, p_event_name, p_partition, p_locked_by, l_locked_until
+              WHERE NOT EXISTS (SELECT 1 FROM updated);
 
-            RETURN l_locked_rows;
+            RETURN 1;
      ELSE
             RETURN 0;
      END IF;
