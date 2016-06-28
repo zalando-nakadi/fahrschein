@@ -1,9 +1,11 @@
 package org.zalando.fahrschein;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -28,6 +30,7 @@ public class PersistentPartitionManager implements PartitionManager {
     }
 
     @Override
+    @Transactional
     public boolean lockPartition(String consumerName, String eventName, String partition, String lockedBy, long timeout, TimeUnit timeoutUnit) {
         final int rows = template.queryForObject("SELECT * FROM nakadi_cursor_partition_lock(?, ?, ?, ?, ?)", new Object[]{consumerName, eventName, partition, lockedBy, timeoutUnit.toMillis(timeout)}, Integer.class);
         if (rows > 1) {
@@ -38,10 +41,18 @@ public class PersistentPartitionManager implements PartitionManager {
     }
 
     @Override
+    @Transactional
     public void unlockPartition(String consumerName, String eventName, String partition, String lockedBy) {
         final int rows = template.queryForObject("SELECT * FROM nakadi_cursor_partition_unlock(?, ?, ?, ?)", new Object[]{consumerName, eventName, partition, lockedBy}, Integer.class);
         if (rows != 1) {
             throw new IllegalStateException("Unlock statement updated [" + rows + "] rows");
         }
     }
+
+    @VisibleForTesting
+    @Transactional
+    public int deleteCursors() {
+        return template.update("DELETE FROM nakadi_cursor");
+    }
+
 }

@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.salesorder;
+package org.zalando.fahrschein;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -9,23 +9,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.zalando.fahrschein.PartitionManager;
-import org.zalando.fahrschein.PersistentPartitionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = PersistentPartitionManagerTest.LocalPostgresConfiguration.class)
-//@Transactional
+@TransactionConfiguration(defaultRollback = false)
 public class PersistentPartitionManagerTest extends AbstractPartitionManagerTest {
-    private static final Logger LOG = LoggerFactory.getLogger(PersistentPartitionManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PersistentPartitionManagerTest.class);
 
+    @Configuration
+    @EnableTransactionManagement(proxyTargetClass = true)
     static class LocalPostgresConfiguration {
         @Bean
         public DataSource dataSource() {
@@ -34,7 +36,7 @@ public class PersistentPartitionManagerTest extends AbstractPartitionManagerTest
             hikariConfig.setJdbcUrl("jdbc:postgresql://localhost:5432/local_nakadi_cursor_db");
             hikariConfig.setUsername("postgres");
             hikariConfig.setPassword("postgres");
-            //hikariConfig.setAutoCommit(false);
+            hikariConfig.setAutoCommit(false);
 
             final HikariDataSource hikariDataSource = new HikariDataSource(hikariConfig);
             final String transactionIsolation = hikariDataSource.getTransactionIsolation();
@@ -45,7 +47,7 @@ public class PersistentPartitionManagerTest extends AbstractPartitionManagerTest
         }
 
         @Bean
-        public PartitionManager partitionManager(DataSource dataSource) throws IOException {
+        public PersistentPartitionManager partitionManager(DataSource dataSource) throws IOException {
             return new PersistentPartitionManager(dataSource);
         }
 
@@ -56,23 +58,17 @@ public class PersistentPartitionManagerTest extends AbstractPartitionManagerTest
     }
 
     @Autowired
-    private DataSource dataSource;
+    private PersistentPartitionManager partitionManager;
 
-    @Autowired
-    private PartitionManager partitionManager;
-
-    private int deleteCursors() {
-        return new JdbcTemplate(dataSource).update("DELETE FROM nakadi_cursor");
-    }
 
     @Before
     public void setup() {
-        deleteCursors();
+        partitionManager.deleteCursors();
     }
 
     @After
     public void teardown() {
-        deleteCursors();
+        partitionManager.deleteCursors();
     }
 
 

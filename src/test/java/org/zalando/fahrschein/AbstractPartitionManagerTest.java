@@ -1,8 +1,7 @@
-package org.zalando.fahrschein.salesorder;
+package org.zalando.fahrschein;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.zalando.fahrschein.PartitionManager;
 
 import java.util.concurrent.TimeUnit;
 
