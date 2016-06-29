@@ -2,9 +2,12 @@ package org.zalando.fahrschein;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
 
+// Looks like the Transactional annotation has to be on the class actually declaring the methods
+@Transactional
 public abstract class AbstractPartitionManagerTest {
 
     protected abstract PartitionManager partitionManager();
@@ -16,11 +19,20 @@ public abstract class AbstractPartitionManagerTest {
     }
 
     @Test
-    public void shouldNotLockAlreadyLocked() {
+    public void shouldAllowLockBySameNode() {
         boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
         Assert.assertTrue(locked1);
 
         boolean locked2 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked2);
+    }
+
+    @Test
+    public void shouldNotLockAlreadyLocked() {
+        boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1);
+
+        boolean locked2 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-2", 1, TimeUnit.HOURS);
         Assert.assertFalse(locked2);
     }
 
@@ -52,11 +64,12 @@ public abstract class AbstractPartitionManagerTest {
     }
 
     @Test
+    @Transactional
     public void shouldExpireLocks() throws InterruptedException {
         boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.MILLISECONDS);
         Assert.assertTrue(locked1);
 
-        Thread.sleep(10);
+        Thread.sleep(50);
 
         boolean locked2 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-2", 1, TimeUnit.HOURS);
         Assert.assertTrue(locked2);

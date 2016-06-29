@@ -50,7 +50,7 @@ public class InMemoryPartitionManager implements PartitionManager {
         final LockInfo tryLock = new LockInfo(lockedBy, now + timeoutUnit.toMillis(timeout));
         final LockKey lockKey = new LockKey(consumerName, eventName, partition);
         final LockInfo newLock = locks.compute(lockKey, (key, old) -> old == null || old.lockedUntil < now ? tryLock : old);
-        return newLock == tryLock;
+        return lockedBy.equals(newLock.lockedBy);
     }
 
     @Override
