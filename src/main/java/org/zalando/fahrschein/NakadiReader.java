@@ -157,6 +157,7 @@ public class NakadiReader<T> {
             try {
 
                 expectToken(jsonParser, JsonToken.START_OBJECT);
+                expectToken(jsonParser, JsonToken.FIELD_NAME);
                 expectField(jsonParser, "cursor");
 
                 final Cursor cursor = readCursor(jsonParser);
@@ -211,7 +212,7 @@ public class NakadiReader<T> {
     }
 
     private void expectField(JsonParser jsonParser, String expectedFieldName) throws IOException {
-        final String fieldName = jsonParser.nextFieldName();
+        final String fieldName = jsonParser.getCurrentName();
         if (fieldName == null) {
             throw new IOException("Stream was closed or no field at current position");
         }
