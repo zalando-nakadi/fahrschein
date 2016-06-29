@@ -1,18 +1,12 @@
 package org.zalando.fahrschein;
 
-import com.google.common.io.Resources;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 public class PersistentPartitionManager implements PartitionManager {
-    private static final Logger LOG = LoggerFactory.getLogger(PersistentCursorManager.class);
-
     private final JdbcTemplate template;
 
     public PersistentPartitionManager(DataSource dataSource) throws IOException {
@@ -21,10 +15,6 @@ public class PersistentPartitionManager implements PartitionManager {
 
     public PersistentPartitionManager(JdbcTemplate template) throws IOException {
         this.template = template;
-    }
-
-    private static String readResource(String resourceName) throws IOException {
-        return Resources.toString(Resources.getResource(PersistentCursorManager.class, resourceName), StandardCharsets.UTF_8);
     }
 
     @Override
