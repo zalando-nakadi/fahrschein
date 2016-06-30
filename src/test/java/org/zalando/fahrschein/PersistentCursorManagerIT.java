@@ -11,15 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 @ContextConfiguration(classes = LocalPostgresConfiguration.class)
 @TransactionConfiguration(defaultRollback = true)
 @Transactional
-public class PersistentPartitionManagerTest extends AbstractPartitionManagerTest {
+public class PersistentCursorManagerIT extends AbstractCursorManagerTest {
 
     @Autowired
-    private PersistentPartitionManager partitionManager;
-
-
+    private CursorManager cursorManager;
 
     @Override
-    protected PartitionManager partitionManager() {
-        return partitionManager;
+    protected CursorManager cursorManager() {
+        return cursorManager;
     }
 }

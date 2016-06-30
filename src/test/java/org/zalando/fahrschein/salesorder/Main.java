@@ -38,7 +38,7 @@ public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException, ExponentialBackoffException {
-        final URI baseUri = new URI("https://nakadi-sandbox-24.aruha-test.zalan.do");
+        final URI baseUri = new URI("https://nakadi-sandbox-hila.aruha-test.zalan.do");
         final String eventName = "sales-order-service.order-placed";
 
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -105,9 +105,9 @@ public class Main {
         cursorManager.fromOldestAvailableOffset(eventName, partitions);
         */
 
-        final StreamParameters streamParameters = new StreamParameters().withStreamTimeout(5 * 60);
+        final StreamParameters streamParameters = new StreamParameters().withStreamTimeout(5 * 60 * 1000);
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", eventName, "fahrschein-demo-sales-order-placed");
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
         nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
 
         //nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters);
