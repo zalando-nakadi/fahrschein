@@ -6,27 +6,30 @@ import org.zalando.fahrschein.domain.Cursor;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class InMemoryCursorManager implements CursorManager {
+public final class InMemoryCursorManager implements CursorManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryCursorManager.class);
 
-    private final Map<String, Map<String, Cursor>> partitionsByEventName = new HashMap<>();
+    private final ConcurrentHashMap<String, ConcurrentHashMap<String, Cursor>> partitionsByEventName = new ConcurrentHashMap<>();
 
-    @Override
-    public void onSuccess(String eventName, Cursor cursor) {
-        partitionsByEventName.computeIfAbsent(eventName, key -> new HashMap<>()).put(cursor.getPartition(), cursor);
+    private ConcurrentHashMap<String, Cursor> cursorsByPartition(final String eventName) {
+        return partitionsByEventName.computeIfAbsent(eventName, key -> new ConcurrentHashMap<>());
     }
 
     @Override
-    public void onError(String eventName, Cursor cursor, Throwable throwable) {
+    public void onSuccess(final String eventName, final Cursor cursor) {
+        cursorsByPartition(eventName).put(cursor.getPartition(), cursor);
+    }
+
+    @Override
+    public void onError(final String eventName, final Cursor cursor, final Throwable throwable) {
         LOG.warn("Exception while processing events for [{}] on partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset(), throwable);
     }
 
     @Override
-    public Collection<Cursor> getCursors(String eventName) {
-        return partitionsByEventName.getOrDefault(eventName, Collections.emptyMap()).values();
+    public Collection<Cursor> getCursors(final String eventName) {
+        return Collections.unmodifiableCollection(cursorsByPartition(eventName).values());
     }
 }
