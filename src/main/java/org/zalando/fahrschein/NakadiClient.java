@@ -20,6 +20,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
@@ -51,7 +52,7 @@ public class NakadiClient {
         }
     }
 
-    public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException, InterruptedException {
+    public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
         final Subscription subscription = new Subscription(applicationName, Collections.singleton(eventName), consumerGroup);
 
         final URI uri = baseUri.resolve("/subscriptions");
@@ -80,7 +81,7 @@ public class NakadiClient {
 
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, exponentialBackoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
 
-        nakadiReader.run();
+        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException, ExponentialBackoffException {
@@ -93,6 +94,6 @@ public class NakadiClient {
 
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, exponentialBackoffStrategy, cursorManager, objectMapper, eventName, Optional.<Subscription>empty(), eventType, listener);
 
-        nakadiReader.run();
+        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
 }

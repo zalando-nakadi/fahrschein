@@ -23,11 +23,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonList;
 
-public class NakadiReader<T> implements IORunnable {
+public class NakadiReader<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
 
@@ -82,6 +83,8 @@ public class NakadiReader<T> implements IORunnable {
         try {
             listener.onEvent(batch.getEvents());
             cursorManager.onSuccess(eventName, cursor);
+        } catch (EventAlreadyProcessedException e) {
+            LOG.info("Events for [{}] partition [{}] at offset [{}] were already processed", eventName, cursor.getPartition(), cursor.getOffset());
         } catch (Throwable throwable) {
             cursorManager.onError(eventName, cursor, throwable);
             throw throwable;
@@ -92,8 +95,7 @@ public class NakadiReader<T> implements IORunnable {
         String partition = null;
         String offset = null;
 
-        final JsonToken token = jsonParser.nextToken();
-        checkState(token == JsonToken.START_OBJECT);
+        expectToken(jsonParser, JsonToken.START_OBJECT);
 
         while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
             String field = jsonParser.getCurrentName();
@@ -123,8 +125,7 @@ public class NakadiReader<T> implements IORunnable {
     }
 
     private List<T> readEvents(ObjectReader objectReader, JsonParser jsonParser) throws IOException {
-        final JsonToken token = jsonParser.nextToken();
-        checkState(token == JsonToken.START_ARRAY);
+        expectToken(jsonParser, JsonToken.START_ARRAY);
 
         final List<T> events = new ArrayList<>();
 
@@ -136,8 +137,13 @@ public class NakadiReader<T> implements IORunnable {
         return events;
     }
 
-    @Override
     public void run() throws IOException {
+        run(-1, TimeUnit.MILLISECONDS);
+    }
+
+    public void run(long timeout, TimeUnit timeoutUnit) throws IOException {
+
+        final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
 
         final JsonFactory jsonFactory = objectMapper.copy().getFactory().configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         final ObjectReader objectReader = objectMapper.reader().forType(eventClass);
@@ -147,37 +153,28 @@ public class NakadiReader<T> implements IORunnable {
 
         int errorCount = 0;
 
-        while (true) {
+        while (System.currentTimeMillis() < lockedUntil) {
             try {
-                JsonToken token;
-                String field;
 
-                token = jsonParser.nextToken();
-                if (token == null) {
-                    throw new IOException("Stream was closed");
-                }
-                checkState(token == JsonToken.START_OBJECT, "Expected [%s] but got [%s]", JsonToken.START_OBJECT, token);
-                field = jsonParser.nextFieldName();
-                checkState("cursor".equals(field), "Expected [cursor] field but got [%s]", field);
+                expectToken(jsonParser, JsonToken.START_OBJECT);
+                expectToken(jsonParser, JsonToken.FIELD_NAME);
+                expectField(jsonParser, "cursor");
 
                 final Cursor cursor = readCursor(jsonParser);
 
                 LOG.debug("Cursor for partition [{}] at offset [{}]", cursor.getPartition(), cursor.getOffset());
 
-                token = jsonParser.nextToken();
+                final JsonToken token = jsonParser.nextToken();
                 if (token != JsonToken.END_OBJECT) {
-                    field = jsonParser.getCurrentName();
-                    checkState("events".equals(field), "Expected [event] field but got [%s]", field);
+                    expectField(jsonParser, "events");
 
                     final List<T> events = readEvents(objectReader, jsonParser);
 
-                    token = jsonParser.nextToken();
-                    checkState(token == JsonToken.END_OBJECT, "Expected [%s] but got [%s]", JsonToken.END_OBJECT, token);
+                    expectToken(jsonParser, JsonToken.END_OBJECT);
 
                     final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
 
                     processBatch(batch);
-
                 }
                 errorCount = 0;
             } catch (IOException e) {
@@ -191,6 +188,11 @@ public class NakadiReader<T> implements IORunnable {
                 } finally {
                     LOG.debug("Trying to close response");
                     response.close();
+                }
+
+                if (Thread.currentThread().isInterrupted()) {
+                    LOG.warn("Thread was interruped");
+                    break;
                 }
 
                 try {
@@ -207,6 +209,22 @@ public class NakadiReader<T> implements IORunnable {
                 errorCount++;
             }
         }
+    }
+
+    private void expectField(JsonParser jsonParser, String expectedFieldName) throws IOException {
+        final String fieldName = jsonParser.getCurrentName();
+        if (fieldName == null) {
+            throw new IOException("Stream was closed or no field at current position");
+        }
+        checkState(expectedFieldName.equals(fieldName), "Expected [%s] field but got [%s]", expectedFieldName, fieldName);
+    }
+
+    private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
+        final JsonToken token = jsonParser.nextToken();
+        if (token == null) {
+            throw new IOException("Stream was closed");
+        }
+        checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
     }
 
 }

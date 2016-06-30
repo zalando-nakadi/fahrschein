@@ -27,6 +27,6 @@ public class InMemoryCursorManager implements CursorManager {
 
     @Override
     public Collection<Cursor> getCursors(String eventName) {
-        return Collections.unmodifiableCollection(partitionsByEventName.get(eventName).values());
+        return partitionsByEventName.getOrDefault(eventName, Collections.emptyMap()).values();
     }
 }

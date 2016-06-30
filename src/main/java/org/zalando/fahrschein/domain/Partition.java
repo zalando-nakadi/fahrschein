@@ -25,7 +25,7 @@ public class Partition {
         return newestAvailableOffset;
     }
 
-    @Hack
+    @Hack("This method relies on offsets being numeric and montonically increasing")
     public boolean isAvailable(final String offset) {
         try {
             final long requestedOffset = Long.parseLong(offset);

@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Manages cursor offsets for one consumer. One consumer can handle several distinct events.
+ */
 public interface CursorManager {
     void onSuccess(String eventName, Cursor cursor) throws IOException;
     void onError(String eventName, Cursor cursor, Throwable throwable) throws IOException;
@@ -19,12 +22,18 @@ public interface CursorManager {
 
     }
 
+    /**
+     * Initializes offsets to start streaming from the newest available offset.
+     */
     default void fromNewestAvailableOffsets(String eventName, List<Partition> partitions) throws IOException {
         for (Partition partition : partitions) {
             onSuccess(eventName, new Cursor(partition.getPartition(), partition.getNewestAvailableOffset()));
         }
     }
 
+    /**
+     * Initializes offsets to start streaming at the oldes available offset (BEGIN).
+     */
     default void fromOldestAvailableOffset(String eventName, List<Partition> partitions) throws IOException {
         for (Partition partition : partitions) {
             onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
