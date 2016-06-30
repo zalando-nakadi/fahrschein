@@ -9,11 +9,16 @@ Fahrschein is a library for consuming events from a nakadi event bus.
 
 ## Features
 
- -
+ - Consistent error handling
+    - `IOException` handled as retryable
+    - `RuntimeException` aborts processing and can be handled outside the main loop
+ - No unnecessary buffering or line-based processing
+    - Less garbage and higher performance
+    - Better integration with Jackson json parser
 
-### Installation
+## Installation
 
-Add the following dependency to your project:
+Fahrschein is available in maven central, so you only have to add the following dependency to your project:
 
 ```xml
 <dependency>
@@ -23,7 +28,16 @@ Add the following dependency to your project:
 </dependency>
 ```
 
-## Configuration
+## Fahrschein compared to other nakadi client libraries
+
+|                      | Fahrschein                                                        | Nakadi-Klients        | Straw               |
+| -------------------- | ----------------------------------------------------------------- | --------------------- | ------------------- |
+| Dependencies         | Spring (http client and jdbc), Jackson, Postgres (optional)       | Scala, Akka, Jackson  | None                |
+| Cursor Management    | In-Memory / Persistent (Postgres)                                 | In-Memory             |                     |
+| Partition Management | In-Memory / Persistent (Postgres)                                 |                       |                     |
+| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | No error handling   |
+
+## Usage
 
 ```java
 final URI baseUri = new URI("https://nakadi-sandbox-hila.aruha-test.zalan.do");
@@ -56,6 +70,10 @@ final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestF
 final CursorManager cursorManager = new InMemoryCursorManager();
 
 // Or persistent in a postgres database
+final HikariConfig hikariConfig = new HikariConfig();
+hikariConfig.setJdbcUrl("jdbc:postgresql://localhost:5432/local_nakadi_cursor_db");
+hikariConfig.setUsername("postgres");
+hikariConfig.setPassword("postgres");
 final DataSource dataSource = new HikariDataSource(hikariConfig);
 final CursorManager cursorManager = new PersistentCursorManager(dataSource);
 
@@ -102,13 +120,11 @@ nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParame
 
 See `src/test/java/org/zalando/fahrschein/salesorder/Main.java` for an executable version of the above code.
 
+## Getting help
 
-## Fahrschein compared to other nakadi client libraries
+If you have questions, concerns, bug reports, etc, please file an issue in this repository's issue tracker.
 
-|                      | Fahrschein                                                        | Nakadi-Klients        | Straw               |
-| -------------------- | ----------------------------------------------------------------- | --------------------- | ------------------- |
-| Dependencies         | Spring (http client and jdbc), Jackson, Postgres (optional)       | Scala, Akka, Jackson  | None                |
-| Cursor Management    | In-Memory / Persistent (Postgres)                                 | In-Memory             |                     |
-| Partition Management | In-Memory / Persistent (Postgres)                                 |                       |                     |
-| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | No error handling   |
+## Getting involved
 
+To contribute, simply make a pull request and add a brief description (1-2 sentences) of your addition or change.
+For more details check the [contribution guidelines](CONTRIBUTING.md).
