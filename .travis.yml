@@ -3,3 +3,5 @@ sudo: false
 jdk:
   - oraclejdk8
 script: mvn clean verify
+addons:
+  postgresql: "9.4"
