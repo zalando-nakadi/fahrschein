@@ -2,7 +2,9 @@
 
 [![Fahrschein](docs/Bundesarchiv_Bild_183-1990-0104-025,_BVG-Fahrscheine.jpg)](https://commons.wikimedia.org/wiki/File:Bundesarchiv_Bild_183-1990-0104-025,_BVG-Fahrscheine.jpg)
 
-*Image Source: Deutsches Bundesarchiv, Photographer: RalphHirschberger, Image License: Creative Commons Attribution-Share Alike 3.0 Germany*
+*Image Source: Deutsches Bundesarchiv, Photographer: RalphHirschberger, Image License: [Creative Commons Attribution-Share Alike 3.0 Germany](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en)*
+
+
 
 [![Build Status](https://travis-ci.org/zalando-incubator/fahrschein.svg?branch=master)](https://travis-ci.org/zalando-incubator/fahrschein)
 [![Release](https://img.shields.io/github/release/zalando-incubator/fahrschein.svg)](https://github.com/zalando-incubator/fahrschein/releases)
@@ -17,7 +19,7 @@ Fahrschein is a library for consuming events from a nakadi event bus.
     - `RuntimeException` aborts processing and can be handled outside the main loop
  - No unnecessary buffering or line-based processing
     - Less garbage and higher performance
-    - All processing done by [Jackson][1] json parser
+    - All processing done by [Jackson](https://github.com/FasterXML/jackson) json parser
 
 ## Installation
 
@@ -85,7 +87,7 @@ nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameter
 // The `listen` call above will block and automatically reconnect on `IOException`
 ```
 
-See `src/test/java/org/zalando/fahrschein/salesorder/Main.java` for an executable version of the above code.
+See [`Main.java`](blob/master/src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
 
 ## Fahrschein compared to other nakadi client libraries
 
@@ -147,5 +149,3 @@ If you have questions, concerns, bug reports, etc, please file an issue in this 
 
 To contribute, simply make a pull request and add a brief description (1-2 sentences) of your addition or change.
 For more details check the [contribution guidelines](CONTRIBUTING.md).
-
- [1]: https://github.com/FasterXML/jackson
