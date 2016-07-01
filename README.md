@@ -2,7 +2,7 @@
 
 [![Fahrschein](docs/Bundesarchiv_Bild_183-1990-0104-025,_BVG-Fahrscheine.jpg)](https://commons.wikimedia.org/wiki/File:Bundesarchiv_Bild_183-1990-0104-025,_BVG-Fahrscheine.jpg)
 
-*Image Source: Deutsches Bundesarchiv, Photographer: RalphHirschberger, Image License: [Creative Commons Attribution-Share Alike 3.0 Germany](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en)*
+*Image Source: Deutsches Bundesarchiv, Photographer: Ralph Hirschberger, Image License: [Creative Commons Attribution-Share Alike 3.0 Germany](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en)*
 
 
 
