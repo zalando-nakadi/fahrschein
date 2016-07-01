@@ -69,12 +69,12 @@ See [`Main.java`](blob/master/src/test/java/org/zalando/fahrschein/salesorder/Ma
 
 ## Fahrschein compared to other nakadi client libraries
 
-|                      | Fahrschein                                                        | Nakadi-Klients        | Straw               |
-| -------------------- | ----------------------------------------------------------------- | --------------------- | ------------------- |
-| Dependencies         | Spring (http client and jdbc), Jackson, Postgres (optional)       | Scala, Akka, Jackson  | None                |
-| Cursor Management    | In-Memory / Persistent (Postgres)                                 | In-Memory             |                     |
-| Partition Management | In-Memory / Persistent (Postgres)                                 |                       |                     |
-| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | No error handling   |
+|                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
+| -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
+| Dependencies         | Spring (http client and jdbc), Jackson, Postgres (optional)       | Scala, Akka, Jackson  | Scala, Akka             | None                |
+| Cursor Management    | In-Memory / Persistent (Postgres)                                 | In-Memory             | Persistent (Dynamo)     |                     |
+| Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
+| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
 
 ## Initializing partition offsets
 
