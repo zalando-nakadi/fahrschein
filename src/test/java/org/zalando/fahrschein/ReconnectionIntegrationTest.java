@@ -14,6 +14,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
 import javax.servlet.ServletException;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReconnectionIntegrationTest {
 
@@ -36,19 +38,19 @@ public class ReconnectionIntegrationTest {
             response.setContentType("application/x-json-stream");
 
             try (PrintWriter writer = response.getWriter()) {
-                for (int i = 0; i < 6; i++) {
+                for (int i = 0; i < 10; i++) {
                     writer.printf(SOME_EVENT, "0", String.valueOf(i), String.valueOf(i));
                     writer.flush();
                     try {
-                        Thread.sleep(10*1000L);
+                        Thread.sleep(1*1000L);
                     } catch (InterruptedException e) {
                         break;
                     }
                 }
+            } finally {
+                // Inform jetty that this request has now been handled
+                baseRequest.setHandled(true);
             }
-
-            // Inform jetty that this request has now been handled
-            baseRequest.setHandled(true);
         }
     }
 
@@ -68,15 +70,15 @@ public class ReconnectionIntegrationTest {
 
     @BeforeClass
     public static void startJetty() throws Exception {
-        Server server = new Server(8088);
+        server = new Server(8088);
         server.setHandler(new StreamingHandler());
 
         server.start();
     }
 
     @AfterClass
-    public static void stopJetty() throws InterruptedException {
-        server.join();
+    public static void stopJetty() throws Exception {
+        server.stop();
     }
 
     private NakadiClient nakadiClient;
@@ -90,26 +92,28 @@ public class ReconnectionIntegrationTest {
 
         final RequestConfig config = RequestConfig.custom()
                 .setSocketTimeout(30000)
-                .setConnectionRequestTimeout(5000)
+                .setConnectionRequestTimeout(2000)
                 .build();
 
         final CloseableHttpClient httpClient = HttpClients.custom()
-                .setConnectionTimeToLive(5, TimeUnit.SECONDS)
+                .setConnectionTimeToLive(2, TimeUnit.SECONDS)
                 .disableAutomaticRetries()
                 .setDefaultRequestConfig(config)
                 .disableRedirectHandling()
                 .build();
 
-        final HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-        final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
+        final ClientHttpRequestFactory requestFactory = new CloseableHttpComponentsClientRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+        final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final InMemoryCursorManager cursorManager = new InMemoryCursorManager();
 
-        this.nakadiClient = new NakadiClient(URI.create("http://localhost:8088/"), requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager);
+        this.nakadiClient = new NakadiClient(URI.create("http://localhost:8088/"), requestFactory, backoffStrategy, objectMapper, cursorManager);
     }
 
     @Test(timeout = 5000)
-    public void shouldReconnectImmediately() throws IOException, ExponentialBackoffException {
-        nakadiClient.listen("some-event", SomeEvent.class, (events) -> {throw new IOException("IOException while processing event");});
-
+    public void shouldNotConsumeStream() throws IOException, BackoffException {
+        final Listener<SomeEvent> listener = (events) -> {
+            throw new IOException("IOException while processing event");
+        };
+        nakadiClient.listen("some-event", SomeEvent.class, listener);
     }
 }
