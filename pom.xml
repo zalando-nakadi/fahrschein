@@ -395,5 +395,19 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- test with different HttpClientRequestFactory -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.4.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>9.3.10.v20160621</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>
