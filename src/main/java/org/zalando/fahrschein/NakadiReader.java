@@ -34,7 +34,7 @@ public class NakadiReader<T> {
 
     private final URI uri;
     private final ClientHttpRequestFactory clientHttpRequestFactory;
-    private final ExponentialBackoffStrategy exponentialBackoffStrategy;
+    private final BackoffStrategy backoffStrategy;
     private final CursorManager cursorManager;
 
     private final ObjectMapper objectMapper;
@@ -44,10 +44,10 @@ public class NakadiReader<T> {
     private final Class<T> eventClass;
     private final Listener<T> listener;
 
-    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, ExponentialBackoffStrategy exponentialBackoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
         this.uri = uri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
-        this.exponentialBackoffStrategy = exponentialBackoffStrategy;
+        this.backoffStrategy = backoffStrategy;
         this.cursorManager = cursorManager;
         this.objectMapper = objectMapper;
         this.eventName = eventName;
@@ -56,14 +56,6 @@ public class NakadiReader<T> {
         this.listener = listener;
 
         checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())));
-    }
-
-    private ClientHttpResponse openStream(int errorCount) throws InterruptedException, IOException {
-        try {
-            return exponentialBackoffStrategy.call(errorCount, this::openStream);
-        } catch (ExponentialBackoffException e) {
-            throw e.getCause();
-        }
     }
 
     private ClientHttpResponse openStream() throws IOException {
@@ -197,7 +189,12 @@ public class NakadiReader<T> {
 
                 try {
                     LOG.info("Reconnecting after [{}] errors", errorCount);
-                    response = openStream(errorCount);
+                    try {
+                        response = backoffStrategy.call(errorCount, e, this::openStream);
+                    } catch (BackoffException e1) {
+                        LOG.warn("Could not reconnect after [{}] errors", errorCount, e1);
+                        return;
+                    }
                     jsonParser = jsonFactory.createParser(response.getBody());
                 } catch (InterruptedException e1) {
                     LOG.warn("Interrupted during reconnection");

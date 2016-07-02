@@ -16,8 +16,8 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.zalando.fahrschein.AccessTokenProvider;
 import org.zalando.fahrschein.AuthorizedClientHttpRequestFactory;
+import org.zalando.fahrschein.BackoffException;
 import org.zalando.fahrschein.EventProcessingException;
-import org.zalando.fahrschein.ExponentialBackoffException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.ManagedCursorManager;
@@ -37,7 +37,7 @@ import java.net.URISyntaxException;
 public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException, ExponentialBackoffException {
+    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException, BackoffException {
         final URI baseUri = new URI("https://nakadi-sandbox-hila.aruha-test.zalan.do");
         final String eventName = "sales-order-service.order-placed";
 
