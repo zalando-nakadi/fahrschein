@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.zalando.fahrschein.request.CloseableHttpComponentsClientHttpRequestFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -24,7 +25,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ReconnectionIntegrationTest {
 
@@ -102,7 +102,7 @@ public class ReconnectionIntegrationTest {
                 .disableRedirectHandling()
                 .build();
 
-        final ClientHttpRequestFactory requestFactory = new CloseableHttpComponentsClientRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+        final ClientHttpRequestFactory requestFactory = new CloseableHttpComponentsClientHttpRequestFactory(httpClient);
         final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final InMemoryCursorManager cursorManager = new InMemoryCursorManager();
 
