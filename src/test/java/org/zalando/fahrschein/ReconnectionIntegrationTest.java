@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -102,7 +103,7 @@ public class ReconnectionIntegrationTest {
                 .disableRedirectHandling()
                 .build();
 
-        final ClientHttpRequestFactory requestFactory = new CloseableHttpComponentsClientRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+        final ClientHttpRequestFactory requestFactory = ClientHttpRequestFactoryHelper.wrap(new HttpComponentsClientHttpRequestFactory(httpClient), objectMapper, () -> "TOKEN");
         final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final InMemoryCursorManager cursorManager = new InMemoryCursorManager();
 

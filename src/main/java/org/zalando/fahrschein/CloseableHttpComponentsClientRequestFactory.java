@@ -1,6 +1,5 @@
 package org.zalando.fahrschein;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -11,19 +10,25 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
 
-public class CloseableHttpComponentsClientRequestFactory implements ClientHttpRequestFactory {
+public class CloseableHttpComponentsClientRequestFactory implements DelegatingClientHttpRequestFactory {
     private static final Logger LOG = LoggerFactory.getLogger(CloseableHttpComponentsClientRequestFactory.class);
 
     private final HttpComponentsClientHttpRequestFactory delegate;
 
-    public CloseableHttpComponentsClientRequestFactory(HttpComponentsClientHttpRequestFactory delegate) {
+    public CloseableHttpComponentsClientRequestFactory(final HttpComponentsClientHttpRequestFactory delegate) {
         this.delegate = delegate;
+    }
+
+    @Override
+    public ClientHttpRequestFactory delegate() {
+        return delegate;
     }
 
     @Override
@@ -65,7 +70,7 @@ public class CloseableHttpComponentsClientRequestFactory implements ClientHttpRe
                         try {
                             final Field field = response.getClass().getDeclaredField("httpResponse");
                             field.setAccessible(true);
-                            final CloseableHttpResponse closeableHttpResponse = (CloseableHttpResponse) field.get(response);
+                            final Closeable closeableHttpResponse = (Closeable) field.get(response);
                             try {
                                 closeableHttpResponse.close();
                             } catch (IOException e) {
@@ -75,7 +80,6 @@ public class CloseableHttpComponentsClientRequestFactory implements ClientHttpRe
                             LOG.warn("Could not release underlying response, trying normal close", e);
                             response.close();
                         }
-
                     }
                 };
             }

@@ -9,13 +9,18 @@ import java.net.URI;
 
 import static java.util.Collections.singletonList;
 
-public class AuthorizedClientHttpRequestFactory implements ClientHttpRequestFactory {
+public class AuthorizedClientHttpRequestFactory implements DelegatingClientHttpRequestFactory {
     private final ClientHttpRequestFactory delegate;
     private final AccessTokenProvider accessTokenProvider;
 
     public AuthorizedClientHttpRequestFactory(final ClientHttpRequestFactory delegate, final AccessTokenProvider accessTokenProvider) {
         this.delegate = delegate;
         this.accessTokenProvider = accessTokenProvider;
+    }
+
+    @Override
+    public ClientHttpRequestFactory delegate() {
+        return delegate;
     }
 
     @Override
