@@ -5,7 +5,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-public class ExponentialBackoffStrategy {
+import static com.google.common.base.Preconditions.checkState;
+
+public class ExponentialBackoffStrategy implements BackoffStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(ExponentialBackoffStrategy.class);
 
     public static final int DEFAULT_INITIAL_DELAY = 500;
@@ -22,6 +24,7 @@ public class ExponentialBackoffStrategy {
     }
 
     public ExponentialBackoffStrategy(int initialDelay, double backoffFactor, long maxDelay, int maxRetries) {
+        checkState(initialDelay > 0, "Initial delay should be bigger than 0");
         this.initialDelay = initialDelay;
         this.backoffFactor = backoffFactor;
         this.maxDelay = maxDelay;
@@ -38,11 +41,17 @@ public class ExponentialBackoffStrategy {
         Thread.sleep(delay);
     }
 
-    public <T> T call(final IOCallable<T> callable) throws ExponentialBackoffException, InterruptedException {
-        return call(0, callable);
+    private void checkMaxRetries(final IOException exception, final int count) throws BackoffException {
+        if (maxRetries >= 0 && count > maxRetries) {
+            LOG.info("Maximum number of retries exceeded");
+            throw new BackoffException(exception);
+        }
     }
 
-    public <T> T call(final int initialCount, final IOCallable<T> callable) throws ExponentialBackoffException, InterruptedException{
+    @Override
+    public <T> T call(final int initialCount, final IOException initialException, final IOCallable<T> callable) throws BackoffException, InterruptedException{
+        checkMaxRetries(initialException, initialCount);
+
         int count = initialCount;
 
         if (count > 0) {
@@ -57,10 +66,7 @@ public class ExponentialBackoffStrategy {
                 LOG.warn("Got [{}]", e.getClass().getSimpleName(), e);
                 count++;
 
-                if (maxRetries >= 0 && count > maxRetries) {
-                    LOG.info("Maximum number of retries exceeded");
-                    throw new ExponentialBackoffException(e);
-                }
+                checkMaxRetries(e, count);
                 sleepForRetries(count);
             }
         }

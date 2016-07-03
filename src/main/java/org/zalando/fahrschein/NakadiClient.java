@@ -30,14 +30,14 @@ public class NakadiClient {
 
     private final URI baseUri;
     private final ClientHttpRequestFactory clientHttpRequestFactory;
-    private final ExponentialBackoffStrategy exponentialBackoffStrategy;
+    private final BackoffStrategy backoffStrategy;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
 
-    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, ExponentialBackoffStrategy exponentialBackoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
+    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
-        this.exponentialBackoffStrategy = exponentialBackoffStrategy;
+        this.backoffStrategy = backoffStrategy;
         this.objectMapper = objectMapper;
         this.cursorManager = cursorManager;
     }
@@ -74,25 +74,25 @@ public class NakadiClient {
         }
     }
 
-    public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, ExponentialBackoffException {
+    public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, BackoffException {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, exponentialBackoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
+        final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
 
         nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
 
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException, ExponentialBackoffException {
+    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException, BackoffException {
         listen(eventName, eventType, listener, new StreamParameters());
     }
 
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, ExponentialBackoffException {
+    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, BackoffException {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, exponentialBackoffStrategy, cursorManager, objectMapper, eventName, Optional.<Subscription>empty(), eventType, listener);
+        final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.<Subscription>empty(), eventType, listener);
 
         nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
