@@ -2,8 +2,8 @@ package org.zalando.fahrschein;
 
 import java.io.IOException;
 
-public class ExponentialBackoffException extends Exception {
-    public ExponentialBackoffException(IOException cause) {
+public class BackoffException extends Exception {
+    public BackoffException(IOException cause) {
         super(cause);
     }
 
