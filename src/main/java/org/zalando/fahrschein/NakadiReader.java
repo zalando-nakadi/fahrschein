@@ -12,6 +12,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
@@ -56,6 +57,10 @@ public class NakadiReader<T> {
         this.listener = listener;
 
         checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())));
+
+        if (clientHttpRequestFactory instanceof HttpComponentsClientHttpRequestFactory) {
+            LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());
+        }
     }
 
     private ClientHttpResponse openStream(int errorCount) throws InterruptedException, IOException {
