@@ -81,7 +81,7 @@ public class NakadiReader<T> {
     private void processBatch(Batch<T> batch) throws IOException {
         final Cursor cursor = batch.getCursor();
         try {
-            listener.onEvent(batch.getEvents());
+            listener.accept(batch.getEvents());
             cursorManager.onSuccess(eventName, cursor);
         } catch (EventAlreadyProcessedException e) {
             LOG.info("Events for [{}] partition [{}] at offset [{}] were already processed", eventName, cursor.getPartition(), cursor.getOffset());
@@ -143,7 +143,7 @@ public class NakadiReader<T> {
         } catch (final RuntimeJsonMappingException e) {
             final Throwable cause = e.getCause();
             if (cause instanceof JsonMappingException) {
-                listener.onError((JsonMappingException) cause);
+                listener.onMappingException((JsonMappingException) cause);
             } else {
                 throw e;
             }

@@ -6,9 +6,10 @@ import java.io.IOException;
 import java.util.List;
 
 public interface Listener<T> {
-    void onEvent(final List<T> event) throws IOException, EventAlreadyProcessedException;
 
-    default void onError(final JsonMappingException e) throws JsonMappingException {
+    void accept(final List<T> events) throws IOException, EventAlreadyProcessedException;
+
+    default void onMappingException(final JsonMappingException e) throws JsonMappingException {
         throw e;
     }
 }
