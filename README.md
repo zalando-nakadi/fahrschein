@@ -116,6 +116,9 @@ nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParame
 
 ```
 
+## Using another ClientHttpRequestFactory
+
+This library is currently only tested and fully working with `SimpleClientHttpRequestFactory`. Please note that `HttpComponentsClientHttpRequestFactory` tries to consume the remaining stream on closing and so might block until the configured `streamTimeout` during reconnection.
 
 ## Getting help
 
