@@ -22,6 +22,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -126,9 +127,20 @@ public class NakadiReader<T> {
 
         final List<T> events = new ArrayList<>();
 
-        while (jsonParser.nextToken() == JsonToken.START_OBJECT) {
-            final T event = objectReader.readValue(jsonParser, eventClass);
-            events.add(event);
+        if (jsonParser.nextToken() == JsonToken.START_OBJECT) {
+            final Iterator<T> eventIterator = objectReader.readValues(jsonParser, eventClass);
+            while (eventIterator.hasNext()) {
+                try {
+                    events.add(eventIterator.next());
+                } catch (final Exception e) {
+                    final Throwable cause = e.getCause();
+                    if (cause instanceof IOException) {
+                        listener.onError((IOException) cause);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
         }
 
         return events;
