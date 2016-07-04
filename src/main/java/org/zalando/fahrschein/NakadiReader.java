@@ -3,8 +3,10 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -123,15 +126,28 @@ public class NakadiReader<T> {
 
     private List<T> readEvents(ObjectReader objectReader, JsonParser jsonParser) throws IOException {
         expectToken(jsonParser, JsonToken.START_ARRAY);
+        jsonParser.clearCurrentToken();
+
+        final Iterator<T> eventIterator = objectReader.readValues(jsonParser, eventClass);
 
         final List<T> events = new ArrayList<>();
-
-        while (jsonParser.nextToken() == JsonToken.START_OBJECT) {
-            final T event = objectReader.readValue(jsonParser, eventClass);
-            events.add(event);
+        while (eventIterator.hasNext()) {
+            readEvent(eventIterator, events);
         }
-
         return events;
+    }
+
+    private void readEvent(final Iterator<T> source, final List<T> target) throws JsonMappingException {
+        try {
+            target.add(source.next());
+        } catch (final RuntimeJsonMappingException e) {
+            final Throwable cause = e.getCause();
+            if (cause instanceof JsonMappingException) {
+                listener.onError((JsonMappingException) cause);
+            } else {
+                throw e;
+            }
+        }
     }
 
     public void run() throws IOException {

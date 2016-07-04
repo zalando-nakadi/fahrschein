@@ -8,8 +8,12 @@
         </Console>
     </Appenders>
 
+
+
     <Loggers>
-        <Root level="debug">
+        <Logger name="org.zalando" level="debug"/>
+
+        <Root level="info">
             <AppenderRef ref="stdout"/>
         </Root>
     </Loggers>
