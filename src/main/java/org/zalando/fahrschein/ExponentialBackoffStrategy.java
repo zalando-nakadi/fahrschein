@@ -3,7 +3,6 @@ package org.zalando.fahrschein;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -43,16 +42,15 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
         Thread.sleep(delay);
     }
 
-    private void checkMaxRetries(final @Nullable IOException exception, final int count) throws BackoffException {
-        if (maxRetries >= 0 && count > maxRetries) {
+    private void checkMaxRetries(final IOException exception, final int count) throws BackoffException {
+        if (maxRetries >= 0 && count >= maxRetries) {
             LOG.info("Number of retries [{}] is higher than configured maximum [{}]", count, maxRetries);
-            checkState(exception != null, "Exception should be present when retries are exceeded");
-            throw new BackoffException(exception);
+            throw new BackoffException(exception, count);
         }
     }
 
     @Override
-    public <T> T call(final int initialExceptionCount, final @Nullable IOException initialException, final IOCallable<T> callable) throws BackoffException, InterruptedException{
+    public <T> T call(final int initialExceptionCount, final IOException initialException, final IOCallable<T> callable) throws BackoffException, InterruptedException{
         checkMaxRetries(initialException, initialExceptionCount);
 
         int count = initialExceptionCount;

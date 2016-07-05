@@ -20,6 +20,7 @@ import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -192,11 +193,11 @@ public class NakadiReader<T> {
         }
     }
 
-    public void run() throws IOException {
+    public void run() throws IOException, BackoffException {
         run(-1, TimeUnit.MILLISECONDS);
     }
 
-    public void run(long timeout, TimeUnit timeoutUnit) throws IOException {
+    public void run(long timeout, TimeUnit timeoutUnit) throws IOException, BackoffException {
 
         final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
 
@@ -250,9 +251,6 @@ public class NakadiReader<T> {
                     jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
                     jsonParser = jsonInput.getJsonParser();
                     LOG.info("Reconnected after [{}] errors", errorCount);
-                } catch (BackoffException e1) {
-                    LOG.warn("Could not reconnect after [{}] errors", errorCount, e1);
-                    return;
                 } catch (InterruptedException e1) {
                     LOG.warn("Interrupted during reconnection");
 
@@ -268,15 +266,17 @@ public class NakadiReader<T> {
     private void expectField(JsonParser jsonParser, String expectedFieldName) throws IOException {
         final String fieldName = jsonParser.getCurrentName();
         if (fieldName == null) {
-            throw new IOException("Stream was closed or no field at current position");
+            throw new EOFException("Stream was closed or no field at current position");
         }
         checkState(expectedFieldName.equals(fieldName), "Expected [%s] field but got [%s]", expectedFieldName, fieldName);
     }
 
+
+
     private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
         final JsonToken token = jsonParser.nextToken();
         if (token == null) {
-            throw new IOException("Stream was closed");
+            throw new EOFException("Stream was closed");
         }
         checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
     }
