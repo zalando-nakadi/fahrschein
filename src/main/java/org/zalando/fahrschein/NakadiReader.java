@@ -19,6 +19,7 @@ import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -48,7 +49,12 @@ public class NakadiReader<T> {
     private final Class<T> eventClass;
     private final Listener<T> listener;
 
+    private final JsonFactory jsonFactory;
+    private final ObjectReader eventReader;
+
     public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
+        checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
+
         this.uri = uri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.backoffStrategy = backoffStrategy;
@@ -59,14 +65,48 @@ public class NakadiReader<T> {
         this.eventClass = eventClass;
         this.listener = listener;
 
-        checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())));
+        this.jsonFactory = this.objectMapper.getFactory();
+        this.eventReader = this.objectMapper.reader().forType(eventClass);
 
         if (clientHttpRequestFactory instanceof HttpComponentsClientHttpRequestFactory) {
             LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());
         }
     }
 
-    private ClientHttpResponse openStream() throws IOException {
+    static class JsonInput implements Closeable {
+        private final ClientHttpResponse response;
+        private final JsonParser jsonParser;
+
+        JsonInput(ClientHttpResponse response, JsonParser jsonParser) {
+            this.response = response;
+            this.jsonParser = jsonParser;
+        }
+
+        ClientHttpResponse getResponse() {
+            return response;
+        }
+
+        JsonParser getJsonParser() {
+            return jsonParser;
+        }
+
+        @Override
+        public void close() {
+            try {
+                LOG.trace("Trying to close json parser");
+                jsonParser.close();
+                LOG.trace("Closed json parser");
+            } catch (IOException e) {
+                LOG.warn("Could not close json parser", e);
+            } finally {
+                LOG.trace("Trying to close response");
+                response.close();
+                LOG.trace("Closed response");
+            }
+        }
+    }
+
+    private JsonInput openJsonInput() throws IOException {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         if (!subscription.isPresent()) {
             final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
@@ -75,7 +115,9 @@ public class NakadiReader<T> {
                 request.getHeaders().put("X-Nakadi-Cursors", singletonList(value));
             }
         }
-        return request.execute();
+        final ClientHttpResponse response = request.execute();
+        final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+        return new JsonInput(response, jsonParser);
     }
 
     private void processBatch(Batch<T> batch) throws IOException {
@@ -124,11 +166,11 @@ public class NakadiReader<T> {
         return new Cursor(partition, offset);
     }
 
-    private List<T> readEvents(ObjectReader objectReader, JsonParser jsonParser) throws IOException {
+    private List<T> readEvents(final JsonParser jsonParser) throws IOException {
         expectToken(jsonParser, JsonToken.START_ARRAY);
         jsonParser.clearCurrentToken();
 
-        final Iterator<T> eventIterator = objectReader.readValues(jsonParser, eventClass);
+        final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventClass);
 
         final List<T> events = new ArrayList<>();
         while (eventIterator.hasNext()) {
@@ -158,16 +200,17 @@ public class NakadiReader<T> {
 
         final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
 
-        final JsonFactory jsonFactory = objectMapper.copy().getFactory().configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-        final ObjectReader objectReader = objectMapper.reader().forType(eventClass);
+        LOG.info("Listen to events for [{}]", eventName);
 
-        ClientHttpResponse response = openStream();
-        JsonParser jsonParser = jsonFactory.createParser(response.getBody());
+        JsonInput jsonInput = openJsonInput();
+        JsonParser jsonParser = jsonInput.getJsonParser();
 
         int errorCount = 0;
 
         while (System.currentTimeMillis() < lockedUntil) {
             try {
+
+                LOG.debug("Waiting for next batch of events for [{}]", eventName);
 
                 expectToken(jsonParser, JsonToken.START_OBJECT);
                 expectToken(jsonParser, JsonToken.FIELD_NAME);
@@ -181,7 +224,7 @@ public class NakadiReader<T> {
                 if (token != JsonToken.END_OBJECT) {
                     expectField(jsonParser, "events");
 
-                    final List<T> events = readEvents(objectReader, jsonParser);
+                    final List<T> events = readEvents(jsonParser);
 
                     expectToken(jsonParser, JsonToken.END_OBJECT);
 
@@ -189,19 +232,13 @@ public class NakadiReader<T> {
 
                     processBatch(batch);
                 }
+
                 errorCount = 0;
             } catch (IOException e) {
 
                 LOG.warn("Got [{}] while reading events", e.getClass().getSimpleName(), e);
-                try {
-                    LOG.debug("Trying to close json parser");
-                    jsonParser.close();
-                } catch (IOException e1) {
-                    LOG.warn("Could not close json parser on IOException");
-                } finally {
-                    LOG.debug("Trying to close response");
-                    response.close();
-                }
+
+                jsonInput.close();
 
                 if (Thread.currentThread().isInterrupted()) {
                     LOG.warn("Thread was interruped");
@@ -210,13 +247,12 @@ public class NakadiReader<T> {
 
                 try {
                     LOG.info("Reconnecting after [{}] errors", errorCount);
-                    try {
-                        response = backoffStrategy.call(errorCount, e, this::openStream);
-                    } catch (BackoffException e1) {
-                        LOG.warn("Could not reconnect after [{}] errors", errorCount, e1);
-                        return;
-                    }
-                    jsonParser = jsonFactory.createParser(response.getBody());
+                    jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
+                    jsonParser = jsonInput.getJsonParser();
+                    LOG.info("Reconnected after [{}] errors", errorCount);
+                } catch (BackoffException e1) {
+                    LOG.warn("Could not reconnect after [{}] errors", errorCount, e1);
+                    return;
                 } catch (InterruptedException e1) {
                     LOG.warn("Interrupted during reconnection");
 
