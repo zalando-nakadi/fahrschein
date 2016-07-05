@@ -63,7 +63,7 @@ final Listener<SalesOrderPlaced> listener = events -> {
 nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters);
 ```
 
-See [`Main.java`](blob/master/src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
+See [`Main.java`](src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
 
 ## Fahrschein compared to other nakadi client libraries
 
@@ -119,6 +119,10 @@ nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParame
 ## Using another ClientHttpRequestFactory
 
 This library is currently only tested and fully working with `SimpleClientHttpRequestFactory`. Please note that `HttpComponentsClientHttpRequestFactory` tries to consume the remaining stream on closing and so might block until the configured `streamTimeout` during reconnection.
+
+## Handling data binding problems
+
+You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing. To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
 
 ## Getting help
 
