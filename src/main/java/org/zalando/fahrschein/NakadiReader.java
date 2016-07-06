@@ -212,7 +212,7 @@ public class NakadiReader<T> {
 
                 LOG.debug("Waiting for next batch of events for [{}]", eventName);
 
-                expectToken(jsonParser, JsonToken.START_OBJECT);
+                expectBatchStartToken(jsonParser, JsonToken.START_OBJECT);
                 expectToken(jsonParser, JsonToken.FIELD_NAME);
                 expectField(jsonParser, "cursor");
 
@@ -235,18 +235,17 @@ public class NakadiReader<T> {
 
                 errorCount = 0;
             } catch (IOException e) {
-
-                LOG.warn("Got [{}] while reading events", e.getClass().getSimpleName(), e);
+                logException(e, errorCount);
 
                 jsonInput.close();
 
                 if (Thread.currentThread().isInterrupted()) {
-                    LOG.warn("Thread was interruped");
+                    LOG.warn("Thread was interrupted");
                     break;
                 }
 
                 try {
-                    LOG.info("Reconnecting after [{}] errors", errorCount);
+                    LOG.debug("Reconnecting after [{}] errors", errorCount);
                     jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
                     jsonParser = jsonInput.getJsonParser();
                     LOG.info("Reconnected after [{}] errors", errorCount);
@@ -265,10 +264,22 @@ public class NakadiReader<T> {
         }
     }
 
+    private void logException(final IOException e, final int errorCount) {
+        if (errorCount == 0 && e instanceof StreamClosedException) {
+            if (LOG.isTraceEnabled()) {
+                LOG.info("Stream was closed", e);
+            } else {
+                LOG.info("Stream was closed");
+            }
+        } else {
+            LOG.warn("Got [{}] while reading events", e.getClass().getSimpleName(), e);
+        }
+    }
+
     private void expectField(JsonParser jsonParser, String expectedFieldName) throws IOException {
         final String fieldName = jsonParser.getCurrentName();
         if (fieldName == null) {
-            throw new IOException("Stream was closed or no field at current position");
+            throw new IOException("No field at current position");
         }
         checkState(expectedFieldName.equals(fieldName), "Expected [%s] field but got [%s]", expectedFieldName, fieldName);
     }
@@ -277,6 +288,14 @@ public class NakadiReader<T> {
         final JsonToken token = jsonParser.nextToken();
         if (token == null) {
             throw new IOException("Stream was closed");
+        }
+        checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
+    }
+
+    private void expectBatchStartToken(final JsonParser jsonParser, final JsonToken expectedToken) throws IOException {
+        final JsonToken token = jsonParser.nextToken();
+        if (token == null) {
+            throw new StreamClosedException("Stream was closed while waiting on next batch");
         }
         checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
     }
