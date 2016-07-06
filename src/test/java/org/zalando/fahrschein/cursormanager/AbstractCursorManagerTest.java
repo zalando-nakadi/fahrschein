@@ -1,4 +1,4 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.cursormanager;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractCursorManagerTest {
 
 
-    protected abstract  CursorManager cursorManager();
+    protected abstract CursorManager cursorManager();
 
     @Test
     public void shouldBeEmptyByDefault() throws IOException {

@@ -20,7 +20,7 @@ import org.zalando.fahrschein.BackoffException;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
 import org.zalando.fahrschein.Listener;
-import org.zalando.fahrschein.ManagedCursorManager;
+import org.zalando.fahrschein.cursormanager.ManagedCursorManager;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
 import org.zalando.fahrschein.StreamParameters;

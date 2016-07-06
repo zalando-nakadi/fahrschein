@@ -1,4 +1,4 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.cursormanager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,19 +9,19 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.Collection;
 
-public class PersistentCursorManager implements CursorManager {
+public class JdbcCursorManager implements CursorManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PersistentCursorManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JdbcCursorManager.class);
 
     private final JdbcTemplate template;
     private final String consumerName;
 
-    public PersistentCursorManager(JdbcTemplate template, String consumerName) {
+    public JdbcCursorManager(JdbcTemplate template, String consumerName) {
         this.template = template;
         this.consumerName = consumerName;
     }
 
-    public PersistentCursorManager(DataSource dataSource, String consumerName) {
+    public JdbcCursorManager(DataSource dataSource, String consumerName) {
         this(new JdbcTemplate(dataSource), consumerName);
     }
 

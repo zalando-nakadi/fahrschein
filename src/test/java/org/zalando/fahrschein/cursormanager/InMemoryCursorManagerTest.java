@@ -1,4 +1,4 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.cursormanager;
 
 public class InMemoryCursorManagerTest extends AbstractCursorManagerTest {
     private CursorManager cursorManager = new InMemoryCursorManager();
