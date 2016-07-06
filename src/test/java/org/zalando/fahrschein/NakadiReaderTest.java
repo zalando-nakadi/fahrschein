@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -86,6 +88,30 @@ public class NakadiReaderTest {
         } catch (BackoffException e) {
             assertEquals(0, e.getRetries());
             assertEquals("Stream was closed", e.getCause().getMessage());
+        }
+    }
+
+    @Test
+    public void shouldHandleBrokenInput() throws IOException, InterruptedException, BackoffException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",".getBytes("utf-8"));
+        when(response.getBody()).thenReturn(initialInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        try {
+            nakadiReader.run();
+            fail("Expected BackoffException");
+        } catch (BackoffException e) {
+            assertEquals(0, e.getRetries());
+            assertTrue(e.getCause() instanceof JsonProcessingException);
+            assertTrue(e.getCause().getMessage().contains("Unexpected end-of-input"));
         }
     }
 
