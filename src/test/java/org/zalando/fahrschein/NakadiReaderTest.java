@@ -2,10 +2,12 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
+import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.ByteArrayInputStream;
@@ -16,7 +18,9 @@ import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class NakadiReaderTest {
@@ -26,6 +30,9 @@ public class NakadiReaderTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final CursorManager cursorManager = mock(CursorManager.class);
     private final ClientHttpRequestFactory clientHttpRequestFactory = mock(ClientHttpRequestFactory.class);
+
+    @SuppressWarnings("unchecked")
+    private final Listener<SomeEvent> listener = (Listener<SomeEvent>)mock(Listener.class);
 
     public static class SomeEvent {
         private String id;
@@ -39,10 +46,6 @@ public class NakadiReaderTest {
         }
     }
 
-    private void handleEvents(List<SomeEvent> events) {
-
-    }
-
     @Test
     public void shouldNotRetryInitialConnection() throws IOException, InterruptedException, BackoffException {
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
@@ -52,7 +55,7 @@ public class NakadiReaderTest {
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
 
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, this::handleEvents);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
         try {
             nakadiReader.run();
@@ -75,7 +78,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, this::handleEvents);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
         try {
             nakadiReader.run();
@@ -98,7 +101,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 1);
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, this::handleEvents);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
         try {
             nakadiReader.run();
@@ -108,4 +111,51 @@ public class NakadiReaderTest {
             assertEquals("Reconnection failed", e.getCause().getMessage());
         }
     }
+
+
+    @Test
+    public void shouldProcessEventsAndCommitCursor() throws IOException, InterruptedException, BackoffException, EventAlreadyProcessedException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"}]}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        try {
+            nakadiReader.run();
+            fail("Expected IOException on reconnect");
+        } catch (BackoffException e) {
+            assertEquals(0, e.getRetries());
+            assertEquals("Stream was closed", e.getCause().getMessage());
+
+            {
+                @SuppressWarnings("unchecked")
+                final ArgumentCaptor<List<SomeEvent>> argumentCaptor = (ArgumentCaptor<List<SomeEvent>>)(Object)ArgumentCaptor.forClass(List.class);
+                verify(listener).accept(argumentCaptor.capture());
+
+                final List<SomeEvent> events = argumentCaptor.getValue();
+
+                assertEquals(1, events.size());
+                assertEquals("789", events.get(0).getId());
+            }
+
+            {
+                final ArgumentCaptor<Cursor> argumentCaptor = ArgumentCaptor.forClass(Cursor.class);
+
+                verify(cursorManager).onSuccess(eq(EVENT_NAME), argumentCaptor.capture());
+
+                final Cursor cursor = argumentCaptor.getValue();
+                assertEquals("123", cursor.getPartition());
+                assertEquals("456", cursor.getOffset());
+            }
+        }
+    }
+
 }
