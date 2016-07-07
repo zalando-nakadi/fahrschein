@@ -2,7 +2,11 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.Matchers;
+import org.hobsoft.hamcrest.compose.ComposeMatchers;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
@@ -16,9 +20,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -35,6 +41,9 @@ public class NakadiReaderTest {
 
     @SuppressWarnings("unchecked")
     private final Listener<SomeEvent> listener = (Listener<SomeEvent>)mock(Listener.class);
+
+    @Rule
+    public final ExpectedException expectedException = ExpectedException.none();
 
     public static class SomeEvent {
         private String id;
@@ -59,12 +68,10 @@ public class NakadiReaderTest {
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
-        try {
-            nakadiReader.run();
-            fail("Expected IOException on initial connect");
-        } catch (IOException e) {
-            assertEquals("Initial connection failed", e.getMessage());
-        }
+        expectedException.expect(IOException.class);
+        expectedException.expectMessage(equalTo("Initial connection failed"));
+
+        nakadiReader.run();
     }
 
     @Test
@@ -82,19 +89,17 @@ public class NakadiReaderTest {
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
-        try {
-            nakadiReader.run();
-            fail("Expected BackoffException");
-        } catch (BackoffException e) {
-            assertEquals(0, e.getRetries());
-            assertEquals("Stream was closed", e.getCause().getMessage());
-        }
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature("retries", BackoffException::getRetries, equalTo(0)));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Stream was closed")));
+
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
     }
 
     @Test
     public void shouldHandleBrokenInput() throws IOException, InterruptedException, BackoffException {
         final ClientHttpResponse response = mock(ClientHttpResponse.class);
-        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",".getBytes("utf-8"));
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"".getBytes("utf-8"));
         when(response.getBody()).thenReturn(initialInputStream);
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
@@ -105,14 +110,12 @@ public class NakadiReaderTest {
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
-        try {
-            nakadiReader.run();
-            fail("Expected BackoffException");
-        } catch (BackoffException e) {
-            assertEquals(0, e.getRetries());
-            assertTrue(e.getCause() instanceof JsonProcessingException);
-            assertTrue(e.getCause().getMessage().contains("Unexpected end-of-input"));
-        }
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
+        expectedException.expectCause(instanceOf(JsonProcessingException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Unexpected end-of-input")));
+
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
     }
 
     @Test
@@ -129,15 +132,35 @@ public class NakadiReaderTest {
         final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 1);
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
-        try {
-            nakadiReader.run();
-            fail("Expected IOException on reconnect");
-        } catch (BackoffException e) {
-            assertEquals(1, e.getRetries());
-            assertEquals("Reconnection failed", e.getCause().getMessage());
-        }
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(1)));
+        expectedException.expectCause(instanceOf(IOException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Reconnection failed")));
+
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
     }
 
+    @Test
+    public void shouldRetryConnectionMultipleTimesOnEof() throws IOException, InterruptedException, BackoffException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
+        when(response.getBody()).thenReturn(initialInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response).thenThrow(new IOException("Reconnection failed"));
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(4)));
+        expectedException.expectCause(instanceOf(IOException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Reconnection failed")));
+
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+    }
 
     @Test
     public void shouldProcessEventsAndCommitCursor() throws IOException, InterruptedException, BackoffException, EventAlreadyProcessedException {
@@ -154,8 +177,9 @@ public class NakadiReaderTest {
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
 
+        // cannot use expectedException since there should be assertions afterwards
         try {
-            nakadiReader.run();
+            nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
             fail("Expected IOException on reconnect");
         } catch (BackoffException e) {
             assertEquals(0, e.getRetries());

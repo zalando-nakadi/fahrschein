@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,15 +194,25 @@ public class NakadiReader<T> {
         }
     }
 
-    public void run() throws IOException, BackoffException {
+    public void run() throws IOException {
         run(-1, TimeUnit.MILLISECONDS);
     }
 
-    public void run(long timeout, TimeUnit timeoutUnit) throws IOException, BackoffException {
+    public void run(long timeout, TimeUnit timeoutUnit) throws IOException {
+        try {
+            runInternal(timeout, timeoutUnit);
+        } catch (BackoffException e) {
+            LOG.warn("");
+            throw e.getCause();
+        }
+    }
+
+    @VisibleForTesting
+    void runInternal(long timeout, TimeUnit timeoutUnit) throws IOException, BackoffException {
 
         final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
 
-        LOG.info("Listen to events for [{}]", eventName);
+        LOG.info("Starting to listen for events for [{}]", eventName);
 
         JsonInput jsonInput = openJsonInput();
         JsonParser jsonParser = jsonInput.getJsonParser();
@@ -219,7 +230,7 @@ public class NakadiReader<T> {
 
                 final Cursor cursor = readCursor(jsonParser);
 
-                LOG.debug("Cursor for partition [{}] at offset [{}]", cursor.getPartition(), cursor.getOffset());
+                LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
 
                 final JsonToken token = jsonParser.nextToken();
                 if (token != JsonToken.END_OBJECT) {
@@ -237,22 +248,26 @@ public class NakadiReader<T> {
                 errorCount = 0;
             } catch (IOException e) {
 
-                LOG.warn("Got [{}] while reading events", e.getClass().getSimpleName(), e);
+                if (errorCount > 0) {
+                    LOG.warn("Got [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), eventName, errorCount, e);
+                } else {
+                    LOG.info("Got [{}] while reading events for [{}]", e.getClass().getSimpleName(), eventName);
+                }
 
                 jsonInput.close();
 
                 if (Thread.currentThread().isInterrupted()) {
-                    LOG.warn("Thread was interruped");
+                    LOG.warn("Thread was interrupted");
                     break;
                 }
 
                 try {
-                    LOG.info("Reconnecting after [{}] errors", errorCount);
+                    LOG.debug("Reconnecting after [{}] errors", errorCount);
                     jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
                     jsonParser = jsonInput.getJsonParser();
                     LOG.info("Reconnected after [{}] errors", errorCount);
                 } catch (InterruptedException e1) {
-                    LOG.warn("Interrupted during reconnection");
+                    LOG.warn("Interrupted during reconnection", e);
 
                     Thread.currentThread().interrupt();
                     return;
@@ -265,13 +280,8 @@ public class NakadiReader<T> {
 
     private void expectField(JsonParser jsonParser, String expectedFieldName) throws IOException {
         final String fieldName = jsonParser.getCurrentName();
-        if (fieldName == null) {
-            throw new EOFException("Stream was closed or no field at current position");
-        }
         checkState(expectedFieldName.equals(fieldName), "Expected [%s] field but got [%s]", expectedFieldName, fieldName);
     }
-
-
 
     private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
         final JsonToken token = jsonParser.nextToken();

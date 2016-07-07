@@ -64,7 +64,7 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
                 LOG.trace("Try [{}]", count);
                 return callable.call();
             } catch (IOException e) {
-                LOG.warn("Got [{}]", e.getClass().getSimpleName(), e);
+                LOG.warn("Got [{}] on retry [{}]", e.getClass().getSimpleName(), count, e);
                 count++;
 
                 checkMaxRetries(e, count);
