@@ -345,6 +345,12 @@
             <version>1.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.hobsoft.hamcrest</groupId>
+            <artifactId>hamcrest-compose</artifactId>
+            <version>0.3.0</version>
+            <scope>test</scope>
+        </dependency>
 
 
         <!-- jackson modules used for tests and examples -->
