@@ -44,7 +44,7 @@ public class IOProblem extends IOException implements Problem {
     private final URI instance;
 
     public IOProblem(final URI type, final String title, final Response.StatusType status, @Nullable final String detail, @Nullable final URI instance) {
-        super(formatMessage(type, title, status.getStatusCode()));
+        super(formatMessage(type, title, status.getStatusCode(), detail));
         this.type = type;
         this.title = title;
         this.status = status;
@@ -60,8 +60,8 @@ public class IOProblem extends IOException implements Problem {
         this(type, title, status, null, null);
     }
 
-    private static String formatMessage(final URI type, final String title, final int status) {
-        return String.format("Problem [%s]: Status %d [%s]", type, status, title);
+    private static String formatMessage(final URI type, final String title, final int status, @Nullable final String detail) {
+        return String.format("Problem [%s] with status [%d]: [%s] [%s]", type, status, title, detail == null ? "" : detail);
     }
 
     @Override
