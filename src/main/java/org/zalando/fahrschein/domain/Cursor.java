@@ -16,4 +16,12 @@ public final class Cursor {
     public String getOffset() {
         return offset;
     }
+
+    @Override
+    public String toString() {
+        return "Cursor{" +
+                "partition='" + partition + '\'' +
+                ", offset='" + offset + '\'' +
+                '}';
+    }
 }

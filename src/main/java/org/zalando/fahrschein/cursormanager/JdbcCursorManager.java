@@ -27,7 +27,9 @@ public class JdbcCursorManager implements CursorManager {
 
     @Override
     public void onSuccess(String eventName, Cursor cursor) throws IOException {
-        template.queryForObject("SELECT * FROM nakadi_cursor_update(?, ?, ?, ?)", new Object[]{consumerName, eventName, cursor.getPartition(), cursor.getOffset()}, Integer.class);
+        template.queryForObject("SELECT * FROM nakadi_cursor_update(?, ?, ?, ?)",
+                new Object[]{consumerName, eventName, cursor.getPartition(), cursor.getOffset()},
+                Integer.class);
     }
 
     @Override
