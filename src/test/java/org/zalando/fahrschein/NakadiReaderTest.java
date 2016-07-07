@@ -77,7 +77,6 @@ public class NakadiReaderTest {
     @Test
     public void shouldNotReconnectWithoutBackoff() throws IOException, InterruptedException, BackoffException {
         final ClientHttpResponse response = mock(ClientHttpResponse.class);
-        //final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
         when(response.getBody()).thenReturn(emptyInputStream);
 
