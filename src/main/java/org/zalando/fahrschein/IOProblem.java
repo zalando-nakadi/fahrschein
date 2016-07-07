@@ -10,6 +10,30 @@ import java.util.Optional;
 
 @SuppressWarnings("serial")
 public class IOProblem extends IOException implements Problem {
+    static final class Status implements Response.StatusType {
+        private final int statusCode;
+        private final String reasonPhrase;
+
+        Status(final int statusCode, final String reasonPhrase) {
+            this.statusCode = statusCode;
+            this.reasonPhrase = reasonPhrase;
+        }
+
+        @Override
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+        @Override
+        public Response.Status.Family getFamily() {
+            return Response.Status.Family.familyOf(statusCode);
+        }
+
+        @Override
+        public String getReasonPhrase() {
+            return reasonPhrase;
+        }
+    }
 
     private final URI type;
     private final String title;
@@ -64,4 +88,5 @@ public class IOProblem extends IOException implements Problem {
     public Optional<URI> getInstance() {
         return Optional.ofNullable(instance);
     }
+
 }
