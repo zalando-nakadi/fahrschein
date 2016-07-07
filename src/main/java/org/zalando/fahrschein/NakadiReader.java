@@ -202,7 +202,6 @@ public class NakadiReader<T> {
         try {
             runInternal(timeout, timeoutUnit);
         } catch (BackoffException e) {
-            LOG.warn("");
             throw e.getCause();
         }
     }
