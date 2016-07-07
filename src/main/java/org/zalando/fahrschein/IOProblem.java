@@ -1,8 +1,6 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.zalando.problem.Problem;
 
 import javax.ws.rs.core.Response;
@@ -10,7 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonDeserialize(using = IOProblemDeserializer.class)
 public class IOProblem extends IOException implements Problem {
     private final URI type;
     private final String title;
@@ -18,8 +16,7 @@ public class IOProblem extends IOException implements Problem {
     private final Optional<String> detail;
     private final Optional<URI> instance;
 
-    @JsonCreator
-    public IOProblem(@JsonProperty("type") URI type, @JsonProperty("title") String title, @JsonProperty("status") int status, @JsonProperty("detail") Optional<String> detail, @JsonProperty("instance") Optional<URI> instance) {
+    public IOProblem(URI type, String title, int status, Optional<String> detail, Optional<URI> instance) {
         super(formatMessage(type, title, status));
         this.type = type;
         this.title = title;

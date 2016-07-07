@@ -43,11 +43,9 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
             final MediaType contentType = response.getHeaders().getContentType();
             if (isProblemContentType(contentType)) {
                 try (InputStream is = response.getBody()) {
-                    final ProblemObject problem = objectMapper.readValue(is, ProblemObject.class);
-                    //final Problem problem = objectMapper.readValue(is, Problem.class);
+                    final IOProblem problem = objectMapper.readValue(is, IOProblem.class);
                     if (problem != null) {
-                        throw new IOProblem(problem.getType(), problem.getTitle(), problem.getStatus(), problem.getDetail(), problem.getInstance());
-                        //throw problem;
+                        throw problem;
                     } else {
                         throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusCode.getReasonPhrase(), statusCode.value());
                     }
@@ -98,7 +96,6 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
     private static ObjectMapper createObjectMapper() {
         final ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-        //objectMapper.registerModule(new ProblemModule());
         objectMapper.registerModule(new Jdk8Module());
         return objectMapper;
     }
