@@ -265,8 +265,8 @@ public class NakadiReader<T> {
                     jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
                     jsonParser = jsonInput.getJsonParser();
                     LOG.info("Reconnected after [{}] errors", errorCount);
-                } catch (InterruptedException e1) {
-                    LOG.warn("Interrupted during reconnection", e);
+                } catch (InterruptedException interruptedException) {
+                    LOG.warn("Interrupted during reconnection", interruptedException);
 
                     Thread.currentThread().interrupt();
                     return;
