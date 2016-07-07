@@ -1,6 +1,7 @@
 package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.zalando.problem.Problem;
 
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class IOProblem extends IOException implements Problem {
     private final URI type;
     private final String title;

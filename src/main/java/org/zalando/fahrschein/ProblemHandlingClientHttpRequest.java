@@ -1,6 +1,8 @@
 package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -16,18 +18,19 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
 public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
 
-    private static final Set<String> PROBLEM_CONTENT_TYPES = new HashSet<>(asList("application/json", "application/problem+json"));
+    public static final MediaType APPLICATION_PROBLEM_JSON = new MediaType("application", "problem+json");
+    private static final Set<MediaType> PROBLEM_CONTENT_TYPES = new HashSet<>(asList(APPLICATION_PROBLEM_JSON));
     private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
 
     private final ClientHttpRequest clientHttpRequest;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = createObjectMapper();
 
     public ProblemHandlingClientHttpRequest(ClientHttpRequest clientHttpRequest, ObjectMapper objectMapper) {
         this.clientHttpRequest = clientHttpRequest;
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -38,11 +41,13 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
         if (!statusCode.is2xxSuccessful()) {
 
             final MediaType contentType = response.getHeaders().getContentType();
-            if (contentType != null && PROBLEM_CONTENT_TYPES.contains(contentType.getType())) {
+            if (isProblemContentType(contentType)) {
                 try (InputStream is = response.getBody()) {
-                    final IOProblem problem = objectMapper.readValue(is, IOProblem.class);
+                    final ProblemObject problem = objectMapper.readValue(is, ProblemObject.class);
+                    //final Problem problem = objectMapper.readValue(is, Problem.class);
                     if (problem != null) {
-                        throw problem;
+                        throw new IOProblem(problem.getType(), problem.getTitle(), problem.getStatus(), problem.getDetail(), problem.getInstance());
+                        //throw problem;
                     } else {
                         throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusCode.getReasonPhrase(), statusCode.value());
                     }
@@ -53,6 +58,21 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
         }
 
         return response;
+    }
+
+    private boolean isProblemContentType(final MediaType contentType) {
+        if (contentType == null) {
+            return false;
+        }
+
+        for (MediaType problemContentType : PROBLEM_CONTENT_TYPES) {
+            if (nullSafeEquals(problemContentType.getType(), contentType.getType())
+                    && nullSafeEquals(problemContentType.getSubtype(), contentType.getSubtype())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -74,4 +94,13 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
     public OutputStream getBody() throws IOException {
         return clientHttpRequest.getBody();
     }
+
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        //objectMapper.registerModule(new ProblemModule());
+        objectMapper.registerModule(new Jdk8Module());
+        return objectMapper;
+    }
+
 }
