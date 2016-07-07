@@ -1,8 +1,6 @@
 package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -27,9 +25,9 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
     private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
 
     private final ClientHttpRequest clientHttpRequest;
-    private final ObjectMapper objectMapper = createObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ProblemHandlingClientHttpRequest(ClientHttpRequest clientHttpRequest, ObjectMapper objectMapper) {
+    public ProblemHandlingClientHttpRequest(ClientHttpRequest clientHttpRequest) {
         this.clientHttpRequest = clientHttpRequest;
     }
 
@@ -91,13 +89,6 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
     @Override
     public OutputStream getBody() throws IOException {
         return clientHttpRequest.getBody();
-    }
-
-    private static ObjectMapper createObjectMapper() {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-        objectMapper.registerModule(new Jdk8Module());
-        return objectMapper;
     }
 
 }
