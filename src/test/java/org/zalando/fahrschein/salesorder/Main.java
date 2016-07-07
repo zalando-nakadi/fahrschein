@@ -17,18 +17,17 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.zalando.fahrschein.AccessTokenProvider;
 import org.zalando.fahrschein.AuthorizedClientHttpRequestFactory;
 import org.zalando.fahrschein.BackoffException;
+import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
+import org.zalando.fahrschein.InMemoryCursorManager;
 import org.zalando.fahrschein.Listener;
-import org.zalando.fahrschein.cursormanager.ManagedCursorManager;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
 import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
-import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
-import org.zalando.problem.ProblemModule;
 
 import java.io.IOException;
 import java.net.URI;
@@ -53,7 +52,6 @@ public class Main {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.registerModule(new Jdk8Module());
         objectMapper.registerModule(new MoneyModule());
-        objectMapper.registerModule(new ProblemModule());
         objectMapper.registerModule(new GuavaModule());
         objectMapper.registerModule(new ParameterNamesModule());
 
@@ -86,10 +84,10 @@ public class Main {
         final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
         requestFactoryDelegate.setConnectTimeout(400);
         requestFactoryDelegate.setReadTimeout(60*1000);
-        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate, objectMapper), tokenProvider);
+        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate), tokenProvider);
 
-        //final CursorManager cursorManager = new InMemoryCursorManager();
-        final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
+        final CursorManager cursorManager = new InMemoryCursorManager();
+        //final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
 
         final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
 
@@ -107,10 +105,10 @@ public class Main {
 
         final StreamParameters streamParameters = new StreamParameters().withStreamTimeout(5 * 60 * 1000);
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
-        nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
+        //final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
+        //nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
 
-        //nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters);
+        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters);
 
     }
 }
