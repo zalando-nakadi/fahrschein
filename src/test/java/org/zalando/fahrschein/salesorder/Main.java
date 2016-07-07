@@ -28,7 +28,6 @@ import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
-import org.zalando.problem.ProblemModule;
 
 import java.io.IOException;
 import java.net.URI;
@@ -53,7 +52,6 @@ public class Main {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.registerModule(new Jdk8Module());
         objectMapper.registerModule(new MoneyModule());
-        objectMapper.registerModule(new ProblemModule());
         objectMapper.registerModule(new GuavaModule());
         objectMapper.registerModule(new ParameterNamesModule());
 
@@ -86,7 +84,7 @@ public class Main {
         final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
         requestFactoryDelegate.setConnectTimeout(400);
         requestFactoryDelegate.setReadTimeout(60*1000);
-        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate, objectMapper), tokenProvider);
+        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate), tokenProvider);
 
         final CursorManager cursorManager = new InMemoryCursorManager();
         //final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
