@@ -1,87 +1,111 @@
 package org.zalando.fahrschein;
 
-import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
+import org.zalando.problem.Problem;
 
+import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.hobsoft.hamcrest.compose.ComposeMatchers.hasFeature;
 import static org.mockito.Mockito.when;
 
 public class ProblemHandlingClientHttpRequestTest {
 
-    public static final Charset UTF8 = Charset.forName("UTF-8");
+    @Rule
+    public final ExpectedException expectedException = ExpectedException.none();
+
+    private final ClientHttpRequest clientHttpRequest = Mockito.mock(ClientHttpRequest.class);
+    private final ClientHttpResponse clientHttpResponse = Mockito.mock(ClientHttpResponse.class);
+    private final ProblemHandlingClientHttpRequest problemHandlingClientHttpRequest = new ProblemHandlingClientHttpRequest(clientHttpRequest);
+
+    private Integer statusCode(final Problem problem) {
+        return problem.getStatus().getStatusCode();
+    }
+
+    private Response.Status.Family statusFamily(final Problem problem) {
+        return problem.getStatus().getFamily();
+    }
 
     @Test
-    public void recognisesJsonAndProblemBodies() throws IOException {
-        final ClientHttpRequest clientHttpRequest = mock(ClientHttpRequest.class);
+    public void shouldCreateProblemFromStatusAndText() throws IOException {
+        when(clientHttpResponse.getRawStatusCode()).thenReturn(HttpStatus.CONFLICT.value());
+        when(clientHttpResponse.getStatusCode()).thenReturn(HttpStatus.CONFLICT);
+        when(clientHttpResponse.getStatusText()).thenReturn("conflict");
 
-        when(clientHttpRequest.execute()).thenReturn(createResponse());
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        when(clientHttpResponse.getHeaders()).thenReturn(headers);
 
-        final ProblemHandlingClientHttpRequest problemHandlingClientHttpRequest =
-                new ProblemHandlingClientHttpRequest(clientHttpRequest);
+        when(clientHttpRequest.execute()).thenReturn(clientHttpResponse);
 
-        Exception actualException = null;
-        try {
-            problemHandlingClientHttpRequest.execute();
-            Assert.fail("No exception was thrown.");
-        } catch (Exception e) {
-            actualException = e;
-        }
+        expectedException.expect(instanceOf(IOProblem.class));
+        expectedException.expect(hasFeature("status code", this::statusCode, equalTo(HttpStatus.CONFLICT.value())));
+        expectedException.expect(hasFeature("status family", this::statusFamily, equalTo(Response.Status.Family.CLIENT_ERROR)));
+        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
+        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("conflict")));
+        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.<String>empty())));
 
-        assertThat("Expected different exception type.", actualException, instanceOf(IOProblem.class));
-
-        final IOProblem ioProblem = (IOProblem) actualException;
-
-        assertThat(ioProblem.getTitle(), equalTo("Not Found"));
-        assertThat(ioProblem.getDetail().get(), equalTo("EventType does not exist."));
+        problemHandlingClientHttpRequest.execute();
     }
 
-    private ClientHttpResponse createResponse() {
-        return new ClientHttpResponse() {
-            @Override
-            public HttpStatus getStatusCode() throws IOException {
-                return HttpStatus.BAD_REQUEST;
-            }
+    @Test
+    public void shouldDeserializeProblemJson() throws IOException {
+        when(clientHttpResponse.getRawStatusCode()).thenReturn(HttpStatus.NOT_FOUND.value());
+        when(clientHttpResponse.getStatusCode()).thenReturn(HttpStatus.NOT_FOUND);
+        when(clientHttpResponse.getStatusText()).thenReturn("not found");
+        when(clientHttpResponse.getBody()).thenReturn(new ByteArrayInputStream("{\"type\":\"http://httpstatus.es/404\",\"title\":\"Not Found\",\"status\":404,\"detail\":\"EventType does not exist.\"}".getBytes(StandardCharsets.UTF_8)));
 
-            @Override
-            public int getRawStatusCode() throws IOException {
-                return 400;
-            }
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.valueOf("application/problem+json"));
+        when(clientHttpResponse.getHeaders()).thenReturn(headers);
 
-            @Override
-            public String getStatusText() throws IOException {
-                return "Bad Request";
-            }
+        when(clientHttpRequest.execute()).thenReturn(clientHttpResponse);
 
-            @Override
-            public void close() {
-                // do nothing
-            }
+        expectedException.expect(instanceOf(IOProblem.class));
+        expectedException.expect(hasFeature("status code", this::statusCode, equalTo(HttpStatus.NOT_FOUND.value())));
+        expectedException.expect(hasFeature("status family", this::statusFamily, equalTo(Response.Status.Family.CLIENT_ERROR)));
+        expectedException.expect(hasFeature("type", Problem::getType, equalTo(URI.create("http://httpstatus.es/404"))));
+        expectedException.expect(hasFeature("title", Problem::getTitle, equalTo("Not Found")));
+        expectedException.expect(hasFeature("detail", Problem::getDetail, equalTo(Optional.of("EventType does not exist."))));
 
-            @Override
-            public InputStream getBody() throws IOException {
-                return new ByteArrayInputStream("{\"type\":\"http://httpstatus.es/404\",\"title\":\"Not Found\",\"status\":404,\"detail\":\"EventType does not exist.\"}".getBytes(UTF8));
-            }
-
-            @Override
-            public HttpHeaders getHeaders() {
-                final HttpHeaders httpHeaders = new HttpHeaders();
-                httpHeaders.add("Content-type", "application/problem+json;charset=UTF-8");
-                return httpHeaders;
-            }
-        };
+        problemHandlingClientHttpRequest.execute();
     }
 
+    @Test
+    public void shouldDeserializeOAuthError() throws IOException {
+        when(clientHttpResponse.getRawStatusCode()).thenReturn(HttpStatus.BAD_REQUEST.value());
+        when(clientHttpResponse.getStatusCode()).thenReturn(HttpStatus.BAD_REQUEST);
+        when(clientHttpResponse.getStatusText()).thenReturn("bad request");
+        when(clientHttpResponse.getBody()).thenReturn(new ByteArrayInputStream("{\"error\":\"invalid_request\",\"error_description\":\"Access Token not valid\"}".getBytes(StandardCharsets.UTF_8)));
+
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.valueOf("application/json"));
+        when(clientHttpResponse.getHeaders()).thenReturn(headers);
+
+        when(clientHttpRequest.execute()).thenReturn(clientHttpResponse);
+
+        expectedException.expect(instanceOf(IOProblem.class));
+        expectedException.expect(hasFeature("status code", this::statusCode, equalTo(HttpStatus.BAD_REQUEST.value())));
+        expectedException.expect(hasFeature("status family", this::statusFamily, equalTo(Response.Status.Family.CLIENT_ERROR)));
+        expectedException.expect(hasFeature("type", Problem::getType, equalTo(URI.create("about:blank"))));
+        expectedException.expect(hasFeature("title", Problem::getTitle, equalTo("invalid_request")));
+        expectedException.expect(hasFeature("detail", Problem::getDetail, equalTo(Optional.of("Access Token not valid"))));
+
+        problemHandlingClientHttpRequest.execute();
+    }
 
 }
