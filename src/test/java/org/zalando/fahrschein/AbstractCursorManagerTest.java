@@ -1,9 +1,10 @@
-package org.zalando.fahrschein.cursormanager;
+package org.zalando.fahrschein;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import org.junit.Test;
 import org.springframework.transaction.annotation.Transactional;
+import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 
 import java.io.IOException;

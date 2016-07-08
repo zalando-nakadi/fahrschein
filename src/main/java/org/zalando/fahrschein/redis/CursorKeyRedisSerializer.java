@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.cursormanager.redis;
+package org.zalando.fahrschein.redis;
 
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;

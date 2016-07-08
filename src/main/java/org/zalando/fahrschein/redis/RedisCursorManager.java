@@ -1,9 +1,9 @@
-package org.zalando.fahrschein.cursormanager.redis;
+package org.zalando.fahrschein.redis;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.zalando.fahrschein.cursormanager.CursorManager;
+import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 
 import java.io.IOException;

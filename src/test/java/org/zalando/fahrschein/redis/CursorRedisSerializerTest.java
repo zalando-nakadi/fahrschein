@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.cursormanager.redis;
+package org.zalando.fahrschein.redis;
 
 import org.hamcrest.core.IsEqual;
 import org.junit.Test;

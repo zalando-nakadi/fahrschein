@@ -1,8 +1,9 @@
-package org.zalando.fahrschein.cursormanager;
+package org.zalando.fahrschein.jdbc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 
 import javax.sql.DataSource;

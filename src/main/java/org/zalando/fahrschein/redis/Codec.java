@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.cursormanager.redis;
+package org.zalando.fahrschein.redis;
 
 import java.nio.charset.Charset;
 

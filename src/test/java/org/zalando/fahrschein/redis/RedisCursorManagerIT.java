@@ -1,9 +1,9 @@
-package org.zalando.fahrschein.cursormanager.redis;
+package org.zalando.fahrschein.redis;
 
 import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
-import org.zalando.fahrschein.cursormanager.CursorManager;
+import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 import redis.clients.jedis.JedisShardInfo;
 

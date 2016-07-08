@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.cursormanager;
+package org.zalando.fahrschein;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

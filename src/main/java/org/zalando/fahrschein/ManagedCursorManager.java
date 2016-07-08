@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.cursormanager;
+package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

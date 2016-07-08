@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.cursormanager.redis;
+package org.zalando.fahrschein.redis;
 
 class RedisCursorKey {
     private final String consumerName;

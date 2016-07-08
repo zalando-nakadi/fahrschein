@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.cursormanager;
+package org.zalando.fahrschein;
 
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
