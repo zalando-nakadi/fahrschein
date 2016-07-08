@@ -2,6 +2,7 @@ package org.zalando.fahrschein;
 
 import java.io.IOException;
 
+@SuppressWarnings("serial")
 public class EventProcessingException extends IOException {
 
     public EventProcessingException(String message) {
