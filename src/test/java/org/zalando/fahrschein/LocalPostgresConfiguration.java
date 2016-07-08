@@ -7,7 +7,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.zalando.fahrschein.cursormanager.JdbcCursorManager;
+import org.zalando.fahrschein.jdbc.JdbcCursorManager;
+import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -33,8 +34,8 @@ public class LocalPostgresConfiguration {
     }
 
     @Bean
-    public PersistentPartitionManager partitionManager(DataSource dataSource) throws IOException {
-        return new PersistentPartitionManager(dataSource);
+    public JdbcPartitionManager partitionManager(DataSource dataSource) throws IOException {
+        return new JdbcPartitionManager(dataSource);
     }
 
     @Bean

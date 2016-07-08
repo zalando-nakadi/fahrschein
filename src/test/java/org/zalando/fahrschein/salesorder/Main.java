@@ -24,8 +24,8 @@ import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
 import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
-import org.zalando.fahrschein.cursormanager.CursorManager;
-import org.zalando.fahrschein.cursormanager.InMemoryCursorManager;
+import org.zalando.fahrschein.CursorManager;
+import org.zalando.fahrschein.InMemoryCursorManager;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
