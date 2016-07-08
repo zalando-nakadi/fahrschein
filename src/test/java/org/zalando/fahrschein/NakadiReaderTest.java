@@ -17,6 +17,7 @@ import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -207,4 +210,27 @@ public class NakadiReaderTest {
         }
     }
 
+    @Test
+    public void shouldNotBlockOnCreatingParser() throws IOException, InterruptedException, BackoffException, EventAlreadyProcessedException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final InputStream blockinInputStream = mock(InputStream.class);
+        when(blockinInputStream.read()).thenThrow(new IOException("read timed out"));
+        when(blockinInputStream.read(any(byte[].class))).thenThrow(new IOException("read timed out"));
+        when(blockinInputStream.read(any(byte[].class), anyInt(), anyInt())).thenThrow(new IOException("read timed out"));
+        when(response.getBody()).thenReturn(blockinInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        expectedException.expect(instanceOf(BackoffException.class));
+        expectedException.expectCause(instanceOf(IOException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("read timed out")));
+
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+    }
 }

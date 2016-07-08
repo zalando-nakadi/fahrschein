@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.RuntimeJsonMappingException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
+import com.google.gag.annotation.remark.Hack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -20,9 +21,11 @@ import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.SequenceInputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,6 +111,13 @@ public class NakadiReader<T> {
         }
     }
 
+    @Hack("Prepend a byte order mark and space (4 bytes total) in front of the input stream so that jackson detects utf-8 without blocking on the underlying input stream")
+    private JsonParser createJsonParser(final ClientHttpResponse response) throws IOException {
+        final byte[] bomnl = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF, ' '};
+        final SequenceInputStream in = new SequenceInputStream(new ByteArrayInputStream(bomnl), response.getBody());
+        return jsonFactory.createParser(in);
+    }
+
     private JsonInput openJsonInput() throws IOException {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         if (!subscription.isPresent()) {
@@ -118,7 +128,7 @@ public class NakadiReader<T> {
             }
         }
         final ClientHttpResponse response = request.execute();
-        final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+        final JsonParser jsonParser = createJsonParser(response);
         return new JsonInput(response, jsonParser);
     }
 
