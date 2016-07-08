@@ -14,7 +14,7 @@ import org.zalando.fahrschein.LocalPostgresConfiguration;
 @ContextConfiguration(classes = LocalPostgresConfiguration.class)
 @TransactionConfiguration(defaultRollback = true)
 @Transactional
-public class PersistentCursorManagerIT extends AbstractCursorManagerTest {
+public class JdbcCursorManagerIT extends AbstractCursorManagerTest {
 
     @Autowired
     private CursorManager cursorManager;
