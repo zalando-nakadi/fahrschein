@@ -2,6 +2,7 @@ package org.zalando.fahrschein;
 
 import java.io.IOException;
 
+@SuppressWarnings("serial")
 public class BackoffException extends Exception {
     private final int retries;
 

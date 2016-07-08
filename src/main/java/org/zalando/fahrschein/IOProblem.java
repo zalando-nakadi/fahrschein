@@ -1,36 +1,67 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.zalando.problem.Problem;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 
-@JsonDeserialize(using = IOProblemDeserializer.class)
+@SuppressWarnings("serial")
 public class IOProblem extends IOException implements Problem {
+    static final class Status implements Response.StatusType {
+        private final int statusCode;
+        private final String reasonPhrase;
+
+        Status(final int statusCode, final String reasonPhrase) {
+            this.statusCode = statusCode;
+            this.reasonPhrase = reasonPhrase;
+        }
+
+        @Override
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+        @Override
+        public Response.Status.Family getFamily() {
+            return Response.Status.Family.familyOf(statusCode);
+        }
+
+        @Override
+        public String getReasonPhrase() {
+            return reasonPhrase;
+        }
+    }
+
     private final URI type;
     private final String title;
     private final Response.StatusType status;
-    private final Optional<String> detail;
-    private final Optional<URI> instance;
+    @Nullable
+    private final String detail;
+    @Nullable
+    private final URI instance;
 
-    public IOProblem(URI type, String title, int status, Optional<String> detail, Optional<URI> instance) {
-        super(formatMessage(type, title, status));
+    public IOProblem(final URI type, final String title, final Response.StatusType status, @Nullable final String detail, @Nullable final URI instance) {
+        super(formatMessage(type, title, status.getStatusCode(), detail));
         this.type = type;
         this.title = title;
-        this.status = Response.Status.fromStatusCode(status);
+        this.status = status;
         this.detail = detail;
         this.instance = instance;
     }
 
-    public IOProblem(URI type, String title, int status) {
-        this(type, title, status, Optional.<String>empty(), Optional.<URI>empty());
+    public IOProblem(final URI type, final String title, final Response.StatusType status, @Nullable final String detail) {
+        this(type, title, status, detail, null);
     }
 
-    private static String formatMessage(URI type, String title, int status) {
-        return String.format("Problem [%s]: Status %d [%s]", type, status, title);
+    public IOProblem(final URI type, final String title, final Response.StatusType status) {
+        this(type, title, status, null, null);
+    }
+
+    private static String formatMessage(final URI type, final String title, final int status, @Nullable final String detail) {
+        return String.format("Problem [%s] with status [%d]: [%s] [%s]", type, status, title, detail == null ? "" : detail);
     }
 
     @Override
@@ -50,11 +81,12 @@ public class IOProblem extends IOException implements Problem {
 
     @Override
     public Optional<String> getDetail() {
-        return detail;
+        return Optional.ofNullable(detail);
     }
 
     @Override
     public Optional<URI> getInstance() {
-        return instance;
+        return Optional.ofNullable(instance);
     }
+
 }
