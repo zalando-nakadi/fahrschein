@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractCursorManagerTest {
 
 
-    protected abstract  CursorManager cursorManager();
+    protected abstract CursorManager cursorManager();
 
     @Test
     public void shouldBeEmptyByDefault() throws IOException {

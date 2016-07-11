@@ -7,13 +7,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.zalando.fahrschein.jdbc.JdbcCursorManager;
+import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 
 @Configuration
 @EnableTransactionManagement(proxyTargetClass = true)
-class LocalPostgresConfiguration {
+public class LocalPostgresConfiguration {
     @Bean
     public DataSource dataSource() {
         HikariConfig hikariConfig = new HikariConfig();
@@ -32,12 +34,12 @@ class LocalPostgresConfiguration {
     }
 
     @Bean
-    public PersistentPartitionManager partitionManager(DataSource dataSource) throws IOException {
-        return new PersistentPartitionManager(dataSource);
+    public JdbcPartitionManager partitionManager(DataSource dataSource) throws IOException {
+        return new JdbcPartitionManager(dataSource);
     }
 
     @Bean
-    public PersistentCursorManager cursorManager(DataSource dataSource) {
-        return new PersistentCursorManager(dataSource, "test");
+    public JdbcCursorManager cursorManager(DataSource dataSource) {
+        return new JdbcCursorManager(dataSource, "test");
     }
 }

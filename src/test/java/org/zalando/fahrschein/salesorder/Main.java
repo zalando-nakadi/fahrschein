@@ -17,15 +17,15 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.zalando.fahrschein.AccessTokenProvider;
 import org.zalando.fahrschein.AuthorizedClientHttpRequestFactory;
 import org.zalando.fahrschein.BackoffException;
-import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
-import org.zalando.fahrschein.InMemoryCursorManager;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
 import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
+import org.zalando.fahrschein.CursorManager;
+import org.zalando.fahrschein.InMemoryCursorManager;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
@@ -42,7 +42,7 @@ public class Main {
 
         final ObjectMapper objectMapper = new ObjectMapper();
 
-        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -84,7 +84,8 @@ public class Main {
         final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
         requestFactoryDelegate.setConnectTimeout(400);
         requestFactoryDelegate.setReadTimeout(60*1000);
-        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate), tokenProvider);
+        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(
+                new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate), tokenProvider);
 
         final CursorManager cursorManager = new InMemoryCursorManager();
         //final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);

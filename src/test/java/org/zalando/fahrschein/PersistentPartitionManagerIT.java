@@ -6,6 +6,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 import org.springframework.transaction.annotation.Transactional;
+import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = LocalPostgresConfiguration.class)
@@ -14,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PersistentPartitionManagerIT extends AbstractPartitionManagerTest {
 
     @Autowired
-    private PersistentPartitionManager partitionManager;
+    private JdbcPartitionManager partitionManager;
 
 
 

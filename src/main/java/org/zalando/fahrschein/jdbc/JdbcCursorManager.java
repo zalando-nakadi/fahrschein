@@ -1,33 +1,36 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.jdbc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.Collection;
 
-public class PersistentCursorManager implements CursorManager {
+public class JdbcCursorManager implements CursorManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PersistentCursorManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JdbcCursorManager.class);
 
     private final JdbcTemplate template;
     private final String consumerName;
 
-    public PersistentCursorManager(JdbcTemplate template, String consumerName) {
+    public JdbcCursorManager(JdbcTemplate template, String consumerName) {
         this.template = template;
         this.consumerName = consumerName;
     }
 
-    public PersistentCursorManager(DataSource dataSource, String consumerName) {
+    public JdbcCursorManager(DataSource dataSource, String consumerName) {
         this(new JdbcTemplate(dataSource), consumerName);
     }
 
     @Override
     public void onSuccess(String eventName, Cursor cursor) throws IOException {
-        template.queryForObject("SELECT * FROM nakadi_cursor_update(?, ?, ?, ?)", new Object[]{consumerName, eventName, cursor.getPartition(), cursor.getOffset()}, Integer.class);
+        template.queryForObject("SELECT * FROM nakadi_cursor_update(?, ?, ?, ?)",
+                new Object[]{consumerName, eventName, cursor.getPartition(), cursor.getOffset()},
+                Integer.class);
     }
 
     @Override

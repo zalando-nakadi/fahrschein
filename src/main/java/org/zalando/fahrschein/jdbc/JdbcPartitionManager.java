@@ -1,19 +1,20 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.jdbc;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.zalando.fahrschein.PartitionManager;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class PersistentPartitionManager implements PartitionManager {
+public class JdbcPartitionManager implements PartitionManager {
     private final JdbcTemplate template;
 
-    public PersistentPartitionManager(DataSource dataSource) throws IOException {
+    public JdbcPartitionManager(DataSource dataSource) throws IOException {
         this(new JdbcTemplate(dataSource));
     }
 
-    public PersistentPartitionManager(JdbcTemplate template) throws IOException {
+    public JdbcPartitionManager(JdbcTemplate template) throws IOException {
         this.template = template;
     }
 
