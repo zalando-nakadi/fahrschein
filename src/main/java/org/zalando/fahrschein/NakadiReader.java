@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonList;
 
-public class NakadiReader<T> {
+public class NakadiReader<T> implements IORunnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
 
@@ -203,6 +203,7 @@ public class NakadiReader<T> {
         }
     }
 
+    @Override
     public void run() throws IOException {
         run(-1, TimeUnit.MILLISECONDS);
     }
@@ -218,7 +219,7 @@ public class NakadiReader<T> {
     @VisibleForTesting
     void runInternal(long timeout, TimeUnit timeoutUnit) throws IOException, BackoffException {
 
-        final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
+        final long lockedUntil = timeout <= 0 ? -1 : (System.currentTimeMillis() + timeoutUnit.toMillis(timeout));
 
         LOG.info("Starting to listen for events for [{}]", eventName);
 
@@ -227,7 +228,7 @@ public class NakadiReader<T> {
 
         int errorCount = 0;
 
-        while (System.currentTimeMillis() < lockedUntil) {
+        while (lockedUntil == -1 || System.currentTimeMillis() < lockedUntil) {
             try {
 
                 LOG.debug("Waiting for next batch of events for [{}]", eventName);

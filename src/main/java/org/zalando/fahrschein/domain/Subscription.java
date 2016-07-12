@@ -3,11 +3,13 @@ package org.zalando.fahrschein.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+@Immutable
 public class Subscription {
     @Nullable
     private final String id;

@@ -3,95 +3,109 @@ package org.zalando.fahrschein;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.transaction.annotation.Transactional;
+import org.zalando.fahrschein.domain.Lock;
+import org.zalando.fahrschein.domain.Partition;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.stream.Collectors.toList;
 
 // Looks like the Transactional annotation has to be on the class actually declaring the methods
 @Transactional
 public abstract class AbstractPartitionManagerTest {
 
     protected abstract PartitionManager partitionManager();
+    protected abstract PartitionManager partitionManagerForAnotherConsumer();
+
+    protected List<Partition> partitions(String... ids) {
+        return Arrays.stream(ids).map(id -> new Partition(id, "0", "0")).collect(toList());
+    }
 
     @Test
     public void shouldLock() {
-        boolean locked = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked);
+        final Optional<Lock> locked = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked.isPresent());
     }
 
     @Test
     public void shouldAllowLockBySameNode() {
-        boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1.isPresent());
 
-        boolean locked2 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked2);
+        final Optional<Lock> locked2 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked2.isPresent());
     }
 
     @Test
     public void shouldNotLockAlreadyLocked() {
-        boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1.isPresent());
 
-        boolean locked2 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-2", 1, TimeUnit.HOURS);
-        Assert.assertFalse(locked2);
+        final Optional<Lock> locked2 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-2", 1, TimeUnit.HOURS);
+        Assert.assertFalse(locked2.isPresent());
     }
 
     @Test
     public void shouldLockIndependentConsumers() {
-        boolean locked1 = partitionManager().lockPartition("test1", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "consumer-1-node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1.isPresent());
 
-        boolean locked2 = partitionManager().lockPartition("test2", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked2);
+        final Optional<Lock> locked2 = partitionManagerForAnotherConsumer().lockPartitions("sales-order-placed", partitions("0"), "consumer-2-node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked2.isPresent());
     }
 
     @Test
     public void shouldLockIndependentEvents() {
-        boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1.isPresent());
 
-        boolean locked2 = partitionManager().lockPartition("test", "address-changed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked2);
+        final Optional<Lock> locked2 = partitionManager().lockPartitions("address-changed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked2.isPresent());
     }
 
     @Test
     public void shouldLockIndependentPartitions() {
-        boolean locked1 = partitionManager().lockPartition("test1", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1.isPresent());
 
-        boolean locked2 = partitionManager().lockPartition("test2", "sales-order-placed", "1", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked2);
+        final Optional<Lock> locked2 = partitionManager().lockPartitions("sales-order-placed", partitions("1"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked2.isPresent());
     }
 
     @Test
     @Transactional
     public void shouldExpireLocks() throws InterruptedException {
-        boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.MILLISECONDS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.MILLISECONDS);
+        Assert.assertTrue(locked1.isPresent());
 
         Thread.sleep(50);
 
-        boolean locked2 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-2", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked2);
+        final Optional<Lock> locked2 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-2", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked2.isPresent());
     }
 
     @Test
     public void shouldUnlock() throws InterruptedException {
-        boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1.isPresent());
 
-        partitionManager().unlockPartition("test", "sales-order-placed", "0", "node-1");
+        final boolean unlocked = partitionManager().unlockPartitions(locked1.get());
+        Assert.assertTrue(unlocked);
 
-        boolean locked2 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-2", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked2);
+        final Optional<Lock> locked2 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-2", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked2.isPresent());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void shouldFailOnInvalidUnlock() throws InterruptedException {
-        boolean locked1 = partitionManager().lockPartition("test", "sales-order-placed", "0", "node-1", 1, TimeUnit.HOURS);
-        Assert.assertTrue(locked1);
+        final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
+        Assert.assertTrue(locked1.isPresent());
 
-        partitionManager().unlockPartition("test", "sales-order-placed", "0", "node-2");
+        final boolean unlocked = partitionManager().unlockPartitions(new Lock("test-consumer-1", "sales-order-placed", "node-2", 1, TimeUnit.HOURS, partitions("0")));
+        Assert.assertFalse(unlocked);
     }
 
 }

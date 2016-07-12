@@ -2,6 +2,9 @@ package org.zalando.fahrschein.domain;
 
 import com.google.gag.annotation.remark.Hack;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public class Partition {
     private final String partition;
     private final String oldestAvailableOffset;

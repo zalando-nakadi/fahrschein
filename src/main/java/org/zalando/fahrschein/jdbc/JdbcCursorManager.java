@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.Collection;
 
+import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
 
 public class JdbcCursorManager implements CursorManager {
@@ -21,11 +22,9 @@ public class JdbcCursorManager implements CursorManager {
     private final String schemaPrefix;
 
     public JdbcCursorManager(final JdbcTemplate template, final String consumerName, final String schema) {
+        checkState(schema != null && !schema.isEmpty(), "Schema name should not be null or empty");
         this.template = template;
         this.consumerName = consumerName;
-        if (schema == null || schema.isEmpty()) {
-            throw new IllegalArgumentException("schema may not be null or empty.");
-        }
         this.schemaPrefix = schema + ".";
     }
 
@@ -35,6 +34,9 @@ public class JdbcCursorManager implements CursorManager {
         this.schemaPrefix = "";
     }
 
+    public JdbcCursorManager(final DataSource dataSource, final String consumerName, final String schema) {
+        this(new JdbcTemplate(dataSource), consumerName, schema);
+    }
 
     public JdbcCursorManager(final DataSource dataSource, final String consumerName) {
         this(new JdbcTemplate(dataSource), consumerName);
@@ -57,7 +59,9 @@ public class JdbcCursorManager implements CursorManager {
         final String sql = format("SELECT * FROM %snakadi_cursor_find_by_event_name(?, ?)", schemaPrefix);
 
         return template.query(sql, new Object[]{consumerName, eventName}, (resultSet, i) -> {
-            return new Cursor(resultSet.getString(2), resultSet.getString(3));
+            final String partition = resultSet.getString(2);
+            final String offset = resultSet.getString(3);
+            return new Cursor(partition, offset);
         });
     }
 }

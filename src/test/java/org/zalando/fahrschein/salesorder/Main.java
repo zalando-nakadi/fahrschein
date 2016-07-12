@@ -20,16 +20,21 @@ import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
 import org.zalando.fahrschein.InMemoryCursorManager;
+import org.zalando.fahrschein.InMemoryPartitionManager;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
-import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
+import org.zalando.fahrschein.CursorManager;
+import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 
 public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
@@ -88,26 +93,41 @@ public class Main {
         final CursorManager cursorManager = new InMemoryCursorManager();
         //final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
 
+        final InMemoryPartitionManager partitionManager = new InMemoryPartitionManager("fahrschein-demo");
+
         final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
 
         final NakadiClient nakadiClient = new NakadiClient(baseUri, requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager);
 
-        /*
         final List<Partition> partitions = nakadiClient.getPartitions(eventName);
 
         for (Partition partition : partitions) {
             LOG.info("Partition [{}] has oldest offset [{}] and newest offset [{}]", partition.getPartition(), partition.getOldestAvailableOffset(), partition.getNewestAvailableOffset());
+            cursorManager.onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
         }
 
-        cursorManager.fromOldestAvailableOffset(eventName, partitions);
+        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener);
+        /*
+        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
+
+
+
+        final IORunnable runnable = () -> {
+            final List<LockedPartition> lockedPartitions = partitionManager.lockPartitions("fahrschein-demo", eventName, partitions, Thread.currentThread().getName(), 30, TimeUnit.SECONDS);
+
+            if (!lockedPartitions.isEmpty()) {
+
+                final StreamParameters streamParameters = new StreamParameters().withStreamTimeout(5 * 60 * 1000);
+
+                //final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
+                //nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
+
+                nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters, lockedPartitions);
+            }
+        };
+
+        scheduledExecutorService.scheduleWithFixedDelay(runnable.unchecked(), 0, 10, TimeUnit.SECONDS);
         */
-
-        final StreamParameters streamParameters = new StreamParameters().withStreamTimeout(5 * 60 * 1000);
-
-        //final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
-        //nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
-
-        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters);
 
     }
 }

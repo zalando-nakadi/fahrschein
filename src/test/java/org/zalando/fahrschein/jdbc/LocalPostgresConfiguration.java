@@ -1,14 +1,13 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.jdbc;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.zalando.fahrschein.jdbc.JdbcCursorManager;
-import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -34,8 +33,15 @@ public class LocalPostgresConfiguration {
     }
 
     @Bean
+    @Qualifier("partition-manager-consumer-1")
     public JdbcPartitionManager partitionManager(DataSource dataSource) throws IOException {
-        return new JdbcPartitionManager(dataSource);
+        return new JdbcPartitionManager(dataSource, "test-consumer-1");
+    }
+
+    @Bean
+    @Qualifier("partition-manager-consumer-2")
+    public JdbcPartitionManager partitionManager2(DataSource dataSource) throws IOException {
+        return new JdbcPartitionManager(dataSource, "test-consumer-2");
     }
 
     @Bean
