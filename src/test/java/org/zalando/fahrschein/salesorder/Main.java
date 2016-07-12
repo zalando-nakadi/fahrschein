@@ -16,28 +16,26 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.zalando.fahrschein.AccessTokenProvider;
 import org.zalando.fahrschein.AuthorizedClientHttpRequestFactory;
-import org.zalando.fahrschein.BackoffException;
+import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
+import org.zalando.fahrschein.InMemoryCursorManager;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
 import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
-import org.zalando.fahrschein.CursorManager;
-import org.zalando.fahrschein.InMemoryCursorManager;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String[] args) throws IOException, URISyntaxException, InterruptedException, BackoffException {
-        final URI baseUri = new URI("https://nakadi-sandbox-hila.aruha-test.zalan.do");
+    public static void main(String[] args) throws IOException {
+        final URI baseUri = URI.create("https://nakadi-sandbox-hila.aruha-test.zalan.do");
         final String eventName = "sales-order-service.order-placed";
 
         final ObjectMapper objectMapper = new ObjectMapper();
