@@ -32,7 +32,7 @@ public class Partition {
             final long oldestAvailableOffset = Long.parseLong(this.oldestAvailableOffset);
             final long newestAvailableOffset = Long.parseLong(this.newestAvailableOffset);
 
-            return requestedOffset >= newestAvailableOffset;
+            return requestedOffset >= oldestAvailableOffset;
         } catch (NumberFormatException e) {
             // Assume it is available and wait for the problem response from nakadi
             return true;
