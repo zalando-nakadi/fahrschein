@@ -37,24 +37,33 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
     public ClientHttpResponse execute() throws IOException {
         final ClientHttpResponse response = clientHttpRequest.execute();
 
-        final int statusCode = response.getRawStatusCode();
-        if (statusCode >= 400) {
-            final String statusText = response.getStatusText();
-            final IOProblem.Status status = new IOProblem.Status(statusCode, statusText);
+        try {
+            final int statusCode = response.getRawStatusCode();
+            if (statusCode >= 400) {
+                final String statusText = response.getStatusText();
+                final IOProblem.Status status = new IOProblem.Status(statusCode, statusText);
 
-            final MediaType contentType = response.getHeaders().getContentType();
-            if (contentType != null && isProblemContentType(contentType)) {
-                try (InputStream is = response.getBody()) {
-                    final IOProblem problem = deserializeProblem(is, status);
-                    if (problem != null) {
-                        throw problem;
-                    } else {
-                        throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, status);
+                final MediaType contentType = response.getHeaders().getContentType();
+                if (contentType != null && isProblemContentType(contentType)) {
+                    try (InputStream is = response.getBody()) {
+                        final IOProblem problem = deserializeProblem(is, status);
+                        if (problem != null) {
+                            throw problem;
+                        } else {
+                            throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, status);
+                        }
                     }
+                } else {
+                    throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, status);
                 }
-            } else {
-                throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, status);
             }
+        } catch (Throwable throwable) {
+            try {
+                response.close();
+            } catch (Throwable suppressed) {
+                throwable.addSuppressed(suppressed);
+            }
+            throw throwable;
         }
 
         return response;
