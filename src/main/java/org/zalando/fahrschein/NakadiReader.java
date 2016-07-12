@@ -118,8 +118,17 @@ public class NakadiReader<T> {
             }
         }
         final ClientHttpResponse response = request.execute();
-        final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
-        return new JsonInput(response, jsonParser);
+        try {
+            final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+            return new JsonInput(response, jsonParser);
+        } catch (Throwable throwable) {
+            try {
+                response.close();
+            } catch (Throwable suppressed) {
+                throwable.addSuppressed(suppressed);
+            }
+            throw throwable;
+        }
     }
 
     private void processBatch(Batch<T> batch) throws IOException {
