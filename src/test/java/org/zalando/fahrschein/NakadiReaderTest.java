@@ -58,7 +58,7 @@ public class NakadiReaderTest {
     }
 
     @Test
-    public void shouldNotRetryInitialConnection() throws IOException, InterruptedException, BackoffException {
+    public void shouldNotRetryInitialConnection() throws IOException {
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
         when(request.execute()).thenThrow(new IOException("Initial connection failed"));
 

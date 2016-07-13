@@ -42,7 +42,7 @@ public class NakadiClient {
         this.cursorManager = cursorManager;
     }
 
-    public List<Partition> getPartitions(String eventName) throws IOException, InterruptedException {
+    public List<Partition> getPartitions(String eventName) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/partitions", eventName));
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         try (final ClientHttpResponse response = request.execute()) {
@@ -74,7 +74,7 @@ public class NakadiClient {
         }
     }
 
-    public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, BackoffException {
+    public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
@@ -84,11 +84,11 @@ public class NakadiClient {
         nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
 
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException, BackoffException {
+    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
         listen(eventName, eventType, listener, new StreamParameters());
     }
 
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException, BackoffException {
+    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
