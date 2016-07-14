@@ -49,8 +49,7 @@ public interface CursorManager {
         final Map<String, Cursor> cursorsByPartition = getCursors(eventName).stream().collect(Collectors.toMap(Cursor::getPartition, c -> c));
 
         for (Partition partition : partitions) {
-            boolean isEmpty = OFFSET_ORDERING.compare(partition.getOldestAvailableOffset(), partition.getNewestAvailableOffset()) > 0;
-            final String minAvailableOffset = isEmpty ? partition.getNewestAvailableOffset() : partition.getOldestAvailableOffset();
+            final String minAvailableOffset = OFFSET_ORDERING.min(partition.getOldestAvailableOffset(), partition.getNewestAvailableOffset());
             final Cursor cursor = cursorsByPartition.get(partition.getPartition());
             if (cursor == null || OFFSET_ORDERING.compare(cursor.getOffset(), minAvailableOffset) < 0) {
                 onSuccess(eventName, new Cursor(partition.getPartition(), minAvailableOffset));
