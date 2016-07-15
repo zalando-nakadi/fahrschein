@@ -19,18 +19,6 @@ import static org.mockito.Mockito.when;
 
 public class CursorManagerTest {
 
-    /*
-    private static Object[] parameter(String name, @Nullable String initialOffset, String oldestAvailableOffset, String newestAvailableOffset, @Nullable String expectedOffset) {
-
-    }
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> parameters() {
-
-        return asList(parameter(""))
-
-    }
-    */
-
     private final CursorManager cursorManager = mock(CursorManager.class);
 
     @Before
