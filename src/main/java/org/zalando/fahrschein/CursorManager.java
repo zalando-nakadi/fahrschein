@@ -50,7 +50,7 @@ public interface CursorManager {
 
         for (Partition partition : partitions) {
             final Cursor cursor = cursorsByPartition.get(partition.getPartition());
-            if (cursor == null || OFFSET_ORDERING.compare(cursor.getOffset(), partition.getOldestAvailableOffset()) < 0) {
+            if (cursor == null || (!"BEGIN".equals(cursor.getOffset()) && OFFSET_ORDERING.compare(cursor.getOffset(), partition.getOldestAvailableOffset()) < 0)) {
                 onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
             }
         }

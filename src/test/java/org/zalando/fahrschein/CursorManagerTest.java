@@ -71,6 +71,11 @@ public class CursorManagerTest {
     }
 
     @Test
+    public void shouldNotUpdatePartitionWhenCursorIsAreadyAtBegin() throws IOException {
+        run("BEGIN", "0", "BEGIN", null);
+    }
+
+    @Test
     public void shouldUpdatePartitionToNewestAvailableWhenNoCursorAndPartitionIsExpired() throws IOException {
         run(null, "2", "1", "BEGIN");
     }
