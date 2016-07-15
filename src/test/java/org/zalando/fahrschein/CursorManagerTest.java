@@ -13,8 +13,8 @@ import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class CursorManagerTest {
@@ -46,18 +46,23 @@ public class CursorManagerTest {
         if (expectedOffset != null) {
             verify(cursorManager).onSuccess("test", new Cursor("0", expectedOffset));
         } else {
-            verifyNoMoreInteractions(cursorManager);
+            verify(cursorManager, never()).onSuccess(any(), any());
         }
     }
 
     @Test
+    public void shouldNotUpdatePartitionWhenOffsetStillAvailable() throws IOException {
+        run("20", "10", "30", null);
+    }
+
+    @Test
     public void shouldUpdatePartitionWhenNoCursorAndLastConsumedOffsetNoLongerAvailable() throws IOException {
-        run(null, "10", "20", "10");
+        run(null, "10", "20", "BEGIN");
     }
 
     @Test
     public void shouldUpdatePartitionWhenLastConsumedOffsetNoLongerAvailable() throws IOException {
-        run("5", "10", "20", "10");
+        run("5", "10", "20", "BEGIN");
     }
 
     @Test
@@ -67,12 +72,12 @@ public class CursorManagerTest {
 
     @Test
     public void shouldUpdatePartitionToNewestAvailableWhenNoCursorAndPartitionIsExpired() throws IOException {
-        run(null, "2", "1", "1");
+        run(null, "2", "1", "BEGIN");
     }
 
     @Test
     public void shouldUpdatePartitionToNewestAvailableWhenPartitionIsExpired() throws IOException {
-        run("10", "22", "21", "21");
+        run("10", "22", "21", "BEGIN");
     }
 
 }

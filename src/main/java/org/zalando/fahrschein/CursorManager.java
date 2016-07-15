@@ -40,7 +40,7 @@ public interface CursorManager {
      */
     default void fromOldestAvailableOffset(String eventName, List<Partition> partitions) throws IOException {
         for (Partition partition : partitions) {
-            onSuccess(eventName, new Cursor(partition.getPartition(), partition.getOldestAvailableOffset()));
+            onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
         }
     }
 
@@ -49,10 +49,9 @@ public interface CursorManager {
         final Map<String, Cursor> cursorsByPartition = getCursors(eventName).stream().collect(Collectors.toMap(Cursor::getPartition, c -> c));
 
         for (Partition partition : partitions) {
-            final String minAvailableOffset = OFFSET_ORDERING.min(partition.getOldestAvailableOffset(), partition.getNewestAvailableOffset());
             final Cursor cursor = cursorsByPartition.get(partition.getPartition());
-            if (cursor == null || OFFSET_ORDERING.compare(cursor.getOffset(), minAvailableOffset) < 0) {
-                onSuccess(eventName, new Cursor(partition.getPartition(), minAvailableOffset));
+            if (cursor == null || OFFSET_ORDERING.compare(cursor.getOffset(), partition.getOldestAvailableOffset()) < 0) {
+                onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
             }
         }
     }
