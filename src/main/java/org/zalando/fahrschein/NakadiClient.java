@@ -2,6 +2,7 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,6 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
@@ -33,6 +38,9 @@ public class NakadiClient {
     private final BackoffStrategy backoffStrategy;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
+
+    private Supplier<String> flowIdProvider = null;
+    private NakadiReaderFactory nakadiReaderFactory = NakadiReader::new;
 
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
         this.baseUri = baseUri;
@@ -79,9 +87,9 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.nakadiReader(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
 
-        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
+        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS, flowId());
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
@@ -92,8 +100,21 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.<Subscription>empty(), eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.nakadiReader(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.<Subscription>empty(), eventType, listener);
 
-        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
+        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS, flowId());
+    }
+
+    private Optional<String> flowId() {
+        return Optional.ofNullable(flowIdProvider != null ? flowIdProvider.get() : null);
+    }
+
+    public void setFlowIdProvider(@Nullable final Supplier<String> flowIdProvider) {
+        this.flowIdProvider = flowIdProvider;
+    }
+
+    @VisibleForTesting
+    void setNakadiReaderFactory(final NakadiReaderFactory nakadiReaderFactory) {
+        this.nakadiReaderFactory = checkNotNull(nakadiReaderFactory);
     }
 }
