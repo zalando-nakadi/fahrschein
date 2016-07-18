@@ -234,9 +234,9 @@ public class NakadiReader<T> {
         run(timeout, timeoutUnit, Optional.empty());
     }
 
-    public void run(final long timeout, final TimeUnit timeoutUnit, final Optional<String> empty) throws IOException {
+    public void run(final long timeout, final TimeUnit timeoutUnit, final Optional<String> flowId) throws IOException {
         try {
-            runInternal(timeout, timeoutUnit, empty);
+            runInternal(timeout, timeoutUnit, flowId);
         } catch (BackoffException e) {
             throw e.getCause();
         }
