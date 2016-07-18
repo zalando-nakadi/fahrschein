@@ -92,7 +92,7 @@ public class NakadiReaderTest {
         expectedException.expect(ComposeMatchers.hasFeature("retries", BackoffException::getRetries, equalTo(0)));
         expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Stream was closed")));
 
-        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS, Optional.empty());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class NakadiReaderTest {
         expectedException.expectCause(instanceOf(JsonProcessingException.class));
         expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Unexpected end-of-input")));
 
-        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS, Optional.empty());
     }
 
     @Test
@@ -136,7 +136,7 @@ public class NakadiReaderTest {
         expectedException.expectCause(instanceOf(IOException.class));
         expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Reconnection failed")));
 
-        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS, Optional.empty());
     }
 
     @Test
@@ -158,7 +158,7 @@ public class NakadiReaderTest {
         expectedException.expectCause(instanceOf(IOException.class));
         expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Reconnection failed")));
 
-        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS, Optional.empty());
     }
 
     @Test
@@ -178,7 +178,7 @@ public class NakadiReaderTest {
 
         // cannot use expectedException since there should be assertions afterwards
         try {
-            nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+            nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS, Optional.empty());
             fail("Expected IOException on reconnect");
         } catch (BackoffException e) {
             assertEquals(0, e.getRetries());

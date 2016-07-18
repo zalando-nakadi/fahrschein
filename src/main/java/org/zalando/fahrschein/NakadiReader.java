@@ -34,10 +34,12 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.joining;
 
 public class NakadiReader<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
+    public static final String X_FLOW_ID = "X-Flow-Id";
 
     private final URI uri;
     private final ClientHttpRequestFactory clientHttpRequestFactory;
@@ -108,7 +110,7 @@ public class NakadiReader<T> {
         }
     }
 
-    private JsonInput openJsonInput() throws IOException {
+    private JsonInput openJsonInput(final Optional<String> flowId) throws IOException {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         if (!subscription.isPresent()) {
             final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
@@ -117,7 +119,14 @@ public class NakadiReader<T> {
                 request.getHeaders().put("X-Nakadi-Cursors", singletonList(value));
             }
         }
+
+        if (flowId.isPresent()) {
+            request.getHeaders().add(X_FLOW_ID, flowId.get());
+        }
+        logRequest(request);
         final ClientHttpResponse response = request.execute();
+        LOG.info("Connected to Nakadi with Flow-Id {}", response.getHeaders().getFirst(X_FLOW_ID));
+
         try {
             final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
             return new JsonInput(response, jsonParser);
@@ -128,6 +137,16 @@ public class NakadiReader<T> {
                 throwable.addSuppressed(suppressed);
             }
             throw throwable;
+        }
+    }
+
+    private void logRequest(final ClientHttpRequest request) {
+        if (LOG.isDebugEnabled()) {
+            final String headersString = request.getHeaders().entrySet().stream().flatMap(headerWithValues -> {
+                final String key = headerWithValues.getKey();
+                return headerWithValues.getValue().stream().map(value -> key + ": " + value);
+            }).collect(joining("\n"));
+            LOG.debug("Connecting to Nakadi with uri {}\n{}", uri, headersString);
         }
     }
 
@@ -207,22 +226,30 @@ public class NakadiReader<T> {
         run(-1, TimeUnit.MILLISECONDS);
     }
 
+    public void run(final Optional<String> flowId) throws IOException {
+        run(-1, TimeUnit.MILLISECONDS, flowId);
+    }
+
     public void run(long timeout, TimeUnit timeoutUnit) throws IOException {
+        run(timeout, timeoutUnit, Optional.empty());
+    }
+
+    public void run(final long timeout, final TimeUnit timeoutUnit, final Optional<String> empty) throws IOException {
         try {
-            runInternal(timeout, timeoutUnit);
+            runInternal(timeout, timeoutUnit, empty);
         } catch (BackoffException e) {
             throw e.getCause();
         }
     }
 
     @VisibleForTesting
-    void runInternal(long timeout, TimeUnit timeoutUnit) throws IOException, BackoffException {
+    void runInternal(long timeout, TimeUnit timeoutUnit, final Optional<String> flowId) throws IOException, BackoffException {
 
         final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
 
         LOG.info("Starting to listen for events for [{}]", eventName);
 
-        JsonInput jsonInput = openJsonInput();
+        JsonInput jsonInput = openJsonInput(flowId);
         JsonParser jsonParser = jsonInput.getJsonParser();
 
         int errorCount = 0;
@@ -271,7 +298,7 @@ public class NakadiReader<T> {
 
                 try {
                     LOG.debug("Reconnecting after [{}] errors", errorCount);
-                    jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
+                    jsonInput = backoffStrategy.call(errorCount, e, () -> openJsonInput(flowId));
                     jsonParser = jsonInput.getJsonParser();
                     LOG.info("Reconnected after [{}] errors", errorCount);
                 } catch (InterruptedException interruptedException) {

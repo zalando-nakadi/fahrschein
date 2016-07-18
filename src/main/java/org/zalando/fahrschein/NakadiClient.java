@@ -13,6 +13,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
@@ -33,6 +35,7 @@ public class NakadiClient {
     private final BackoffStrategy backoffStrategy;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
+    private Supplier<String> flowIdProvider = null;
 
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
         this.baseUri = baseUri;
@@ -81,7 +84,7 @@ public class NakadiClient {
 
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.of(subscription), eventType, listener);
 
-        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
+        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS, flowId());
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
@@ -94,6 +97,14 @@ public class NakadiClient {
 
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, Optional.<Subscription>empty(), eventType, listener);
 
-        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
+        nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS, flowId());
+    }
+
+    private Optional<String> flowId() {
+        return Optional.ofNullable(flowIdProvider != null ? flowIdProvider.get() : null);
+    }
+
+    public void setFlowIdProvider(@Nullable final Supplier<String> flowIdProvider) {
+        this.flowIdProvider = flowIdProvider;
     }
 }
