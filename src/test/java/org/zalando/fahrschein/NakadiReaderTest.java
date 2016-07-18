@@ -8,6 +8,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -61,6 +62,7 @@ public class NakadiReaderTest {
     public void shouldNotRetryInitialConnection() throws IOException {
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
         when(request.execute()).thenThrow(new IOException("Initial connection failed"));
+        when(request.getHeaders()).thenReturn(new HttpHeaders());
 
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
@@ -76,12 +78,12 @@ public class NakadiReaderTest {
 
     @Test
     public void shouldNotReconnectWithoutBackoff() throws IOException, InterruptedException, BackoffException {
-        final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
-        when(response.getBody()).thenReturn(emptyInputStream);
+        final ClientHttpResponse response = createHttpResponse(emptyInputStream);
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
         when(request.execute()).thenReturn(response);
+        when(request.getHeaders()).thenReturn(new HttpHeaders());
 
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
@@ -97,12 +99,12 @@ public class NakadiReaderTest {
 
     @Test
     public void shouldHandleBrokenInput() throws IOException, InterruptedException, BackoffException {
-        final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"".getBytes("utf-8"));
-        when(response.getBody()).thenReturn(initialInputStream);
+        final ClientHttpResponse response = createHttpResponse(initialInputStream);
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
         when(request.execute()).thenReturn(response);
+        when(request.getHeaders()).thenReturn(new HttpHeaders());
 
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
@@ -119,12 +121,12 @@ public class NakadiReaderTest {
 
     @Test
     public void shouldRetryConnectionOnEof() throws IOException, InterruptedException, BackoffException {
-        final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
-        when(response.getBody()).thenReturn(initialInputStream);
+        final ClientHttpResponse response = createHttpResponse(initialInputStream);
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
         when(request.execute()).thenReturn(response).thenThrow(new IOException("Reconnection failed"));
+        when(request.getHeaders()).thenReturn(new HttpHeaders());
 
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
@@ -141,12 +143,12 @@ public class NakadiReaderTest {
 
     @Test
     public void shouldRetryConnectionMultipleTimesOnEof() throws IOException, InterruptedException, BackoffException {
-        final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
-        when(response.getBody()).thenReturn(initialInputStream);
+        final ClientHttpResponse response = createHttpResponse(initialInputStream);
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
         when(request.execute()).thenReturn(response).thenThrow(new IOException("Reconnection failed"));
+        when(request.getHeaders()).thenReturn(new HttpHeaders());
 
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
@@ -163,13 +165,13 @@ public class NakadiReaderTest {
 
     @Test
     public void shouldProcessEventsAndCommitCursor() throws IOException, InterruptedException, BackoffException, EventAlreadyProcessedException {
-        final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"}]}".getBytes("utf-8"));
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
-        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+        final ClientHttpResponse response = createHttpResponse(initialInputStream, emptyInputStream);
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
         when(request.execute()).thenReturn(response);
+        when(request.getHeaders()).thenReturn(new HttpHeaders());
 
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
@@ -205,6 +207,13 @@ public class NakadiReaderTest {
                 assertEquals("456", cursor.getOffset());
             }
         }
+    }
+
+    private ClientHttpResponse createHttpResponse(final ByteArrayInputStream initialContentStream, final ByteArrayInputStream... contentStreams) throws IOException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        when(response.getBody()).thenReturn(initialContentStream, contentStreams);
+        when(response.getHeaders()).thenReturn(new HttpHeaders());
+        return response;
     }
 
 }
