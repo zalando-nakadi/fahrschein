@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 import java.net.URI;
 import java.util.Optional;
 
-public class NakadiReaderFactory {
+class NakadiReaderFactory {
 
     private final ClientHttpRequestFactory clientHttpRequestFactory;
     private final BackoffStrategy backoffStrategy;
