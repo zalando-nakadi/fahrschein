@@ -55,7 +55,7 @@ public class NakadiReader<T> {
     private final JsonFactory jsonFactory;
     private final ObjectReader eventReader;
 
-    private final MetricsCollector metricsCollector = null;
+    private MetricsCollector metricsCollector = null;
 
     public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
         checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
@@ -321,4 +321,7 @@ public class NakadiReader<T> {
         checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
     }
 
+    public void setMetricsCollector(final MetricsCollector metricsCollector) {
+        this.metricsCollector = metricsCollector;
+    }
 }
