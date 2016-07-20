@@ -49,7 +49,7 @@ public class NakadiClient {
         this.cursorManager = cursorManager;
         this.metricsCollector = metricsCollector;
 
-        nakadiReaderFactory = new NakadiReaderFactory(baseUri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
+        nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
     }
 
     public List<Partition> getPartitions(String eventName) throws IOException {
@@ -89,7 +89,7 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(eventName, Optional.of(subscription), eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener);
 
         nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
@@ -102,7 +102,7 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(eventName, Optional.<Subscription>empty(), eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
 
         nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
