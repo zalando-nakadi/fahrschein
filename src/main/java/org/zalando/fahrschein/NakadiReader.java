@@ -56,7 +56,7 @@ public class NakadiReader<T> {
     private final JsonFactory jsonFactory;
     private final ObjectReader eventReader;
 
-    private final MetricsCollector metricsCollector;
+    private final Optional<MetricsCollector> metricsCollector;
 
     public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
         this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, listener, null);
@@ -74,7 +74,7 @@ public class NakadiReader<T> {
         this.subscription = subscription;
         this.eventClass = eventClass;
         this.listener = listener;
-        this.metricsCollector = metricsCollector;
+        this.metricsCollector = Optional.ofNullable(metricsCollector);
 
         this.jsonFactory = this.objectMapper.getFactory();
         this.eventReader = this.objectMapper.reader().forType(eventClass);
@@ -249,18 +249,14 @@ public class NakadiReader<T> {
 
                 LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
 
-                if (metricsCollector != null) {
-                    metricsCollector.markBatchesReceived();
-                }
+                metricsCollector.ifPresent(mc -> mc.markBatchesReceived());
 
                 final JsonToken token = jsonParser.nextToken();
                 if (token != JsonToken.END_OBJECT) {
                     expectField(jsonParser, "events");
 
                     final List<T> events = readEvents(jsonParser);
-                    if (metricsCollector != null) {
-                        metricsCollector.markEventsReceived(events.size());
-                    }
+                    metricsCollector.ifPresent(mc -> mc.markEventsReceived(events.size()));
 
                     expectToken(jsonParser, JsonToken.END_OBJECT);
 
@@ -269,17 +265,13 @@ public class NakadiReader<T> {
                     processBatch(batch);
                 } else {
                     // it's a keep alive batch
-                    if (metricsCollector != null) {
-                        metricsCollector.markEventsReceived(0);
-                    }
+                    metricsCollector.ifPresent(mc -> mc.markEventsReceived(0));
                 }
 
                 errorCount = 0;
             } catch (IOException e) {
 
-                if (metricsCollector != null) {
-                    metricsCollector.markErrorWhileConsuming();
-                }
+                metricsCollector.ifPresent(mc -> mc.markErrorWhileConsuming());
 
                 if (errorCount > 0) {
                     LOG.warn("Got [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), eventName, errorCount, e);
@@ -299,9 +291,7 @@ public class NakadiReader<T> {
                     jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
                     jsonParser = jsonInput.getJsonParser();
                     LOG.info("Reconnected after [{}] errors", errorCount);
-                    if (metricsCollector != null) {
-                        metricsCollector.markReconnection();
-                    }
+                    metricsCollector.ifPresent(mc -> mc.markReconnection());
                 } catch (InterruptedException interruptedException) {
                     LOG.warn("Interrupted during reconnection", interruptedException);
 
