@@ -21,6 +21,7 @@ import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
 
+import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
@@ -55,9 +56,13 @@ public class NakadiReader<T> {
     private final JsonFactory jsonFactory;
     private final ObjectReader eventReader;
 
-    private MetricsCollector metricsCollector = null;
+    private final MetricsCollector metricsCollector;
 
     public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
+        this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, listener, null);
+    }
+
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
         checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
 
         this.uri = uri;
@@ -69,6 +74,7 @@ public class NakadiReader<T> {
         this.subscription = subscription;
         this.eventClass = eventClass;
         this.listener = listener;
+        this.metricsCollector = metricsCollector;
 
         this.jsonFactory = this.objectMapper.getFactory();
         this.eventReader = this.objectMapper.reader().forType(eventClass);
@@ -321,7 +327,4 @@ public class NakadiReader<T> {
         checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
     }
 
-    public void setMetricsCollector(final MetricsCollector metricsCollector) {
-        this.metricsCollector = metricsCollector;
-    }
 }

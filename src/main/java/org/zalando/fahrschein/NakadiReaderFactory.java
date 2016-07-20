@@ -26,9 +26,7 @@ public class NakadiReaderFactory {
     public <T> NakadiReader createReader(final URI uri, final String eventName, final Optional<Subscription> subscription,
             final Class<T> eventType, final Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
-                eventName, subscription, eventType, listener);
-
-        nakadiReader.setMetricsCollector(metricsCollector);
+                eventName, subscription, eventType, listener, metricsCollector);
 
         return nakadiReader;
     }
