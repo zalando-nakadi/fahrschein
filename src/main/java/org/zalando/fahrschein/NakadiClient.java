@@ -32,7 +32,6 @@ public class NakadiClient {
 
     private final URI baseUri;
     private final ClientHttpRequestFactory clientHttpRequestFactory;
-    private final BackoffStrategy backoffStrategy;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
@@ -40,7 +39,6 @@ public class NakadiClient {
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
-        this.backoffStrategy = backoffStrategy;
         this.objectMapper = objectMapper;
         this.cursorManager = cursorManager;
 
