@@ -14,6 +14,7 @@ import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,21 +36,15 @@ public class NakadiClient {
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
-    private final MetricsCollector metricsCollector;
 
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
-        this(baseUri, clientHttpRequestFactory, backoffStrategy, objectMapper, cursorManager, null);
-    }
-
-    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager, final MetricsCollector metricsCollector) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.backoffStrategy = backoffStrategy;
         this.objectMapper = objectMapper;
         this.cursorManager = cursorManager;
-        this.metricsCollector = metricsCollector;
 
-        nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
+        nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper);
     }
 
     public List<Partition> getPartitions(String eventName) throws IOException {
@@ -85,11 +80,15 @@ public class NakadiClient {
     }
 
     public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
+        listen(subscription, eventType, listener, streamParameters, null);
+    }
+
+    public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, @Nullable MetricsCollector metricsCollector) throws IOException {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener, metricsCollector);
 
         nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }
@@ -99,10 +98,14 @@ public class NakadiClient {
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
+        listen(eventName, eventType, listener, streamParameters, null);
+    }
+
+    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, @Nullable MetricsCollector metricsCollector) throws IOException {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener, metricsCollector);
 
         nakadiReader.run(streamParameters.getStreamTimeout().orElse(0), TimeUnit.SECONDS);
     }

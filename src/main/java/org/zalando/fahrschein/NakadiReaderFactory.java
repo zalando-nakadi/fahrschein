@@ -15,18 +15,16 @@ public class NakadiReaderFactory {
     private final BackoffStrategy backoffStrategy;
     private final CursorManager cursorManager;
     private final ObjectMapper objectMapper;
-    private final MetricsCollector metricsCollector;
 
-    public NakadiReaderFactory(final ClientHttpRequestFactory clientHttpRequestFactory, final BackoffStrategy backoffStrategy, final CursorManager cursorManager, final ObjectMapper objectMapper, @Nullable final MetricsCollector metricsCollector) {
+    public NakadiReaderFactory(final ClientHttpRequestFactory clientHttpRequestFactory, final BackoffStrategy backoffStrategy, final CursorManager cursorManager, final ObjectMapper objectMapper) {
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.backoffStrategy = backoffStrategy;
         this.cursorManager = cursorManager;
         this.objectMapper = objectMapper;
-        this.metricsCollector = metricsCollector;
     }
 
     public <T> NakadiReader createReader(final URI uri, final String eventName, final Optional<Subscription> subscription,
-            final Class<T> eventType, final Listener<T> listener) {
+            final Class<T> eventType, final Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
         final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
                 eventName, subscription, eventType, listener);
 
