@@ -1,7 +1,7 @@
 package org.zalando.fahrschein.metrics;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
 public class DropwizardMetricsCollector implements MetricsCollector {
@@ -10,10 +10,10 @@ public class DropwizardMetricsCollector implements MetricsCollector {
 
     private final MetricRegistry metricRegistry;
     private final String prefix;
-    private Counter batchesReceivedCounter;
+    private Meter batchesReceivedMeter;
     private Histogram eventsReceivedHistogram;
-    private Counter errorsWhileConsumingCounter;
-    private Counter reconnectionsCounter;
+    private Meter errorsWhileConsumingMeter;
+    private Meter reconnectionsMeter;
 
     public DropwizardMetricsCollector(final MetricRegistry metricRegistry) {
         this(metricRegistry, DEFAULT_PREFIX);
@@ -23,15 +23,15 @@ public class DropwizardMetricsCollector implements MetricsCollector {
         this.metricRegistry = metricRegistry;
         this.prefix = prefix;
 
-        batchesReceivedCounter = metricRegistry.counter(prefix + "batchesReceived");
+        batchesReceivedMeter = metricRegistry.meter(prefix + "batchesReceived");
         eventsReceivedHistogram = metricRegistry.histogram(prefix + "eventsReceived");
-        errorsWhileConsumingCounter = metricRegistry.counter(prefix + "errorsWhileConsuming");
-        reconnectionsCounter = metricRegistry.counter(prefix + "reconnections");
+        errorsWhileConsumingMeter = metricRegistry.meter(prefix + "errorsWhileConsuming");
+        reconnectionsMeter = metricRegistry.meter(prefix + "reconnections");
     }
 
     @Override
     public void markBatchesReceived() {
-        batchesReceivedCounter.inc();
+        batchesReceivedMeter.mark();
     }
 
     @Override
@@ -41,11 +41,11 @@ public class DropwizardMetricsCollector implements MetricsCollector {
 
     @Override
     public void markErrorWhileConsuming() {
-        errorsWhileConsumingCounter.inc();
+        errorsWhileConsumingMeter.mark();
     }
 
     @Override
     public void markReconnection() {
-        reconnectionsCounter.inc();
+        reconnectionsMeter.mark();
     }
 }
