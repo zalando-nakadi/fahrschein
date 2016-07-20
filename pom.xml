@@ -157,6 +157,7 @@
                             <goal>execute</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipITs}</skip>
                             <url>jdbc:postgresql://localhost:5432/postgres</url>
                             <autocommit>true</autocommit>
                             <sqlCommand>DROP DATABASE IF EXISTS local_nakadi_cursor_db; CREATE DATABASE local_nakadi_cursor_db;</sqlCommand>
@@ -170,6 +171,7 @@
                             <goal>execute</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipITs}</skip>
                             <url>jdbc:postgresql://localhost:5432/local_nakadi_cursor_db</url>
                             <delimiterType>row</delimiterType>
                             <keepFormat>true</keepFormat>
