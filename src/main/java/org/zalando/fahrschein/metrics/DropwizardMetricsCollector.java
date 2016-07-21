@@ -1,6 +1,5 @@
 package org.zalando.fahrschein.metrics;
 
-import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 
@@ -8,10 +7,8 @@ public class DropwizardMetricsCollector implements MetricsCollector {
 
     public static final String DEFAULT_PREFIX = "org.zalando.fahrschein.";
 
-    private final MetricRegistry metricRegistry;
-    private final String prefix;
     private Meter batchesReceivedMeter;
-    private Histogram eventsReceivedHistogram;
+    private Meter eventsReceivedMeter;
     private Meter errorsWhileConsumingMeter;
     private Meter reconnectionsMeter;
 
@@ -20,11 +17,8 @@ public class DropwizardMetricsCollector implements MetricsCollector {
     }
 
     public DropwizardMetricsCollector(final MetricRegistry metricRegistry, final String prefix) {
-        this.metricRegistry = metricRegistry;
-        this.prefix = prefix;
-
         batchesReceivedMeter = metricRegistry.meter(prefix + "batchesReceived");
-        eventsReceivedHistogram = metricRegistry.histogram(prefix + "eventsReceived");
+        eventsReceivedMeter = metricRegistry.meter(prefix + "eventsReceived");
         errorsWhileConsumingMeter = metricRegistry.meter(prefix + "errorsWhileConsuming");
         reconnectionsMeter = metricRegistry.meter(prefix + "reconnections");
     }
@@ -36,7 +30,7 @@ public class DropwizardMetricsCollector implements MetricsCollector {
 
     @Override
     public void markEventsReceived(final int size) {
-        eventsReceivedHistogram.update(size);
+        eventsReceivedMeter.mark(size);
     }
 
     @Override
