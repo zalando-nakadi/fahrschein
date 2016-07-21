@@ -21,4 +21,9 @@ public class NoMetricsCollector implements MetricsCollector {
         // do nothing
     }
 
+    @Override
+    public void markMessageSuccessfullyProcessed() {
+        // do nothing
+    }
+
 }

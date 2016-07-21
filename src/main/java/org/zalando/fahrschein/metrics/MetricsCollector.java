@@ -8,4 +8,6 @@ public interface MetricsCollector {
     void markErrorWhileConsuming();
 
     void markReconnection();
+
+    void markMessageSuccessfullyProcessed();
 }

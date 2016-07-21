@@ -264,6 +264,8 @@ public class NakadiReader<T> {
                     final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
 
                     processBatch(batch);
+
+                    metricsCollector.markMessageSuccessfullyProcessed();
                 } else {
                     // it's a keep alive batch
                     metricsCollector.markEventsReceived(0);
