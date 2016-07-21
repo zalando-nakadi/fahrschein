@@ -24,7 +24,7 @@ public class DropwizardMetricsCollector implements MetricsCollector {
     }
 
     @Override
-    public void markBatchesReceived() {
+    public void markMessageReceived() {
         batchesReceivedMeter.mark();
     }
 

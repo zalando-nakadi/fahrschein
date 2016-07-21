@@ -1,7 +1,7 @@
 package org.zalando.fahrschein.metrics;
 
 public interface MetricsCollector {
-    void markBatchesReceived();
+    void markMessageReceived();
 
     void markEventsReceived(int size);
 
