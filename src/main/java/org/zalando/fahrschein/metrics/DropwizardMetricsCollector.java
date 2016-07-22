@@ -7,7 +7,7 @@ public class DropwizardMetricsCollector implements MetricsCollector {
 
     public static final String DEFAULT_PREFIX = "org.zalando.fahrschein.";
 
-    private final Meter batchesReceivedMeter;
+    private final Meter messagesReceivedMeter;
     private final Meter eventsReceivedMeter;
     private final Meter errorsWhileConsumingMeter;
     private final Meter reconnectionsMeter;
@@ -18,7 +18,7 @@ public class DropwizardMetricsCollector implements MetricsCollector {
     }
 
     public DropwizardMetricsCollector(final MetricRegistry metricRegistry, final String prefix) {
-        batchesReceivedMeter = metricRegistry.meter(prefix + "batchesReceived");
+        messagesReceivedMeter = metricRegistry.meter(prefix + "messagesReceived");
         eventsReceivedMeter = metricRegistry.meter(prefix + "eventsReceived");
         errorsWhileConsumingMeter = metricRegistry.meter(prefix + "errorsWhileConsuming");
         reconnectionsMeter = metricRegistry.meter(prefix + "reconnections");
@@ -27,7 +27,7 @@ public class DropwizardMetricsCollector implements MetricsCollector {
 
     @Override
     public void markMessageReceived() {
-        batchesReceivedMeter.mark();
+        messagesReceivedMeter.mark();
     }
 
     @Override
