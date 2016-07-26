@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static org.zalando.fahrschein.metrics.NoMetricsCollector.NO_METRICS_COLLECTOR;
+
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
 
@@ -78,7 +80,7 @@ public class NakadiClient {
     }
 
     public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
-        listen(subscription, eventType, listener, streamParameters, null);
+        listen(subscription, eventType, listener, streamParameters, NO_METRICS_COLLECTOR);
     }
 
     public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, @Nullable MetricsCollector metricsCollector) throws IOException {
@@ -96,7 +98,7 @@ public class NakadiClient {
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
-        listen(eventName, eventType, listener, streamParameters, null);
+        listen(eventName, eventType, listener, streamParameters, NO_METRICS_COLLECTOR);
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, @Nullable MetricsCollector metricsCollector) throws IOException {

@@ -1,6 +1,9 @@
 package org.zalando.fahrschein.metrics;
 
 public class NoMetricsCollector implements MetricsCollector {
+
+    public static final NoMetricsCollector NO_METRICS_COLLECTOR = new NoMetricsCollector();
+
     @Override
     public void markMessageReceived() {
         // do nothing
