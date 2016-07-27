@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.hobsoft.hamcrest.compose.ComposeMatchers;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,11 +16,14 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -159,6 +163,125 @@ public class NakadiReaderTest {
         expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Reconnection failed")));
 
         nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void shouldRetryConnectionAfterExceptionDuringReconnection() throws IOException, InterruptedException, BackoffException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
+        when(response.getBody()).thenReturn(initialInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response).thenThrow(new IOException("Reconnection failed")).thenReturn(response).thenThrow(new IOException("Reconnection failed on second attempt"));
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(4)));
+        expectedException.expectCause(instanceOf(IOException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Reconnection failed on second attempt")));
+
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+    }
+
+    @Test(timeout = 1000)
+    public void shouldReturnAfterLockTimeout() throws IOException, InterruptedException, BackoffException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final InputStream endlessInputStream = new SequenceInputStream(new Enumeration<InputStream>() {
+            @Override
+            public boolean hasMoreElements() {
+                return true;
+            }
+
+            @Override
+            public InputStream nextElement() {
+                try {
+                    return new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
+                } catch (UnsupportedEncodingException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        });
+        when(response.getBody()).thenReturn(endlessInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        nakadiReader.runInternal(20, TimeUnit.MILLISECONDS);
+    }
+
+    private Future<?> runInSeparateThread(NakadiReader<SomeEvent> nakadiReader) {
+        return Executors.newCachedThreadPool().submit(() -> {
+            try {
+                nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } catch (BackoffException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+    }
+
+    @Test
+    public void shouldReturnOnInterruption() throws IOException, InterruptedException, BackoffException, ExecutionException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
+        when(response.getBody()).thenAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            return initialInputStream;
+        });
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        final Future<?> future = runInSeparateThread(nakadiReader);
+        Assert.assertNull("Thread should have completed normally", future.get());
+    }
+
+    @Test
+    public void shouldReturnOnInterruptionDuringReconnection() throws IOException, InterruptedException, BackoffException, ExecutionException {
+        final ClientHttpResponse initialResponse = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
+        when(initialResponse.getBody()).thenReturn(initialInputStream);
+
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        final ClientHttpResponse emptyResponse = mock(ClientHttpResponse.class);
+        when(emptyResponse.getBody()).thenReturn(emptyInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(initialResponse).thenAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            throw new IOException("Reconnection failed");
+        });
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        final Future<?> future = Executors.newCachedThreadPool().submit(() -> {
+            try {
+                nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            } catch (BackoffException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        Assert.assertNull("Thread should have completed normally", future.get());
     }
 
     @Test

@@ -315,7 +315,7 @@ public class NakadiReader<T> {
     private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
         final JsonToken token = jsonParser.nextToken();
         if (token == null) {
-            throw new EOFException("Stream was closed");
+            throw new EOFException(Thread.currentThread().isInterrupted() ? "Thread was interrupted" : "Stream was closed");
         }
         checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
     }
