@@ -16,7 +16,7 @@ public interface PartitionManager {
      * @param lockedBy Name of one node of the consuming application
      * @param timeout Timeout after that the lock will automatically be released
      * @param timeoutUnit Time unit for the timeout
-     * @return A {@code Lock} instance containing the list of locked partitions if locking succeded, {@code Optional.empty()} otherwise
+     * @return A {@link Lock} instance containing the list of locked partitions if locking succeeded, {@link Optional#empty()} otherwise
      */
     Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy, long timeout, TimeUnit timeoutUnit);
 
