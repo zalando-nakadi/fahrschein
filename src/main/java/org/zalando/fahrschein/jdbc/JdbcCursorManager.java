@@ -3,12 +3,15 @@ package org.zalando.fahrschein.jdbc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Partition;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -41,6 +44,7 @@ public class JdbcCursorManager implements CursorManager {
     }
 
     @Override
+    @Transactional
     public void onSuccess(final String eventName, final Cursor cursor) throws IOException {
         final String sql = format("SELECT * FROM %snakadi_cursor_update(?, ?, ?, ?)", schemaPrefix);
 
@@ -59,5 +63,23 @@ public class JdbcCursorManager implements CursorManager {
         return template.query(sql, new Object[]{consumerName, eventName}, (resultSet, i) -> {
             return new Cursor(resultSet.getString(2), resultSet.getString(3));
         });
+    }
+
+    @Override
+    @Transactional
+    public void fromNewestAvailableOffsets(String eventName, List<Partition> partitions) throws IOException {
+        CursorManager.super.fromNewestAvailableOffsets(eventName, partitions);
+    }
+
+    @Override
+    @Transactional
+    public void fromOldestAvailableOffset(String eventName, List<Partition> partitions) throws IOException {
+        CursorManager.super.fromOldestAvailableOffset(eventName, partitions);
+    }
+
+    @Override
+    @Transactional
+    public void updatePartitions(String eventName, List<Partition> partitions) throws IOException {
+        CursorManager.super.updatePartitions(eventName, partitions);
     }
 }
