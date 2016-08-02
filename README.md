@@ -113,7 +113,30 @@ final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, req
 ...
 final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
 nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
+```
 
+## Using multiple partitions and multiple consumers
+
+With the `PartitionManager` api it is possible to coordinate between multiple nodes of one application, so that only one node is consuming events from a partition at the same time.
+
+Partitions are locked by one node for a certain time. This requires that every node has an unique name or other identifier. The `listen` method will return after the lock timeout and can try to grab the lock again.
+
+```java
+@Scheduled(fixedDelay = 60*1000L)
+public void readSalesOrderPlacedEvents() throws IOException {
+    final String lockedBy = ... // host name or another unique identifier for this node
+    final List<Partition> partitions = nakadiClient.getPartitions(EVENT_NAME);
+    final Optional<Lock> optionalLock = partitionManager.lockPartitions(EVENT_NAME, partitions, lockedBy, 60, TimeUnit.SECONDS);
+
+    if (optionalLock.isPresent()) {
+        final Lock lock = optionalLock.get();
+        try {
+            nakadiClient.listen(EVENT_NAME, SalesOrderPlaced.class, this::handleEvents, streamParameters, lock.getLockTimeout(), lock.getTimeoutUnit());
+        } finally {
+            partitionManager.unlockPartitions(lock);
+        }
+    }
+}
 ```
 
 ## Using another ClientHttpRequestFactory

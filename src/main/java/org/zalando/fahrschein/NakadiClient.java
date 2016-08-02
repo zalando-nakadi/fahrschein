@@ -14,7 +14,6 @@ import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,6 +21,8 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.zalando.fahrschein.metrics.NoMetricsCollector.NO_METRICS_COLLECTOR;
@@ -37,13 +38,19 @@ public class NakadiClient {
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
+    private final ScheduledExecutorService executor;
 
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
+        this(baseUri, clientHttpRequestFactory, backoffStrategy, objectMapper, cursorManager, NO_METRICS_COLLECTOR);
+
+    }
+    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager, MetricsCollector metricsCollector) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.objectMapper = objectMapper;
         this.cursorManager = cursorManager;
-        this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper);
+        this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
+        this.executor = Executors.newScheduledThreadPool(1);
     }
 
     public List<Partition> getPartitions(String eventName) throws IOException {
@@ -79,21 +86,13 @@ public class NakadiClient {
     }
 
     public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
-        listen(subscription, eventType, listener, streamParameters, NO_METRICS_COLLECTOR);
-    }
-
-    public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, @Nullable MetricsCollector metricsCollector) throws IOException {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener, metricsCollector);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener);
 
         nakadiReader.run();
-    }
-
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
-        listen(eventName, eventType, listener, new StreamParameters());
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
@@ -101,15 +100,16 @@ public class NakadiClient {
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, long lockTimeout, TimeUnit timeoutUnit) throws IOException {
-        listen(eventName, eventType, listener, streamParameters, lockTimeout, timeoutUnit, NO_METRICS_COLLECTOR);
-    }
-
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, long lockTimeout, TimeUnit timeoutUnit, @Nullable MetricsCollector metricsCollector) throws IOException {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener, metricsCollector);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
 
-        nakadiReader.run(lockTimeout, timeoutUnit);
+        if (lockTimeout > 0) {
+            final Thread currentThread = Thread.currentThread();
+            executor.schedule(currentThread::interrupt, lockTimeout, timeoutUnit);
+        }
+
+        nakadiReader.run();
     }
 }

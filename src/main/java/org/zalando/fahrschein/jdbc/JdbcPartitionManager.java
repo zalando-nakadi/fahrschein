@@ -3,6 +3,7 @@ package org.zalando.fahrschein.jdbc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.zalando.fahrschein.PartitionManager;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
@@ -69,6 +70,7 @@ public class JdbcPartitionManager implements PartitionManager {
     }
 
     @Override
+    @Transactional
     public Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy, long timeout, TimeUnit timeoutUnit) {
         final String sql = String.format("SELECT * FROM %snakadi_partition_lock(?, ?, ?::text[], ?, ?)", schemaPrefix);
 
@@ -88,6 +90,7 @@ public class JdbcPartitionManager implements PartitionManager {
     }
 
     @Override
+    @Transactional
     public boolean unlockPartitions(Lock lock) {
         final String sql = String.format("SELECT * FROM %snakadi_partition_unlock(?, ?, ?::text[], ?)", schemaPrefix);
 

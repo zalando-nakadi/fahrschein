@@ -24,16 +24,16 @@ import org.zalando.fahrschein.InMemoryPartitionManager;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
+import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
-import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
+import org.zalando.fahrschein.metrics.NoMetricsCollector;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 public class Main {
@@ -97,7 +97,7 @@ public class Main {
 
         final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
 
-        final NakadiClient nakadiClient = new NakadiClient(baseUri, requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager);
+        final NakadiClient nakadiClient = new NakadiClient(baseUri, requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager, NoMetricsCollector.NO_METRICS_COLLECTOR);
 
         final List<Partition> partitions = nakadiClient.getPartitions(eventName);
 
@@ -106,7 +106,7 @@ public class Main {
             cursorManager.onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
         }
 
-        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener);
+        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, new StreamParameters());
         /*
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
 
