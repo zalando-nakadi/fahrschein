@@ -193,25 +193,26 @@ public class NakadiReader<T> {
         final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventClass);
 
         final List<T> events = new ArrayList<>();
-        while (eventIterator.hasNext()) {
-            readEvent(eventIterator, events);
-        }
-        return events;
-    }
-
-    private void readEvent(final Iterator<T> source, final List<T> target) throws IOException {
-        try {
-            target.add(source.next());
-        } catch (RuntimeException e) {
-            final Throwable cause = e.getCause();
-            if (cause instanceof JsonMappingException) {
-                listener.onMappingException((JsonMappingException) cause);
-            } else if (cause instanceof IOException) {
-                throw (IOException)cause;
-            } else {
-                throw e;
+        while (true) {
+            try {
+                // MappingIterator#hasNext can theoretically also throw RuntimeExceptions, that's why we use this strange loop structure
+                if (eventIterator.hasNext()) {
+                    events.add(eventIterator.next());
+                } else {
+                    break;
+                }
+            } catch (RuntimeException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof JsonMappingException) {
+                    listener.onMappingException((JsonMappingException) cause);
+                } else if (cause instanceof IOException) {
+                    throw (IOException)cause;
+                } else {
+                    throw e;
+                }
             }
         }
+        return events;
     }
 
     public void run() throws IOException {
