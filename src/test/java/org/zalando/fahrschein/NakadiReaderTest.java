@@ -122,6 +122,28 @@ public class NakadiReaderTest {
     }
 
     @Test
+    public void shouldHandleBrokenInputInEvents() throws IOException, InterruptedException, BackoffException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":".getBytes("utf-8"));
+        when(response.getBody()).thenReturn(initialInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), SomeEvent.class, listener);
+
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
+        expectedException.expectCause(instanceOf(JsonProcessingException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Unexpected end-of-input")));
+
+        nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+    }
+
+    @Test
     public void shouldRetryConnectionOnEof() throws IOException, InterruptedException, BackoffException {
         final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}".getBytes("utf-8"));
