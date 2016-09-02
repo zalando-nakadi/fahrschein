@@ -24,38 +24,74 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.singletonList;
+
 public class ManagedCursorManager implements CursorManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagedCursorManager.class);
     private static final TypeReference<List<Cursor>> LIST_OF_CURSORS = new TypeReference<List<Cursor>>() {
     };
 
+    static final class SubscriptionStream {
+        private final String eventName;
+        private final String subscriptionId;
+        private String streamId;
+
+        public SubscriptionStream(String eventName, String subscriptionId) {
+            this.eventName = eventName;
+            this.subscriptionId = subscriptionId;
+        }
+
+        public String getEventName() {
+            return eventName;
+        }
+
+        public String getSubscriptionId() {
+            return subscriptionId;
+        }
+
+        String getStreamId() {
+            return streamId;
+        }
+
+        void setStreamId(String streamId) {
+            this.streamId = streamId;
+        }
+    }
+
     private final URI baseUri;
     private final ClientHttpRequestFactory clientHttpRequestFactory;
     private final ObjectMapper objectMapper;
-    private final Map<String, Subscription> subscriptions;
+    private final Map<String, SubscriptionStream> streams;
 
     public ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, ObjectMapper objectMapper) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.objectMapper = objectMapper;
-        this.subscriptions = new HashMap<>();
+        this.streams = new HashMap<>();
     }
 
     @Override
     public void addSubscription(Subscription subscription) {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
-        subscriptions.put(eventName, subscription);
+        streams.put(eventName, new SubscriptionStream(eventName, subscription.getId()));
+    }
+
+    @Override
+    public void addStreamId(Subscription subscription, String streamId) {
+        final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
+        streams.get(eventName).setStreamId(streamId);
     }
 
     @Override
     public void onSuccess(String eventName, Cursor cursor) throws IOException {
-        final Subscription subscription = subscriptions.get(eventName);
-        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscription.getId()));
+        final SubscriptionStream stream = streams.get(eventName);
+        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", stream.getSubscriptionId()));
 
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.PUT);
+        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.POST);
 
         request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        request.getHeaders().put("X-Nakadi-StreamId", singletonList(stream.getStreamId()));
 
         try (OutputStream os = request.getBody()) {
             objectMapper.writeValue(os, Collections.singleton(cursor));
@@ -78,8 +114,8 @@ public class ManagedCursorManager implements CursorManager {
 
     @Override
     public Collection<Cursor> getCursors(String eventName) throws IOException {
-        final Subscription subscription = subscriptions.get(eventName);
-        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscription.getId()));
+        final SubscriptionStream stream = streams.get(eventName);
+        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", stream.getSubscriptionId()));
 
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.GET);
 

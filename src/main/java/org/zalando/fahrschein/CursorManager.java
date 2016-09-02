@@ -28,6 +28,10 @@ public interface CursorManager {
 
     }
 
+    default void addStreamId(Subscription subscription, String streamId) {
+
+    }
+
     /**
      * Initializes offsets to start streaming from the newest available offset.
      */

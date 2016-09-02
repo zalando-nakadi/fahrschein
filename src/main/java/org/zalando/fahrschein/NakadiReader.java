@@ -126,7 +126,13 @@ class NakadiReader<T> implements IORunnable {
         }
         final ClientHttpResponse response = request.execute();
         try {
+            final String streamId = Optional.ofNullable(response.getHeaders()).flatMap(h -> h.get("X-Nakadi-StreamId").stream().findFirst()).orElse(null);
             final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+
+            if (subscription.isPresent()) {
+                cursorManager.addStreamId(subscription.get(), streamId);
+            }
+
             return new JsonInput(response, jsonParser);
         } catch (Throwable throwable) {
             try {
@@ -154,6 +160,9 @@ class NakadiReader<T> implements IORunnable {
     private Cursor readCursor(JsonParser jsonParser) throws IOException {
         String partition = null;
         String offset = null;
+        String eventType = null;
+        String cursorToken = null;
+
 
         expectToken(jsonParser, JsonToken.START_OBJECT);
 
@@ -165,6 +174,12 @@ class NakadiReader<T> implements IORunnable {
                     break;
                 case "offset":
                     offset = jsonParser.nextTextValue();
+                    break;
+                case "event_type":
+                    eventType = jsonParser.nextTextValue();
+                    break;
+                case "cursor_token":
+                    cursorToken = jsonParser.nextTextValue();
                     break;
                 default:
                     LOG.warn("Unexpected field [{}] in cursor", field);
@@ -181,7 +196,7 @@ class NakadiReader<T> implements IORunnable {
             throw new IllegalStateException("Could not read offset from cursor for partition [" + partition + "]");
         }
 
-        return new Cursor(partition, offset);
+        return new Cursor(partition, offset, eventType, cursorToken);
     }
 
     private List<T> readEvents(final JsonParser jsonParser) throws IOException {
@@ -233,36 +248,56 @@ class NakadiReader<T> implements IORunnable {
 
         while (true) {
             try {
-
                 LOG.debug("Waiting for next batch of events for [{}]", eventName);
 
                 expectToken(jsonParser, JsonToken.START_OBJECT);
-                expectToken(jsonParser, JsonToken.FIELD_NAME);
-                expectField(jsonParser, "cursor");
+                metricsCollector.markMessageReceived();
 
-                final Cursor cursor = readCursor(jsonParser);
+                Cursor cursor = null;
+                List<T> events = null;
+
+                while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                    final String field = jsonParser.getCurrentName();
+                    switch (field) {
+                        case "cursor": {
+                            cursor = readCursor(jsonParser);
+                            break;
+                        }
+                        case "events": {
+                            events = readEvents(jsonParser);
+                            break;
+                        }
+                        case "metadata": {
+                            LOG.debug("Skipping metadata in event batch");
+                            jsonParser.nextToken();
+                            jsonParser.skipChildren();
+                            break;
+                        }
+                        default: {
+                            LOG.warn("Unexpected field [{}] in event batch", field);
+                            jsonParser.nextToken();
+                            jsonParser.skipChildren();
+                            break;
+                        }
+                    }
+                }
+
+                if (cursor == null) {
+                    throw new IOException("Could not read cursor");
+                }
 
                 LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
 
-                metricsCollector.markMessageReceived();
-
-                final JsonToken token = jsonParser.nextToken();
-                if (token != JsonToken.END_OBJECT) {
-                    expectField(jsonParser, "events");
-
-                    final List<T> events = readEvents(jsonParser);
+                if (events == null) {
+                    metricsCollector.markEventsReceived(0);
+                } else {
                     metricsCollector.markEventsReceived(events.size());
-
-                    expectToken(jsonParser, JsonToken.END_OBJECT);
 
                     final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
 
                     processBatch(batch);
 
                     metricsCollector.markMessageSuccessfullyProcessed();
-                } else {
-                    // it's a keep alive batch
-                    metricsCollector.markEventsReceived(0);
                 }
 
                 errorCount = 0;
@@ -273,7 +308,7 @@ class NakadiReader<T> implements IORunnable {
                 if (errorCount > 0) {
                     LOG.warn("Got [{}] [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventName, errorCount, e);
                 } else {
-                    LOG.info("Got [{}] [{}] while reading events for [{}]", e.getClass().getSimpleName(), e.getMessage(), eventName);
+                    LOG.info("Got [{}] [{}] while reading events for [{}]", e.getClass().getSimpleName(), e.getMessage(), eventName, e);
                 }
 
                 jsonInput.close();
@@ -301,11 +336,6 @@ class NakadiReader<T> implements IORunnable {
         }
     }
 
-    private void expectField(JsonParser jsonParser, String expectedFieldName) throws IOException {
-        final String fieldName = jsonParser.getCurrentName();
-        checkState(expectedFieldName.equals(fieldName), "Expected [%s] field but got [%s]", expectedFieldName, fieldName);
-    }
-
     private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
         final JsonToken token = jsonParser.nextToken();
         if (token == null) {
@@ -315,7 +345,9 @@ class NakadiReader<T> implements IORunnable {
                 throw new EOFException("Stream was closed");
             }
         }
-        checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
+        if (token != expectedToken) {
+            throw new IOException(String.format("Expected [%s] but got [%s]", expectedToken, token));
+        }
     }
 
 }
