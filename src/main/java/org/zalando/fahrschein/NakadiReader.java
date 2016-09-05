@@ -3,9 +3,12 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
@@ -40,13 +43,13 @@ import static java.util.Collections.singletonList;
 public class NakadiReader<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
+    private static final TypeReference<List<Cursor>> LIST_OF_CURSORS = new TypeReference<List<Cursor>>() {
+    };
 
     private final URI uri;
     private final ClientHttpRequestFactory clientHttpRequestFactory;
     private final BackoffStrategy backoffStrategy;
     private final CursorManager cursorManager;
-
-    private final ObjectMapper objectMapper;
 
     private final String eventName;
     private final Optional<Subscription> subscription;
@@ -55,6 +58,7 @@ public class NakadiReader<T> {
 
     private final JsonFactory jsonFactory;
     private final ObjectReader eventReader;
+    private final ObjectWriter cursorHeaderWriter;
 
     private final MetricsCollector metricsCollector;
 
@@ -69,15 +73,15 @@ public class NakadiReader<T> {
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.backoffStrategy = backoffStrategy;
         this.cursorManager = cursorManager;
-        this.objectMapper = objectMapper;
         this.eventName = eventName;
         this.subscription = subscription;
         this.eventClass = eventClass;
         this.listener = listener;
         this.metricsCollector = metricsCollector != null ? metricsCollector : new NoMetricsCollector();
 
-        this.jsonFactory = this.objectMapper.getFactory();
-        this.eventReader = this.objectMapper.reader().forType(eventClass);
+        this.jsonFactory = objectMapper.getFactory();
+        this.eventReader = objectMapper.reader().forType(eventClass);
+        this.cursorHeaderWriter = objectMapper.writerFor(LIST_OF_CURSORS).without(SerializationFeature.INDENT_OUTPUT);
 
         if (clientHttpRequestFactory instanceof HttpComponentsClientHttpRequestFactory) {
             LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());
@@ -122,7 +126,7 @@ public class NakadiReader<T> {
         if (!subscription.isPresent()) {
             final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
             if (!cursors.isEmpty()) {
-                final String value = objectMapper.writeValueAsString(cursors);
+                final String value = cursorHeaderWriter.writeValueAsString(cursors);
                 request.getHeaders().put("X-Nakadi-Cursors", singletonList(value));
             }
         }
