@@ -201,7 +201,7 @@ public class NakadiReader<T> {
             try {
                 // MappingIterator#hasNext can theoretically also throw RuntimeExceptions, that's why we use this strange loop structure
                 if (eventIterator.hasNext()) {
-                    events.add(eventIterator.next());
+                    events.add(eventClass.cast(eventIterator.next()));
                 } else {
                     break;
                 }
