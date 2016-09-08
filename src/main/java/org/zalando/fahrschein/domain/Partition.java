@@ -2,13 +2,19 @@ package org.zalando.fahrschein.domain;
 
 import javax.annotation.concurrent.Immutable;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Immutable
 public class Partition {
     private final String partition;
     private final String oldestAvailableOffset;
     private final String newestAvailableOffset;
 
-    public Partition(String partition, String oldestAvailableOffset, String newestAvailableOffset) {
+    @JsonCreator
+    public Partition(@JsonProperty("partition") final String partition,
+            @JsonProperty("oldest_available_offset") final String oldestAvailableOffset,
+            @JsonProperty("newest_available_offset") final String newestAvailableOffset) {
         this.partition = partition;
         this.oldestAvailableOffset = oldestAvailableOffset;
         this.newestAvailableOffset = newestAvailableOffset;
