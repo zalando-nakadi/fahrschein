@@ -14,11 +14,9 @@ import static java.util.stream.Collectors.toSet;
 
 public class InMemoryPartitionManager implements PartitionManager {
     static final class LockKey {
-        private final String consumerName;
         private final String eventName;
 
-        LockKey(String consumerName, String eventName) {
-            this.consumerName = consumerName;
+        LockKey(String eventName) {
             this.eventName = eventName;
         }
 
@@ -27,13 +25,12 @@ public class InMemoryPartitionManager implements PartitionManager {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             LockKey lockKey = (LockKey) o;
-            return Objects.equals(consumerName, lockKey.consumerName) &&
-                    Objects.equals(eventName, lockKey.eventName);
+            return Objects.equals(eventName, lockKey.eventName);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(consumerName, eventName);
+            return Objects.hash(eventName);
         }
     }
 
@@ -50,26 +47,21 @@ public class InMemoryPartitionManager implements PartitionManager {
     }
 
     private final ConcurrentHashMap<LockKey, LockInfo> locks = new ConcurrentHashMap<>();
-    private final String consumerName;
-
-    public InMemoryPartitionManager(String consumerName) {
-        this.consumerName = consumerName;
-    }
 
     @Override
     public Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy, long timeout, TimeUnit timeoutUnit) {
         long now = System.currentTimeMillis();
         final Set<String> partitionIds = partitions.stream().map(Partition::getPartition).collect(toSet());
-        final LockKey lockKey = new LockKey(consumerName, eventName);
+        final LockKey lockKey = new LockKey(eventName);
         final LockInfo tryLock = new LockInfo(lockedBy, now + timeoutUnit.toMillis(timeout), partitionIds);
         final LockInfo newLock = locks.compute(lockKey, (key, oldLock) -> oldLock == null || oldLock.lockedUntil < now ? tryLock : oldLock);
-        return lockedBy.equals(newLock.lockedBy) ? Optional.of(new Lock(consumerName, eventName, lockedBy, timeout, timeoutUnit, partitions)) : Optional.<Lock>empty();
+        return lockedBy.equals(newLock.lockedBy) ? Optional.of(new Lock(eventName, lockedBy, timeout, timeoutUnit, partitions)) : Optional.<Lock>empty();
     }
 
     @Override
     public boolean unlockPartitions(Lock lock) {
         final String lockedBy = lock.getLockedBy();
-        final LockKey lockKey = new LockKey(lock.getConsumerName(), lock.getEventName());
+        final LockKey lockKey = new LockKey(lock.getEventName());
         final LockInfo newLock = locks.compute(lockKey, (key, old) -> old != null && old.lockedBy.equals(lockedBy) ? null : old);
         return newLock == null;
     }

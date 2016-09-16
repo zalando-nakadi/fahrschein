@@ -85,7 +85,7 @@ public class JdbcPartitionManager implements PartitionManager {
         } else {
             final Map<String, Partition> partitionsById = partitions.stream().collect(toMap(Partition::getPartition, p -> p));
             final List<Partition> collect = lockedPartitions.stream().map(lp -> partitionsById.get(lp.partition)).collect(toList());
-            return Optional.of(new Lock(consumerName, eventName, lockedBy, timeout, timeoutUnit, collect));
+            return Optional.of(new Lock(eventName, lockedBy, timeout, timeoutUnit, collect));
         }
     }
 
@@ -97,7 +97,7 @@ public class JdbcPartitionManager implements PartitionManager {
         final String partitionIds = formatPartitionIds(lock.getPartitions());
 
         final List<LockedPartition> unlockedPartitions = template.query(sql,
-                new Object[]{lock.getConsumerName(), lock.getEventName(), partitionIds, lock.getLockedBy()},
+                new Object[]{consumerName, lock.getEventName(), partitionIds, lock.getLockedBy()},
                 this::getLockedPartition);
 
         return !unlockedPartitions.isEmpty();

@@ -104,7 +104,7 @@ public abstract class AbstractPartitionManagerTest {
         final Optional<Lock> locked1 = partitionManager().lockPartitions("sales-order-placed", partitions("0"), "node-1", 1, TimeUnit.HOURS);
         Assert.assertTrue(locked1.isPresent());
 
-        final boolean unlocked = partitionManager().unlockPartitions(new Lock("test-consumer-1", "sales-order-placed", "node-2", 1, TimeUnit.HOURS, partitions("0")));
+        final boolean unlocked = partitionManager().unlockPartitions(new Lock("sales-order-placed", "node-2", 1, TimeUnit.HOURS, partitions("0")));
         Assert.assertFalse(unlocked);
     }
 

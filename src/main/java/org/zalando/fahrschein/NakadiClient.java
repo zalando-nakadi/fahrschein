@@ -90,9 +90,7 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener);
-
-        nakadiReader.run();
+        listen(uri, eventName, eventType, listener, -1, TimeUnit.SECONDS);
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
@@ -103,6 +101,10 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
+        listen(uri, eventName, eventType, listener, lockTimeout, timeoutUnit);
+    }
+
+    private <T> void listen(URI uri, String eventName, Class<T> eventType, Listener<T> listener, long lockTimeout, TimeUnit timeoutUnit) throws IOException {
         final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
 
         if (lockTimeout > 0) {

@@ -93,7 +93,7 @@ public class Main {
         final CursorManager cursorManager = new InMemoryCursorManager();
         //final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
 
-        final InMemoryPartitionManager partitionManager = new InMemoryPartitionManager("fahrschein-demo");
+        final InMemoryPartitionManager partitionManager = new InMemoryPartitionManager();
 
         final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
 
