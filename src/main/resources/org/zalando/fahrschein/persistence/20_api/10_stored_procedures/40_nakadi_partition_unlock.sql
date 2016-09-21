@@ -2,8 +2,7 @@ CREATE OR REPLACE FUNCTION nakadi_partition_unlock(p_consumer_name text, p_event
 $$
 
     UPDATE nakadi_partition np
-       SET np_locked_by = NULL,
-           np_locked_until = NULL
+       SET np_locked_by = NULL
       FROM unnest(p_partitions) partition
      WHERE np_locked_by = p_locked_by
        AND np_consumer_name = p_consumer_name

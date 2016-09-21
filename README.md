@@ -15,9 +15,11 @@
  - Consistent error handling
     - `IOException` handled as retryable
     - `RuntimeException` aborts processing and can be handled outside the main loop
- - No unnecessary buffering or line-based processing
+ - Stream-based parsing
+    - Optimized utf-8 decoding by [Jackson](https://github.com/FasterXML/jackson)
+    - No unnecessary buffering or line-based processing, causing less garbage
     - Less garbage and higher performance
-    - All processing done by [Jackson](https://github.com/FasterXML/jackson) json parser
+    - No required base classes for events
 
 ## Installation
 
@@ -126,12 +128,12 @@ Partitions are locked by one node for a certain time. This requires that every n
 public void readSalesOrderPlacedEvents() throws IOException {
     final String lockedBy = ... // host name or another unique identifier for this node
     final List<Partition> partitions = nakadiClient.getPartitions(EVENT_NAME);
-    final Optional<Lock> optionalLock = partitionManager.lockPartitions(EVENT_NAME, partitions, lockedBy, 60, TimeUnit.SECONDS);
+    final Optional<Lock> optionalLock = partitionManager.lockPartitions(EVENT_NAME, partitions, lockedBy);
 
     if (optionalLock.isPresent()) {
         final Lock lock = optionalLock.get();
         try {
-            nakadiClient.listen(EVENT_NAME, SalesOrderPlaced.class, this::handleEvents, streamParameters, lock.getLockTimeout(), lock.getTimeoutUnit());
+            nakadiClient.listen(EVENT_NAME, SalesOrderPlaced.class, this::handleEvents, streamParameters);
         } finally {
             partitionManager.unlockPartitions(lock);
         }

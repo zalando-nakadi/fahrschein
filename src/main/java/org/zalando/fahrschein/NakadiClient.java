@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static org.zalando.fahrschein.metrics.NoMetricsCollector.NO_METRICS_COLLECTOR;
 
@@ -90,27 +89,18 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        listen(uri, eventName, eventType, listener, -1, TimeUnit.SECONDS);
+        listen(uri, eventName, eventType, listener);
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
-        listen(eventName, eventType, listener, streamParameters, -1, TimeUnit.SECONDS);
-    }
-
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters, long lockTimeout, TimeUnit timeoutUnit) throws IOException {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        listen(uri, eventName, eventType, listener, lockTimeout, timeoutUnit);
+        listen(uri, eventName, eventType, listener);
     }
 
-    private <T> void listen(URI uri, String eventName, Class<T> eventType, Listener<T> listener, long lockTimeout, TimeUnit timeoutUnit) throws IOException {
+    private <T> void listen(URI uri, String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
         final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
-
-        if (lockTimeout > 0) {
-            final Thread currentThread = Thread.currentThread();
-            executor.schedule(currentThread::interrupt, lockTimeout, timeoutUnit);
-        }
 
         nakadiReader.run();
     }

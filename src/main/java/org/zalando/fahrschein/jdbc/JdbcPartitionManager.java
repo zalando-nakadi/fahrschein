@@ -14,7 +14,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.joining;
@@ -71,13 +70,13 @@ public class JdbcPartitionManager implements PartitionManager {
 
     @Override
     @Transactional
-    public Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy, long timeout, TimeUnit timeoutUnit) {
-        final String sql = String.format("SELECT * FROM %snakadi_partition_lock(?, ?, ?::text[], ?, ?)", schemaPrefix);
+    public Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy) {
+        final String sql = String.format("SELECT * FROM %snakadi_partition_lock(?, ?, ?::text[], ?)", schemaPrefix);
 
         final String partitionIds = formatPartitionIds(partitions);
 
         final List<LockedPartition> lockedPartitions = template.query(sql,
-                new Object[]{consumerName, eventName, partitionIds, lockedBy, timeoutUnit.toMillis(timeout)},
+                new Object[]{consumerName, eventName, partitionIds, lockedBy},
                 this::getLockedPartition);
 
         if (lockedPartitions.isEmpty()) {
@@ -85,13 +84,13 @@ public class JdbcPartitionManager implements PartitionManager {
         } else {
             final Map<String, Partition> partitionsById = partitions.stream().collect(toMap(Partition::getPartition, p -> p));
             final List<Partition> collect = lockedPartitions.stream().map(lp -> partitionsById.get(lp.partition)).collect(toList());
-            return Optional.of(new Lock(eventName, lockedBy, timeout, timeoutUnit, collect));
+            return Optional.of(new Lock(eventName, lockedBy, collect));
         }
     }
 
     @Override
     @Transactional
-    public boolean unlockPartitions(Lock lock) {
+    public void unlockPartitions(Lock lock) {
         final String sql = String.format("SELECT * FROM %snakadi_partition_unlock(?, ?, ?::text[], ?)", schemaPrefix);
 
         final String partitionIds = formatPartitionIds(lock.getPartitions());
@@ -100,6 +99,8 @@ public class JdbcPartitionManager implements PartitionManager {
                 new Object[]{consumerName, lock.getEventName(), partitionIds, lock.getLockedBy()},
                 this::getLockedPartition);
 
-        return !unlockedPartitions.isEmpty();
+        if (unlockedPartitions.isEmpty()) {
+            throw new IllegalStateException("Could not unlock [" + lock.getEventName() + "] by [" + lock.getLockedBy() + "]");
+        }
     }
 }
