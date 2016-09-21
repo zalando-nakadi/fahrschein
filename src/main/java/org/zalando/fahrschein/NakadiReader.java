@@ -271,7 +271,7 @@ class NakadiReader<T> implements IORunnable {
                 metricsCollector.markErrorWhileConsuming();
 
                 if (errorCount > 0) {
-                    LOG.warn("Got [{}] [{}]while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventName, errorCount, e);
+                    LOG.warn("Got [{}] [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventName, errorCount, e);
                 } else {
                     LOG.info("Got [{}] [{}] while reading events for [{}]", e.getClass().getSimpleName(), e.getMessage(), eventName);
                 }
