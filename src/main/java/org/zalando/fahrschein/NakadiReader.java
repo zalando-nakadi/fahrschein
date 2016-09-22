@@ -267,8 +267,8 @@ class NakadiReader<T> implements IORunnable {
                             events = readEvents(jsonParser);
                             break;
                         }
-                        case "metadata": {
-                            LOG.debug("Skipping metadata in event batch");
+                        case "info": {
+                            LOG.debug("Skipping stream info in event batch");
                             jsonParser.nextToken();
                             jsonParser.skipChildren();
                             break;

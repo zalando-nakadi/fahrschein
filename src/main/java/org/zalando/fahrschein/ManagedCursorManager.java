@@ -1,12 +1,12 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -29,24 +29,22 @@ import static java.util.Collections.singletonList;
 public class ManagedCursorManager implements CursorManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagedCursorManager.class);
-    private static final TypeReference<List<Cursor>> LIST_OF_CURSORS = new TypeReference<List<Cursor>>() {
-    };
 
     static final class SubscriptionStream {
         private final String eventName;
         private final String subscriptionId;
         private String streamId;
 
-        public SubscriptionStream(String eventName, String subscriptionId) {
+        SubscriptionStream(String eventName, String subscriptionId) {
             this.eventName = eventName;
             this.subscriptionId = subscriptionId;
         }
 
-        public String getEventName() {
+        String getEventName() {
             return eventName;
         }
 
-        public String getSubscriptionId() {
+        String getSubscriptionId() {
             return subscriptionId;
         }
 
@@ -56,6 +54,19 @@ public class ManagedCursorManager implements CursorManager {
 
         void setStreamId(String streamId) {
             this.streamId = streamId;
+        }
+    }
+
+    static final class CursorResponse {
+        private final List<Cursor> items;
+
+        @JsonCreator
+        CursorResponse(@JsonProperty("items") List<Cursor> items) {
+            this.items = items;
+        }
+
+        List<Cursor> getItems() {
+            return items;
         }
     }
 
@@ -74,19 +85,29 @@ public class ManagedCursorManager implements CursorManager {
     @Override
     public void addSubscription(Subscription subscription) {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
+
+        LOG.debug("Adding subscription [{}] to event [{}]", subscription.getId(), eventName);
+
         streams.put(eventName, new SubscriptionStream(eventName, subscription.getId()));
     }
 
     @Override
     public void addStreamId(Subscription subscription, String streamId) {
         final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
+
+        LOG.debug("Adding stream id [{}] for subscription [{}] to event [{}]", streamId, subscription.getId(), eventName);
+
         streams.get(eventName).setStreamId(streamId);
     }
 
     @Override
     public void onSuccess(String eventName, Cursor cursor) throws IOException {
+
         final SubscriptionStream stream = streams.get(eventName);
-        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", stream.getSubscriptionId()));
+        final String subscriptionId = stream.getSubscriptionId();
+        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscriptionId));
+
+        LOG.debug("Committing cursors for subscription [{}] to event [{}] in partition [{}] with offset [{}]", subscriptionId, stream.getEventName(), cursor.getPartition(), cursor.getOffset());
 
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.POST);
 
@@ -99,10 +120,13 @@ public class ManagedCursorManager implements CursorManager {
 
         try (final ClientHttpResponse response = request.execute()) {
 
-            if (response.getStatusCode().value() == HttpStatus.NO_CONTENT.value()) {
-                LOG.warn("Cursor for event [{}] in partition [{}] with offset [{}] was already committed", eventName, cursor.getPartition(), cursor.getOffset());
-            } else if (response.getStatusCode().is2xxSuccessful()) {
-                LOG.debug("Successfully committed cursor for event [{}] in partition [{}] with offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
+            final int status = response.getStatusCode().value();
+            if (status == 204) {
+                LOG.debug("Successfully committed cursor for subscription [{}] to event [{}] in partition [{}] with offset [{}]", subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
+            } else if (status == 200) {
+                LOG.warn("Cursor for subscription [{}] to event [{}] in partition [{}] with offset [{}] was already committed", subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
+            } else {
+                LOG.warn("Unexpected status code [{}] for subscription [{}] to event [{}] in partition [{}] with offset [{}]", status, subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
             }
         }
     }
@@ -121,7 +145,8 @@ public class ManagedCursorManager implements CursorManager {
 
         try (final ClientHttpResponse response = request.execute()) {
             try (InputStream is = response.getBody()) {
-                return objectMapper.readValue(is, LIST_OF_CURSORS);
+                final CursorResponse cursorResponse = objectMapper.readValue(is, CursorResponse.class);
+                return cursorResponse.getItems();
             }
         }
     }
