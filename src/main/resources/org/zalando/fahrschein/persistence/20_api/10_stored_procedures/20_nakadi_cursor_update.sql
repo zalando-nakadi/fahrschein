@@ -1,7 +1,8 @@
 CREATE OR REPLACE FUNCTION nakadi_cursor_update(p_consumer_name text, p_event_name text, p_partition text, p_offset text) RETURNS VOID AS
 $$
     WITH updated AS (UPDATE nakadi_cursor nc
-                        SET nc_offset = p_offset
+                        SET nc_offset = p_offset,
+                            nc_last_modified = now()
                       WHERE nc_consumer_name = p_consumer_name
                         AND nc_event_name = p_event_name
                         AND nc_partition = p_partition

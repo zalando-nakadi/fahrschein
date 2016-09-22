@@ -1,8 +1,11 @@
 package org.zalando.fahrschein.domain;
 
+import javax.annotation.concurrent.Immutable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@Immutable
 public class Partition {
     private final String partition;
     private final String oldestAvailableOffset;

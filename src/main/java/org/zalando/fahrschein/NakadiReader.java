@@ -22,12 +22,11 @@ import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
-import org.zalando.fahrschein.metrics.NoMetricsCollector;
 
-import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,12 +34,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.singletonList;
 
-public class NakadiReader<T> {
+class NakadiReader<T> implements IORunnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
     private static final TypeReference<List<Cursor>> LIST_OF_CURSORS = new TypeReference<List<Cursor>>() {
@@ -62,11 +60,7 @@ public class NakadiReader<T> {
 
     private final MetricsCollector metricsCollector;
 
-    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
-        this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, listener, null);
-    }
-
-    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
+    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, final MetricsCollector metricsCollector) {
         checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
 
         this.uri = uri;
@@ -77,7 +71,7 @@ public class NakadiReader<T> {
         this.subscription = subscription;
         this.eventClass = eventClass;
         this.listener = listener;
-        this.metricsCollector = metricsCollector != null ? metricsCollector : new NoMetricsCollector();
+        this.metricsCollector = metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
         this.eventReader = objectMapper.reader().forType(eventClass);
@@ -219,23 +213,17 @@ public class NakadiReader<T> {
         return events;
     }
 
+    @Override
     public void run() throws IOException {
-        run(-1, TimeUnit.MILLISECONDS);
-    }
-
-    public void run(long timeout, TimeUnit timeoutUnit) throws IOException {
         try {
-            runInternal(timeout, timeoutUnit);
+            runInternal();
         } catch (BackoffException e) {
             throw e.getCause();
         }
     }
 
     @VisibleForTesting
-    void runInternal(long timeout, TimeUnit timeoutUnit) throws IOException, BackoffException {
-
-        final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
-
+    void runInternal() throws IOException, BackoffException {
         LOG.info("Starting to listen for events for [{}]", eventName);
 
         JsonInput jsonInput = openJsonInput();
@@ -243,7 +231,7 @@ public class NakadiReader<T> {
 
         int errorCount = 0;
 
-        while (System.currentTimeMillis() < lockedUntil) {
+        while (true) {
             try {
 
                 LOG.debug("Waiting for next batch of events for [{}]", eventName);
@@ -283,9 +271,9 @@ public class NakadiReader<T> {
                 metricsCollector.markErrorWhileConsuming();
 
                 if (errorCount > 0) {
-                    LOG.warn("Got [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), eventName, errorCount, e);
+                    LOG.warn("Got [{}] [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventName, errorCount, e);
                 } else {
-                    LOG.info("Got [{}] while reading events for [{}]", e.getClass().getSimpleName(), eventName);
+                    LOG.info("Got [{}] [{}] while reading events for [{}]", e.getClass().getSimpleName(), e.getMessage(), eventName);
                 }
 
                 jsonInput.close();
@@ -321,7 +309,11 @@ public class NakadiReader<T> {
     private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
         final JsonToken token = jsonParser.nextToken();
         if (token == null) {
-            throw new EOFException(Thread.currentThread().isInterrupted() ? "Thread was interrupted" : "Stream was closed");
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedIOException("Thread was interrupted");
+            } else {
+                throw new EOFException("Stream was closed");
+            }
         }
         checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
     }
