@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 class NakadiReader<T> implements IORunnable {
@@ -115,6 +116,11 @@ class NakadiReader<T> implements IORunnable {
         }
     }
 
+    private static Optional<String> getStreamId(ClientHttpResponse response) {
+        return Optional.ofNullable(response.getHeaders())
+                .flatMap(h -> h.getOrDefault("X-Nakadi-StreamId", emptyList()).stream().findFirst());
+    }
+
     private JsonInput openJsonInput() throws IOException {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         if (!subscription.isPresent()) {
@@ -126,11 +132,11 @@ class NakadiReader<T> implements IORunnable {
         }
         final ClientHttpResponse response = request.execute();
         try {
-            final String streamId = Optional.ofNullable(response.getHeaders()).flatMap(h -> h.get("X-Nakadi-StreamId").stream().findFirst()).orElse(null);
+            final Optional<String> streamId = getStreamId(response);
             final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
 
-            if (subscription.isPresent()) {
-                cursorManager.addStreamId(subscription.get(), streamId);
+            if (subscription.isPresent() && streamId.isPresent()) {
+                cursorManager.addStreamId(subscription.get(), streamId.get());
             }
 
             return new JsonInput(response, jsonParser);
