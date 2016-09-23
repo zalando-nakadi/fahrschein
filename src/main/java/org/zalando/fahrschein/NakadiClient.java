@@ -89,17 +89,15 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
 
-        listen(uri, eventName, eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener);
+
+        nakadiReader.run();
     }
 
     public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        listen(uri, eventName, eventType, listener);
-    }
-
-    private <T> void listen(URI uri, String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
         final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
 
         nakadiReader.run();
