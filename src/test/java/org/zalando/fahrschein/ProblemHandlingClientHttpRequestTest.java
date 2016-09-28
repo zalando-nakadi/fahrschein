@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
+import org.zalando.fahrschein.http.ProblemHandlingClientHttpRequest;
 import org.zalando.problem.Problem;
 
 import javax.ws.rs.core.Response;

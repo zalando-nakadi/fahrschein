@@ -1,8 +1,9 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.http;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.zalando.fahrschein.AccessTokenProvider;
 
 import java.io.IOException;
 import java.net.URI;

@@ -10,11 +10,11 @@ import java.util.Optional;
 
 @SuppressWarnings("serial")
 public class IOProblem extends IOException implements Problem {
-    static final class Status implements Response.StatusType {
+    public static final class Status implements Response.StatusType {
         private final int statusCode;
         private final String reasonPhrase;
 
-        Status(final int statusCode, final String reasonPhrase) {
+        public Status(final int statusCode, final String reasonPhrase) {
             this.statusCode = statusCode;
             this.reasonPhrase = reasonPhrase;
         }

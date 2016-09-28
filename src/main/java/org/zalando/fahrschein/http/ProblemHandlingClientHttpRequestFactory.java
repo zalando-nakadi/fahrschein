@@ -1,4 +1,4 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.http;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;

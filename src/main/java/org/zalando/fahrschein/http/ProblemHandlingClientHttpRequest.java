@@ -1,4 +1,4 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
+import org.zalando.fahrschein.IOProblem;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
