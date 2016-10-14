@@ -7,10 +7,10 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import java.io.IOException;
 import java.net.URI;
 
-public class EnableCompressionClientHttpRequestFactory implements ClientHttpRequestFactory {
+public class CompressingClientHttpRequestFactory implements ClientHttpRequestFactory {
     private final ClientHttpRequestFactory delegate;
 
-    public EnableCompressionClientHttpRequestFactory(final ClientHttpRequestFactory delegate) {
+    public CompressingClientHttpRequestFactory(final ClientHttpRequestFactory delegate) {
         this.delegate = delegate;
     }
 
