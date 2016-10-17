@@ -73,11 +73,11 @@ public class NakadiClient {
         }
     }
 
-    public <T> PreparedListening prepareListening(Subscription subscription, Class<T> eventType, Listener<T> listener) throws IOException {
+    public <T> PreparedListening<T> prepareListening(Subscription subscription, Class<T> eventType, Listener<T> listener) throws IOException {
         return new SubscriptionApiPreparedListening<>(nakadiReaderFactory, baseUri, eventType, listener, subscription);
     }
 
-    public <T> PreparedListening prepareListening(String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
+    public <T> PreparedListening<T> prepareListening(String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
         return new LowLevelApiPreparedListening<>(nakadiReaderFactory, baseUri, eventType, listener, eventName);
     }
 }

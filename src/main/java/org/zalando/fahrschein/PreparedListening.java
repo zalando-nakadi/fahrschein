@@ -26,12 +26,12 @@ public abstract class PreparedListening<T> {
         this.listener = listener;
     }
 
-    public PreparedListening withStreamParameters(final StreamParameters streamParameters) {
+    public PreparedListening<T> withStreamParameters(final StreamParameters streamParameters) {
         this.streamParameters = streamParameters;
         return this;
     }
 
-    public PreparedListening withMetricCollector(final MetricsCollector metricsCollector) {
+    public PreparedListening<T> withMetricCollector(final MetricsCollector metricsCollector) {
         this.metricsCollector = metricsCollector;
         return this;
     }
