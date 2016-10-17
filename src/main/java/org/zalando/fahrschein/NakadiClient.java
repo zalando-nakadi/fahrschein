@@ -2,7 +2,6 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -10,9 +9,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
+import org.zalando.fahrschein.PreparedListening.LowLevelApiPreparedListening;
+import org.zalando.fahrschein.PreparedListening.SubscriptionApiPreparedListening;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
-import org.zalando.fahrschein.metrics.MetricsCollector;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,11 +20,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import static org.zalando.fahrschein.metrics.NoMetricsCollector.NO_METRICS_COLLECTOR;
 
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
@@ -37,19 +32,13 @@ public class NakadiClient {
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
-    private final ScheduledExecutorService executor;
 
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
-        this(baseUri, clientHttpRequestFactory, backoffStrategy, objectMapper, cursorManager, NO_METRICS_COLLECTOR);
-
-    }
-    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager, MetricsCollector metricsCollector) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.objectMapper = objectMapper;
         this.cursorManager = cursorManager;
-        this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
-        this.executor = Executors.newScheduledThreadPool(1);
+        this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper);
     }
 
     public List<Partition> getPartitions(String eventName) throws IOException {
@@ -84,22 +73,11 @@ public class NakadiClient {
         }
     }
 
-    public <T> void listen(Subscription subscription, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
-        final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
-        final String queryString = streamParameters.toQueryString();
-        final URI uri = baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
-
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.of(subscription), eventType, listener);
-
-        nakadiReader.run();
+    public <T> PreparedListening prepareListening(Subscription subscription, Class<T> eventType, Listener<T> listener) throws IOException {
+        return new SubscriptionApiPreparedListening<>(nakadiReaderFactory, baseUri, eventType, listener, subscription);
     }
 
-    public <T> void listen(String eventName, Class<T> eventType, Listener<T> listener, StreamParameters streamParameters) throws IOException {
-        final String queryString = streamParameters.toQueryString();
-        final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
-
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
-
-        nakadiReader.run();
+    public <T> PreparedListening prepareListening(String eventName, Class<T> eventType, Listener<T> listener) throws IOException {
+        return new LowLevelApiPreparedListening<>(nakadiReaderFactory, baseUri, eventType, listener, eventName);
     }
 }
