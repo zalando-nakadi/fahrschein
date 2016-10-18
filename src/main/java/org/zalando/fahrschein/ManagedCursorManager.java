@@ -1,12 +1,15 @@
 package org.zalando.fahrschein;
 
+import com.google.common.collect.Iterables;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -120,10 +123,10 @@ public class ManagedCursorManager implements CursorManager {
 
         try (final ClientHttpResponse response = request.execute()) {
 
-            final int status = response.getStatusCode().value();
-            if (status == 204) {
+            final HttpStatus status = response.getStatusCode();
+            if (status == HttpStatus.NO_CONTENT) {
                 LOG.debug("Successfully committed cursor for subscription [{}] to event [{}] in partition [{}] with offset [{}]", subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
-            } else if (status == 200) {
+            } else if (status == HttpStatus.OK) {
                 LOG.warn("Cursor for subscription [{}] to event [{}] in partition [{}] with offset [{}] was already committed", subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
             } else {
                 // Error responses should already have been handled by ProblemHandlingClientHttpRequest, so we still treat this as success

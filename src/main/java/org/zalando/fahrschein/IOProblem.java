@@ -1,40 +1,17 @@
 package org.zalando.fahrschein;
 
+import org.springframework.http.HttpStatus;
 import org.zalando.problem.Problem;
 
-import javax.annotation.Nullable;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+import javax.ws.rs.core.Response;
+
 @SuppressWarnings("serial")
 public class IOProblem extends IOException implements Problem {
-    static final class Status implements Response.StatusType {
-        private final int statusCode;
-        private final String reasonPhrase;
-
-        Status(final int statusCode, final String reasonPhrase) {
-            this.statusCode = statusCode;
-            this.reasonPhrase = reasonPhrase;
-        }
-
-        @Override
-        public int getStatusCode() {
-            return statusCode;
-        }
-
-        @Override
-        public Response.Status.Family getFamily() {
-            return Response.Status.Family.familyOf(statusCode);
-        }
-
-        @Override
-        public String getReasonPhrase() {
-            return reasonPhrase;
-        }
-    }
-
     private final URI type;
     private final String title;
     private final Response.StatusType status;
@@ -42,7 +19,6 @@ public class IOProblem extends IOException implements Problem {
     private final String detail;
     @Nullable
     private final URI instance;
-
     public IOProblem(final URI type, final String title, final Response.StatusType status, @Nullable final String detail, @Nullable final URI instance) {
         super(formatMessage(type, title, status.getStatusCode(), detail));
         this.type = type;
@@ -87,6 +63,31 @@ public class IOProblem extends IOException implements Problem {
     @Override
     public Optional<URI> getInstance() {
         return Optional.ofNullable(instance);
+    }
+
+    static final class Status implements Response.StatusType {
+        private final HttpStatus httpStatus;
+        private final String reasonPhrase;
+
+        Status(final HttpStatus httpStatus, final String reasonPhrase) {
+            this.httpStatus = httpStatus;
+            this.reasonPhrase = reasonPhrase;
+        }
+
+        @Override
+        public int getStatusCode() {
+            return httpStatus.value();
+        }
+
+        @Override
+        public Response.Status.Family getFamily() {
+            return Response.Status.Family.familyOf(httpStatus.value());
+        }
+
+        @Override
+        public String getReasonPhrase() {
+            return reasonPhrase;
+        }
     }
 
 }

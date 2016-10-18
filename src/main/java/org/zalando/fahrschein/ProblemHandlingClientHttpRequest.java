@@ -2,13 +2,14 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,6 +17,8 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 import static java.util.Arrays.asList;
 
@@ -28,7 +31,7 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
     private final ClientHttpRequest clientHttpRequest;
     private final ObjectMapper objectMapper;
 
-    public ProblemHandlingClientHttpRequest(ClientHttpRequest clientHttpRequest) {
+    public ProblemHandlingClientHttpRequest(final ClientHttpRequest clientHttpRequest) {
         this.clientHttpRequest = clientHttpRequest;
         this.objectMapper = new ObjectMapper();
     }
@@ -38,10 +41,10 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
         final ClientHttpResponse response = clientHttpRequest.execute();
 
         try {
-            final int statusCode = response.getRawStatusCode();
-            if (statusCode >= 400) {
+            final HttpStatus httpStatus = response.getStatusCode();
+            if (httpStatus.is4xxClientError() || httpStatus.is5xxServerError()) {
                 final String statusText = response.getStatusText();
-                final IOProblem.Status status = new IOProblem.Status(statusCode, statusText);
+                final IOProblem.Status status = new IOProblem.Status(httpStatus, statusText);
 
                 final MediaType contentType = response.getHeaders().getContentType();
                 if (contentType != null && isProblemContentType(contentType)) {
@@ -57,10 +60,10 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
                     throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, status);
                 }
             }
-        } catch (Throwable throwable) {
+        } catch (final Throwable throwable) {
             try {
                 response.close();
-            } catch (Throwable suppressed) {
+            } catch (final Throwable suppressed) {
                 throwable.addSuppressed(suppressed);
             }
             throw throwable;
@@ -70,7 +73,7 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
     }
 
     private boolean isProblemContentType(final MediaType contentType) {
-        for (MediaType problemContentType : PROBLEM_CONTENT_TYPES) {
+        for (final MediaType problemContentType : PROBLEM_CONTENT_TYPES) {
             if (Objects.equals(problemContentType.getType(), contentType.getType())
                     && Objects.equals(problemContentType.getSubtype(), contentType.getSubtype())) {
                 return true;
