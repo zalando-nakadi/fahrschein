@@ -1,7 +1,9 @@
 package org.zalando.fahrschein.domain;
 
-public interface DataChangeEvent extends Event {
+public interface DataChangeEvent<T> extends Event {
     String getDataType();
 
-    String getOperation();
+    DataOperation getOperation();
+
+    T getData();
 }
