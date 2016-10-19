@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,15 +56,15 @@ public class ManagedCursorManager implements CursorManager {
         }
     }
 
-    static final class CursorResponse {
+    static final class CursorWrapper {
         private final List<Cursor> items;
 
         @JsonCreator
-        CursorResponse(@JsonProperty("items") List<Cursor> items) {
+        CursorWrapper(@JsonProperty("items") List<Cursor> items) {
             this.items = items;
         }
 
-        List<Cursor> getItems() {
+        public List<Cursor> getItems() {
             return items;
         }
     }
@@ -115,7 +114,7 @@ public class ManagedCursorManager implements CursorManager {
         request.getHeaders().put("X-Nakadi-StreamId", singletonList(stream.getStreamId()));
 
         try (OutputStream os = request.getBody()) {
-            objectMapper.writeValue(os, Collections.singleton(cursor));
+            objectMapper.writeValue(os, new CursorWrapper(singletonList(cursor)));
         }
 
         try (final ClientHttpResponse response = request.execute()) {
@@ -146,8 +145,8 @@ public class ManagedCursorManager implements CursorManager {
 
         try (final ClientHttpResponse response = request.execute()) {
             try (InputStream is = response.getBody()) {
-                final CursorResponse cursorResponse = objectMapper.readValue(is, CursorResponse.class);
-                return cursorResponse.getItems();
+                final CursorWrapper cursorWrapper = objectMapper.readValue(is, CursorWrapper.class);
+                return cursorWrapper.getItems();
             }
         }
     }

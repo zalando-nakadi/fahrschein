@@ -13,7 +13,7 @@ public final class Cursor {
     private final String cursorToken;
 
     @JsonCreator
-    public Cursor(String partition, String offset, @JsonProperty("event_type") String eventType, @JsonProperty("cursor_token") String cursorToken) {
+    public Cursor(@JsonProperty("partition") String partition, @JsonProperty("offset") String offset, @JsonProperty("event_type") String eventType, @JsonProperty("cursor_token") String cursorToken) {
         this.partition = partition;
         this.offset = offset;
         this.eventType = eventType;
