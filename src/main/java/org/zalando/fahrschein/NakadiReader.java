@@ -42,7 +42,7 @@ import static java.util.Collections.singletonList;
 class NakadiReader<T> implements IORunnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
-    private static final TypeReference<List<Cursor>> LIST_OF_CURSORS = new TypeReference<List<Cursor>>() {
+    private static final TypeReference<Collection<Cursor>> COLLECTION_OF_CURSORS = new TypeReference<Collection<Cursor>>() {
     };
 
     private final URI uri;
@@ -76,7 +76,7 @@ class NakadiReader<T> implements IORunnable {
 
         this.jsonFactory = objectMapper.getFactory();
         this.eventReader = objectMapper.reader().forType(eventClass);
-        this.cursorHeaderWriter = objectMapper.writerFor(LIST_OF_CURSORS).without(SerializationFeature.INDENT_OUTPUT);
+        this.cursorHeaderWriter = objectMapper.writerFor(COLLECTION_OF_CURSORS).without(SerializationFeature.INDENT_OUTPUT);
 
         if (clientHttpRequestFactory instanceof HttpComponentsClientHttpRequestFactory) {
             LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());

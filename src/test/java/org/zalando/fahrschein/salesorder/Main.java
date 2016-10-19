@@ -40,7 +40,7 @@ public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException {
-        final URI baseUri = URI.create("https://nakadi-sandbox-hila.aruha-test.zalan.do");
+        final URI baseUri = URI.create("https://nakadi-sandbox.aruha-test.zalan.do");
         final String eventName = "sales-order-service.order-placed";
 
         final ObjectMapper objectMapper = new ObjectMapper();
