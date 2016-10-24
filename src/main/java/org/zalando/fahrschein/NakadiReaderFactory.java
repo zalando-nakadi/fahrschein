@@ -1,13 +1,16 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
 
-import javax.annotation.Nullable;
-import java.net.URI;
-import java.util.Optional;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 class NakadiReaderFactory {
 
@@ -31,4 +34,11 @@ class NakadiReaderFactory {
         return nakadiReader;
     }
 
+    <T> NakadiReader createReader(final URI uri, final String eventName, final Optional<Subscription> subscription,
+            final Class<T> eventClass, JavaType eventType, final Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
+    	final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
+                eventName, subscription, eventClass, eventType, listener, metricsCollector);
+
+        return nakadiReader;
+    }
 }

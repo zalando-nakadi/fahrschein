@@ -1,16 +1,22 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.singletonList;
+
+import java.io.Closeable;
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -24,21 +30,18 @@ import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
 import org.zalando.fahrschein.metrics.NoMetricsCollector;
 
-import javax.annotation.Nullable;
-import java.io.Closeable;
-import java.io.EOFException;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.Collections.singletonList;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 
 public class NakadiReader<T> {
 
@@ -61,32 +64,39 @@ public class NakadiReader<T> {
     private final ObjectWriter cursorHeaderWriter;
 
     private final MetricsCollector metricsCollector;
+    
+    private final JavaType eventType;
 
     public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
-        this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, listener, null);
+        this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, objectMapper.getTypeFactory().constructType(eventClass), listener, null);
     }
 
-    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
-        checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, JavaType eventType, Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
+    	checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
 
-        this.uri = uri;
+    	this.uri = uri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.backoffStrategy = backoffStrategy;
         this.cursorManager = cursorManager;
         this.eventName = eventName;
         this.subscription = subscription;
         this.eventClass = eventClass;
+        this.eventType = eventType;
         this.listener = listener;
         this.metricsCollector = metricsCollector != null ? metricsCollector : new NoMetricsCollector();
 
         this.jsonFactory = objectMapper.getFactory();
-        this.eventReader = objectMapper.reader().forType(eventClass);
+        this.eventReader = objectMapper.reader().forType(eventType);
         this.cursorHeaderWriter = objectMapper.writerFor(LIST_OF_CURSORS).without(SerializationFeature.INDENT_OUTPUT);
 
         if (clientHttpRequestFactory instanceof HttpComponentsClientHttpRequestFactory) {
             LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());
         }
     }
+    
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
+    	this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, objectMapper.getTypeFactory().constructType(eventClass), listener, metricsCollector);
+     }
 
     static class JsonInput implements Closeable {
         private final ClientHttpResponse response;
@@ -132,7 +142,7 @@ public class NakadiReader<T> {
         }
         final ClientHttpResponse response = request.execute();
         try {
-            final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+            final JsonParser jsonParser = jsonFactory.createParser(response.getBody());
             return new JsonInput(response, jsonParser);
         } catch (Throwable throwable) {
             try {
@@ -194,7 +204,7 @@ public class NakadiReader<T> {
         expectToken(jsonParser, JsonToken.START_ARRAY);
         jsonParser.clearCurrentToken();
 
-        final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventClass);
+        final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventType);
 
         final List<T> events = new ArrayList<>();
         while (true) {
