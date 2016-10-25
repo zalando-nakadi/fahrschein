@@ -42,6 +42,7 @@ import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.salesorder.domain.DataChangeEvent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
@@ -368,7 +369,7 @@ public class NakadiReaderTest {
     }
     
     @Test
-    public void shouldDeserializeParametricType() throws Exception {
+    public void shouldDeserializeParametricTypeFails() throws Exception {
     	final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"data_op\":\"C\",\"data_type\":\"sample-event\",\"data\":{\"id\":\"12345\"}}]}".getBytes("utf-8"));
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
@@ -396,6 +397,37 @@ public class NakadiReaderTest {
 
     }
 
+    @Test
+    public void shouldDeserializeParametricType() throws Exception {
+    	final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"data_op\":\"C\",\"data_type\":\"sample-event\",\"data\":{\"id\":\"12345\"}}]}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+        
+        JavaType eventType = objectMapper.getTypeFactory().constructParametricType(DataChangeEvent.class, SomeEvent.class);
+        
+        RecordingListener<DataChangeEvent> listener = new RecordingListener<>();
+        
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<DataChangeEvent> nakadiReader = new NakadiReader<DataChangeEvent>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), DataChangeEvent.class, eventType, listener, null);
+        
+        try {
+        	nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+        	fail("Expected IOException on reconnect");
+        } catch (BackoffException e) {
+            List<DataChangeEvent> batch = listener.getLastResult();
+            Assert.assertNotNull(batch);
+            DataChangeEvent<?> event = batch.get(0);
+            Assert.assertEquals("data-type", SomeEvent.class, event.getData().getClass());        	
+        }
+
+    }
+    
     private class RecordingListener<T> implements Listener<T> {
     	
     	private List<List<T>> result = new ArrayList<>();
