@@ -1,10 +1,34 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.SequenceInputStream;
+import java.io.UncheckedIOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.hamcrest.Matchers;
 import org.hobsoft.hamcrest.compose.ComposeMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -15,25 +39,11 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.salesorder.domain.DataChangeEvent;
 
-import java.io.*;
-import java.net.URI;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 public class NakadiReaderTest {
 
@@ -61,6 +71,11 @@ public class NakadiReaderTest {
         }
     }
 
+    @Before
+    public void before() {
+    	objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+    }
+    
     @Test
     public void shouldNotRetryInitialConnection() throws IOException {
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
@@ -351,5 +366,49 @@ public class NakadiReaderTest {
             }
         }
     }
+    
+    @Test
+    public void shouldDeserializeParametricType() throws Exception {
+    	final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"data_op\":\"C\",\"data_type\":\"sample-event\",\"data\":{\"id\":\"12345\"}}]}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
 
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+        
+        RecordingListener<DataChangeEvent> listener = new RecordingListener<>();
+        
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<DataChangeEvent> nakadiReader = new NakadiReader<DataChangeEvent>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.<Subscription>empty(), DataChangeEvent.class, listener, null);
+        
+        try {
+        	nakadiReader.runInternal(-1, TimeUnit.MILLISECONDS);
+        	fail("Expected IOException on reconnect");
+        } catch (BackoffException e) {
+            List<DataChangeEvent> batch = listener.getLastResult();
+            Assert.assertNotNull(batch);
+            DataChangeEvent<?> event = batch.get(0);
+            Assert.assertEquals("data-type", SomeEvent.class, event.getData().getClass());        	
+        }
+
+    }
+
+    private class RecordingListener<T> implements Listener<T> {
+    	
+    	private List<List<T>> result = new ArrayList<>();
+    	
+    	public List<T> getLastResult() {
+    		return result.size() == 0 ? null : result.get(0);
+    	}
+    	
+    	@Override
+    	public void accept(List<T> events) throws IOException, EventAlreadyProcessedException {
+    		result.add(0, events);
+    	}
+    	
+    }
+    
 }
