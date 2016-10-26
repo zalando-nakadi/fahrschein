@@ -21,8 +21,6 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import static org.zalando.fahrschein.metrics.NoMetricsCollector.NO_METRICS_COLLECTOR;
 
@@ -37,7 +35,6 @@ public class NakadiClient {
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
-    private final ScheduledExecutorService executor;
 
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
         this(baseUri, clientHttpRequestFactory, backoffStrategy, objectMapper, cursorManager, NO_METRICS_COLLECTOR);
@@ -49,7 +46,6 @@ public class NakadiClient {
         this.objectMapper = objectMapper;
         this.cursorManager = cursorManager;
         this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
-        this.executor = Executors.newScheduledThreadPool(1);
     }
 
     public List<Partition> getPartitions(String eventName) throws IOException {

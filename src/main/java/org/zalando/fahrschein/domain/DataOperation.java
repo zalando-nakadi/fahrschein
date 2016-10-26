@@ -1,5 +1,7 @@
 package org.zalando.fahrschein.domain;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * The type of operation executed on the entity.
  * <ul>
@@ -9,7 +11,7 @@ package org.zalando.fahrschein.domain;
  * <li><strong>S</strong>: Snapshot</li>
  * </ul>
  */
-enum DataOperation {
+public enum DataOperation {
 
     CREATE("C"),
     UPDATE("U"),
@@ -22,6 +24,7 @@ enum DataOperation {
         this.operation = operation;
     }
 
+    @JsonValue
     public String getOperation() {
         return operation;
     }
