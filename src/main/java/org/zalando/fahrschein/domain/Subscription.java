@@ -24,7 +24,7 @@ public class Subscription {
     @JsonCreator
     @Hack("Use String type for createdAt so we do not have to require JavaTimeModule to be registered in the ObjectMapper")
     public Subscription(@JsonProperty("id") String id, @JsonProperty("owning_application") String owningApplication, @JsonProperty("event_types") Set<String> eventTypes, @JsonProperty("consumer_group") String consumerGroup, @JsonProperty("created_at") String createdAt) {
-        this(id, owningApplication, eventTypes, consumerGroup, OffsetDateTime.parse(createdAt));
+        this(id, owningApplication, eventTypes, consumerGroup, createdAt == null ? null : OffsetDateTime.parse(createdAt));
     }
 
     public Subscription(String owningApplication, Set<String> eventTypes, String consumerGroup) {
