@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.zalando.fahrschein.metrics.NoMetricsCollector.NO_METRICS_COLLECTOR;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,12 +18,15 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.hamcrest.Matchers;
 import org.hobsoft.hamcrest.compose.ComposeMatchers;
@@ -45,10 +49,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeoutException;
-
-import static org.zalando.fahrschein.metrics.NoMetricsCollector.NO_METRICS_COLLECTOR;
 
 public class NakadiReaderTest {
 
@@ -385,6 +385,11 @@ public class NakadiReaderTest {
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
         when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
 
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+        
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+        
         RecordingListener<DataChangeEvent> listener = new RecordingListener<>();
         
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
@@ -397,7 +402,7 @@ public class NakadiReaderTest {
             List<DataChangeEvent> batch = listener.getLastResult();
             Assert.assertNotNull(batch);
             DataChangeEvent<?> event = batch.get(0);
-            Assert.assertEquals("data-type", SomeEvent.class, event.getData().getClass());        	
+            Assert.assertEquals("data-type", LinkedHashMap.class, event.getData().getClass());        	
         }
 
     }
@@ -406,7 +411,13 @@ public class NakadiReaderTest {
     public void shouldDeserializeParametricType() throws Exception {
     	final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"data_op\":\"C\",\"data_type\":\"sample-event\",\"data\":{\"id\":\"12345\"}}]}".getBytes("utf-8"));
-
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+        
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+        
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
         
         JavaType eventType = objectMapper.getTypeFactory().constructParametricType(DataChangeEvent.class, SomeEvent.class);
         

@@ -29,6 +29,7 @@ import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
+import org.zalando.fahrschein.metrics.NoMetricsCollector;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -83,7 +84,7 @@ class NakadiReader<T> implements IORunnable {
         this.eventClass = eventClass;
         this.eventType = eventType;
         this.listener = listener;
-        this.metricsCollector = metricsCollector;
+        this.metricsCollector = metricsCollector ==  null ? NoMetricsCollector.NO_METRICS_COLLECTOR : metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
         this.eventReader = objectMapper.reader().forType(eventClass);
