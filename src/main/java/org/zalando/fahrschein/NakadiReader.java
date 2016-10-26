@@ -1,27 +1,8 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.zalando.fahrschein.domain.Batch;
-import org.zalando.fahrschein.domain.Cursor;
-import org.zalando.fahrschein.domain.Subscription;
-import org.zalando.fahrschein.metrics.MetricsCollector;
+import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -35,9 +16,33 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkState;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
+import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.zalando.fahrschein.domain.Batch;
+import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.metrics.MetricsCollector;
+import org.zalando.fahrschein.metrics.NoMetricsCollector;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Iterables;
 
 class NakadiReader<T> implements IORunnable {
 
@@ -60,19 +65,26 @@ class NakadiReader<T> implements IORunnable {
     private final ObjectWriter cursorHeaderWriter;
 
     private final MetricsCollector metricsCollector;
+    
+    private final JavaType eventType;
 
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, final MetricsCollector metricsCollector) {
-        checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener) {
+        this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, objectMapper.getTypeFactory().constructType(eventClass), listener, null);
+    }
 
-        this.uri = uri;
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, JavaType eventType, Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
+    	checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
+
+    	this.uri = uri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.backoffStrategy = backoffStrategy;
         this.cursorManager = cursorManager;
         this.eventName = eventName;
         this.subscription = subscription;
         this.eventClass = eventClass;
+        this.eventType = eventType;
         this.listener = listener;
-        this.metricsCollector = metricsCollector;
+        this.metricsCollector = metricsCollector ==  null ? NoMetricsCollector.NO_METRICS_COLLECTOR : metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
         this.eventReader = objectMapper.reader().forType(eventClass);
@@ -82,6 +94,10 @@ class NakadiReader<T> implements IORunnable {
             LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());
         }
     }
+    
+    public NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, @Nullable final MetricsCollector metricsCollector) {
+    	this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, eventClass, objectMapper.getTypeFactory().constructType(eventClass), listener, metricsCollector);
+     }
 
     static class JsonInput implements Closeable {
         private final ClientHttpResponse response;
@@ -133,7 +149,7 @@ class NakadiReader<T> implements IORunnable {
         final ClientHttpResponse response = request.execute();
         try {
             final Optional<String> streamId = getStreamId(response);
-            final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+            final JsonParser jsonParser = jsonFactory.createParser(response.getBody());
 
             if (subscription.isPresent() && streamId.isPresent()) {
                 cursorManager.addStreamId(subscription.get(), streamId.get());
@@ -209,7 +225,7 @@ class NakadiReader<T> implements IORunnable {
         expectToken(jsonParser, JsonToken.START_ARRAY);
         jsonParser.clearCurrentToken();
 
-        final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventClass);
+        final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventType);
 
         final List<T> events = new ArrayList<>();
         while (true) {
