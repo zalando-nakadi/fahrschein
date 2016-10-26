@@ -1,11 +1,13 @@
 package org.zalando.fahrschein;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,7 +15,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
@@ -28,7 +29,6 @@ import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
-import org.zalando.fahrschein.metrics.NoMetricsCollector;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -43,10 +43,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterables;
 
-public class NakadiReader<T> {
+class NakadiReader<T> implements IORunnable {
 
     private static final Logger LOG = LoggerFactory.getLogger(NakadiReader.class);
-    private static final TypeReference<List<Cursor>> LIST_OF_CURSORS = new TypeReference<List<Cursor>>() {
+    private static final TypeReference<Collection<Cursor>> COLLECTION_OF_CURSORS = new TypeReference<Collection<Cursor>>() {
     };
 
     private final URI uri;
@@ -83,11 +83,11 @@ public class NakadiReader<T> {
         this.eventClass = eventClass;
         this.eventType = eventType;
         this.listener = listener;
-        this.metricsCollector = metricsCollector != null ? metricsCollector : new NoMetricsCollector();
+        this.metricsCollector = metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
-        this.eventReader = objectMapper.reader().forType(eventType);
-        this.cursorHeaderWriter = objectMapper.writerFor(LIST_OF_CURSORS).without(SerializationFeature.INDENT_OUTPUT);
+        this.eventReader = objectMapper.reader().forType(eventClass);
+        this.cursorHeaderWriter = objectMapper.writerFor(COLLECTION_OF_CURSORS).without(SerializationFeature.INDENT_OUTPUT);
 
         if (clientHttpRequestFactory instanceof HttpComponentsClientHttpRequestFactory) {
             LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());
@@ -131,6 +131,11 @@ public class NakadiReader<T> {
         }
     }
 
+    private static Optional<String> getStreamId(ClientHttpResponse response) {
+        return Optional.ofNullable(response.getHeaders())
+                .flatMap(h -> h.getOrDefault("X-Nakadi-StreamId", emptyList()).stream().findFirst());
+    }
+
     private JsonInput openJsonInput() throws IOException {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         if (!subscription.isPresent()) {
@@ -142,7 +147,13 @@ public class NakadiReader<T> {
         }
         final ClientHttpResponse response = request.execute();
         try {
+            final Optional<String> streamId = getStreamId(response);
             final JsonParser jsonParser = jsonFactory.createParser(response.getBody());
+
+            if (subscription.isPresent() && streamId.isPresent()) {
+                cursorManager.addStreamId(subscription.get(), streamId.get());
+            }
+
             return new JsonInput(response, jsonParser);
         } catch (Throwable throwable) {
             try {
@@ -170,6 +181,9 @@ public class NakadiReader<T> {
     private Cursor readCursor(JsonParser jsonParser) throws IOException {
         String partition = null;
         String offset = null;
+        String eventType = null;
+        String cursorToken = null;
+
 
         expectToken(jsonParser, JsonToken.START_OBJECT);
 
@@ -181,6 +195,12 @@ public class NakadiReader<T> {
                     break;
                 case "offset":
                     offset = jsonParser.nextTextValue();
+                    break;
+                case "event_type":
+                    eventType = jsonParser.nextTextValue();
+                    break;
+                case "cursor_token":
+                    cursorToken = jsonParser.nextTextValue();
                     break;
                 default:
                     LOG.warn("Unexpected field [{}] in cursor", field);
@@ -197,7 +217,7 @@ public class NakadiReader<T> {
             throw new IllegalStateException("Could not read offset from cursor for partition [" + partition + "]");
         }
 
-        return new Cursor(partition, offset);
+        return new Cursor(partition, offset, eventType, cursorToken);
     }
 
     private List<T> readEvents(final JsonParser jsonParser) throws IOException {
@@ -229,23 +249,17 @@ public class NakadiReader<T> {
         return events;
     }
 
+    @Override
     public void run() throws IOException {
-        run(-1, TimeUnit.MILLISECONDS);
-    }
-
-    public void run(long timeout, TimeUnit timeoutUnit) throws IOException {
         try {
-            runInternal(timeout, timeoutUnit);
+            runInternal();
         } catch (BackoffException e) {
             throw e.getCause();
         }
     }
 
     @VisibleForTesting
-    void runInternal(long timeout, TimeUnit timeoutUnit) throws IOException, BackoffException {
-
-        final long lockedUntil = timeout <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeoutUnit.toMillis(timeout);
-
+    void runInternal() throws IOException, BackoffException {
         LOG.info("Starting to listen for events for [{}]", eventName);
 
         JsonInput jsonInput = openJsonInput();
@@ -253,38 +267,58 @@ public class NakadiReader<T> {
 
         int errorCount = 0;
 
-        while (System.currentTimeMillis() < lockedUntil) {
+        while (true) {
             try {
-
                 LOG.debug("Waiting for next batch of events for [{}]", eventName);
 
                 expectToken(jsonParser, JsonToken.START_OBJECT);
-                expectToken(jsonParser, JsonToken.FIELD_NAME);
-                expectField(jsonParser, "cursor");
+                metricsCollector.markMessageReceived();
 
-                final Cursor cursor = readCursor(jsonParser);
+                Cursor cursor = null;
+                List<T> events = null;
+
+                while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                    final String field = jsonParser.getCurrentName();
+                    switch (field) {
+                        case "cursor": {
+                            cursor = readCursor(jsonParser);
+                            break;
+                        }
+                        case "events": {
+                            events = readEvents(jsonParser);
+                            break;
+                        }
+                        case "info": {
+                            LOG.debug("Skipping stream info in event batch");
+                            jsonParser.nextToken();
+                            jsonParser.skipChildren();
+                            break;
+                        }
+                        default: {
+                            LOG.warn("Unexpected field [{}] in event batch", field);
+                            jsonParser.nextToken();
+                            jsonParser.skipChildren();
+                            break;
+                        }
+                    }
+                }
+
+                if (cursor == null) {
+                    throw new IOException("Could not read cursor");
+                }
 
                 LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
 
-                metricsCollector.markMessageReceived();
-
-                final JsonToken token = jsonParser.nextToken();
-                if (token != JsonToken.END_OBJECT) {
-                    expectField(jsonParser, "events");
-
-                    final List<T> events = readEvents(jsonParser);
+                if (events == null) {
+                    metricsCollector.markEventsReceived(0);
+                } else {
                     metricsCollector.markEventsReceived(events.size());
-
-                    expectToken(jsonParser, JsonToken.END_OBJECT);
 
                     final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
 
                     processBatch(batch);
 
                     metricsCollector.markMessageSuccessfullyProcessed();
-                } else {
-                    // it's a keep alive batch
-                    metricsCollector.markEventsReceived(0);
                 }
 
                 errorCount = 0;
@@ -293,9 +327,9 @@ public class NakadiReader<T> {
                 metricsCollector.markErrorWhileConsuming();
 
                 if (errorCount > 0) {
-                    LOG.warn("Got [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), eventName, errorCount, e);
+                    LOG.warn("Got [{}] [{}] while reading events for [{}] after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventName, errorCount, e);
                 } else {
-                    LOG.info("Got [{}] while reading events for [{}]", e.getClass().getSimpleName(), eventName);
+                    LOG.info("Got [{}] [{}] while reading events for [{}]", e.getClass().getSimpleName(), e.getMessage(), eventName, e);
                 }
 
                 jsonInput.close();
@@ -323,17 +357,18 @@ public class NakadiReader<T> {
         }
     }
 
-    private void expectField(JsonParser jsonParser, String expectedFieldName) throws IOException {
-        final String fieldName = jsonParser.getCurrentName();
-        checkState(expectedFieldName.equals(fieldName), "Expected [%s] field but got [%s]", expectedFieldName, fieldName);
-    }
-
     private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
         final JsonToken token = jsonParser.nextToken();
         if (token == null) {
-            throw new EOFException(Thread.currentThread().isInterrupted() ? "Thread was interrupted" : "Stream was closed");
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedIOException("Thread was interrupted");
+            } else {
+                throw new EOFException("Stream was closed");
+            }
         }
-        checkState(token == expectedToken, "Expected [%s] but got [%s]", expectedToken, token);
+        if (token != expectedToken) {
+            throw new IOException(String.format("Expected [%s] but got [%s]", expectedToken, token));
+        }
     }
 
 }

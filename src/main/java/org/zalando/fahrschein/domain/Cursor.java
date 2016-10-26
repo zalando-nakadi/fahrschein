@@ -1,12 +1,30 @@
 package org.zalando.fahrschein.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public final class Cursor {
     private final String partition;
     private final String offset;
+    private final String eventType;
+    private final String cursorToken;
+
+    @JsonCreator
+    public Cursor(@JsonProperty("partition") String partition, @JsonProperty("offset") String offset, @JsonProperty("event_type") String eventType, @JsonProperty("cursor_token") String cursorToken) {
+        this.partition = partition;
+        this.offset = offset;
+        this.eventType = eventType;
+        this.cursorToken = cursorToken;
+    }
 
     public Cursor(String partition, String offset) {
         this.partition = partition;
         this.offset = offset;
+        this.eventType = null;
+        this.cursorToken = null;
     }
 
     public String getPartition() {
@@ -15,6 +33,14 @@ public final class Cursor {
 
     public String getOffset() {
         return offset;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public String getCursorToken() {
+        return cursorToken;
     }
 
     @Override

@@ -33,6 +33,8 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
         final Process zign = new ProcessBuilder("zign", "token", "uid").start();
         try (final InputStream inputStream = zign.getInputStream()) {
             return CharStreams.toString(new InputStreamReader(inputStream, Charsets.UTF_8)).trim();
+        } finally {
+            LOG.debug("Refreshed token from zign");
         }
     }
 
