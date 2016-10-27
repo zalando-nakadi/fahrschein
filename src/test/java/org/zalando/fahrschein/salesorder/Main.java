@@ -24,11 +24,9 @@ import org.zalando.fahrschein.InMemoryPartitionManager;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
-import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
-import org.zalando.fahrschein.metrics.NoMetricsCollector;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
@@ -97,7 +95,7 @@ public class Main {
 
         final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
 
-        final NakadiClient nakadiClient = new NakadiClient(baseUri, requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager, NoMetricsCollector.NO_METRICS_COLLECTOR);
+        final NakadiClient nakadiClient = new NakadiClient(baseUri, requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager);
 
         final List<Partition> partitions = nakadiClient.getPartitions(eventName);
 
@@ -106,7 +104,7 @@ public class Main {
             cursorManager.onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
         }
 
-        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, new StreamParameters());
+        nakadiClient.prepareListening(eventName, SalesOrderPlaced.class, listener).startListening();
         /*
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
 
