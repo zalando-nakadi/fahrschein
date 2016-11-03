@@ -254,57 +254,7 @@ class NakadiReader<T> implements IORunnable {
 
         while (true) {
             try {
-                LOG.debug("Waiting for next batch of events for [{}]", eventName);
-
-                expectToken(jsonParser, JsonToken.START_OBJECT);
-                metricsCollector.markMessageReceived();
-
-                Cursor cursor = null;
-                List<T> events = null;
-
-                while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
-                    final String field = jsonParser.getCurrentName();
-                    switch (field) {
-                        case "cursor": {
-                            cursor = readCursor(jsonParser);
-                            break;
-                        }
-                        case "events": {
-                            events = readEvents(jsonParser);
-                            break;
-                        }
-                        case "info": {
-                            LOG.debug("Skipping stream info in event batch");
-                            jsonParser.nextToken();
-                            jsonParser.skipChildren();
-                            break;
-                        }
-                        default: {
-                            LOG.warn("Unexpected field [{}] in event batch", field);
-                            jsonParser.nextToken();
-                            jsonParser.skipChildren();
-                            break;
-                        }
-                    }
-                }
-
-                if (cursor == null) {
-                    throw new IOException("Could not read cursor");
-                }
-
-                LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
-
-                if (events == null) {
-                    metricsCollector.markEventsReceived(0);
-                } else {
-                    metricsCollector.markEventsReceived(events.size());
-
-                    final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
-
-                    processBatch(batch);
-
-                    metricsCollector.markMessageSuccessfullyProcessed();
-                }
+                readBatch(jsonParser);
 
                 errorCount = 0;
             } catch (IOException e) {
@@ -339,6 +289,71 @@ class NakadiReader<T> implements IORunnable {
 
                 errorCount++;
             }
+        }
+    }
+
+    @VisibleForTesting
+    void readSingleBatch() throws IOException {
+        try (final JsonInput jsonInput = openJsonInput()) {
+            final JsonParser jsonParser = jsonInput.getJsonParser();
+            readBatch(jsonParser);
+        } catch (IOException e) {
+            metricsCollector.markErrorWhileConsuming();
+            throw e;
+        }
+    }
+
+    private void readBatch(final JsonParser jsonParser) throws IOException {
+        LOG.debug("Waiting for next batch of events for [{}]", eventName);
+
+        expectToken(jsonParser, JsonToken.START_OBJECT);
+        metricsCollector.markMessageReceived();
+
+        Cursor cursor = null;
+        List<T> events = null;
+
+        while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+            final String field = jsonParser.getCurrentName();
+            switch (field) {
+                case "cursor": {
+                    cursor = readCursor(jsonParser);
+                    break;
+                }
+                case "events": {
+                    events = readEvents(jsonParser);
+                    break;
+                }
+                case "info": {
+                    LOG.debug("Skipping stream info in event batch");
+                    jsonParser.nextToken();
+                    jsonParser.skipChildren();
+                    break;
+                }
+                default: {
+                    LOG.warn("Unexpected field [{}] in event batch", field);
+                    jsonParser.nextToken();
+                    jsonParser.skipChildren();
+                    break;
+                }
+            }
+        }
+
+        if (cursor == null) {
+            throw new IOException("Could not read cursor");
+        }
+
+        LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
+
+        if (events == null) {
+            metricsCollector.markEventsReceived(0);
+        } else {
+            metricsCollector.markEventsReceived(events.size());
+
+            final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
+
+            processBatch(batch);
+
+            metricsCollector.markMessageSuccessfullyProcessed();
         }
     }
 
