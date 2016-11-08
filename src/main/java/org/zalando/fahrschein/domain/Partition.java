@@ -17,8 +17,10 @@ public class Partition {
     }
 
     private final String partition;
+
     @JsonProperty(OLDEST_AVAILABLE_OFFSET)
     private final String oldestAvailableOffset;
+
     @JsonProperty(NEWEST_AVAILABLE_OFFSET)
     private final String newestAvailableOffset;
 

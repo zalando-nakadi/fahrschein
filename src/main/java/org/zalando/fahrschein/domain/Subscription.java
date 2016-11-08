@@ -27,12 +27,16 @@ public class Subscription {
     @Nullable
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private final String id;
+
     @JsonProperty(OWNING_APPLICATION)
     private final String owningApplication;
+
     @JsonProperty(EVENT_TYPES)
     private final Set<String> eventTypes;
+
     @JsonProperty(CONSUMER_GROUP)
     private final String consumerGroup;
+
     @Nullable
     @JsonProperty(CREATED_AT)
     private final OffsetDateTime createdAt;

@@ -20,11 +20,15 @@ public final class Metadata {
 
     @JsonProperty(EVENT_TYPE)
     private final String eventType;
+
     private final String eid;
+
     @JsonProperty(OCCURED_AT)
     private final OffsetDateTime occuredAt;
+
     @JsonProperty(RECEIVED_AT)
     private final OffsetDateTime receivedAt;
+
     @JsonProperty(FLOW_ID)
     private final String flowId;
 

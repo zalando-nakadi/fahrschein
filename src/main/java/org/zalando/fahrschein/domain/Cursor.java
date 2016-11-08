@@ -18,9 +18,12 @@ public final class Cursor {
     }
 
     private final String partition;
+
     private final String offset;
+
     @JsonProperty(EVENT_TYPE)
     private final String eventType;
+
     @JsonProperty(CURSOR_TOKEN)
     private final String cursorToken;
 

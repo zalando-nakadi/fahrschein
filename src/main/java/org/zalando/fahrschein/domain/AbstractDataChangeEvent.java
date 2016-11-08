@@ -12,10 +12,13 @@ public abstract class AbstractDataChangeEvent<T> implements DataChangeEvent<T> {
     }
 
     private final Metadata metadata;
+
     @JsonProperty(FieldNames.DATA_TYPE)
     private final String dataType;
+
     @JsonProperty(FieldNames.DATA_OP)
     private final DataOperation dataOp;
+
     private final T data;
 
     protected AbstractDataChangeEvent(@JsonProperty(FieldNames.METADATA) Metadata metadata, @JsonProperty(FieldNames.DATA_TYPE) String dataType, @JsonProperty(FieldNames.DATA_OP) DataOperation dataOp, @JsonProperty(FieldNames.DATA) T data) {
