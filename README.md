@@ -41,7 +41,6 @@ final String eventName = "sales-order-service.order-placed";
 
 // Create an ObjectMapper that understands Nakadi naming conventions and problem responses
 final ObjectMapper objectMapper = new ObjectMapper();
-objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
 objectMapper.registerModule(new ProblemModule());
 
 // Create a ClientHttpRequestFactory that automatically sends "Authorization: Bearer TOKEN" headers and handles proble responses
