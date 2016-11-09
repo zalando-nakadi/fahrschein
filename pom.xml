@@ -361,6 +361,11 @@
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.7.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-guava</artifactId>
             <version>2.7.4</version>
         </dependency>
@@ -398,12 +403,6 @@
         </dependency>
 
         <!-- jackson modules used for tests and examples -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.7.4</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.zalando</groupId>
             <artifactId>jackson-datatype-money</artifactId>
