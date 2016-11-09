@@ -6,9 +6,9 @@ public abstract class AbstractDataChangeEvent<T> implements DataChangeEvent<T> {
     private final DataOperation dataOp;
     private final T data;
 
-    protected AbstractDataChangeEvent( Metadata metadata,  DataOperation dataOp, T data) {
+    protected AbstractDataChangeEvent( Metadata metadata, String dataType,  DataOperation dataOp, T data) {
         this.metadata = metadata;
-        this.dataType = getDataType();
+        this.dataType = dataType;
         this.dataOp = dataOp;
         this.data = data;
     }
@@ -16,6 +16,11 @@ public abstract class AbstractDataChangeEvent<T> implements DataChangeEvent<T> {
     @Override
     public final Metadata getMetadata() {
         return metadata;
+    }
+
+    @Override
+    public final String getDataType() {
+        return dataType;
     }
 
     @Override
