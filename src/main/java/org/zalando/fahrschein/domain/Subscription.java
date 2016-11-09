@@ -1,6 +1,6 @@
 package org.zalando.fahrschein.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.google.gag.annotation.remark.Hack;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -19,14 +19,28 @@ public class Subscription {
     @Nullable
     private final OffsetDateTime createdAt;
 
+    @Hack("Necessary to enable Jackson Wrapper working with multiple constructors but without @JsonCreator annotation")
+    private Subscription() {
+        this(null, null, null, null, null);
+    }
 
-    @JsonCreator
     public Subscription(String id, String owningApplication, Set<String> eventTypes, String consumerGroup, OffsetDateTime createdAt) {
         this.id = id;
         this.owningApplication = owningApplication;
-        this.eventTypes = Collections.unmodifiableSet(new HashSet<>(eventTypes));
+        this.eventTypes = determineEventTypesToBeSet(eventTypes);
         this.consumerGroup = consumerGroup;
         this.createdAt = createdAt;
+    }
+
+    @Hack("Necessary to prevent NullPointerException on deserialization")
+    private Set<String> determineEventTypesToBeSet(Set<String> eventTypes) {
+        Set<String> eventTypesToBeSet;
+        if (eventTypes != null)
+            eventTypesToBeSet = Collections.unmodifiableSet(new HashSet<>(eventTypes));
+        else {
+            eventTypesToBeSet = new HashSet<>();
+        }
+        return eventTypesToBeSet;
     }
 
     public Subscription(String owningApplication, Set<String> eventTypes, String consumerGroup) {

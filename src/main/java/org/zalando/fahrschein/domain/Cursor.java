@@ -1,7 +1,6 @@
 package org.zalando.fahrschein.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gag.annotation.remark.Hack;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -12,8 +11,12 @@ public final class Cursor {
     private final String eventType;
     private final String cursorToken;
 
-    @JsonCreator
-    public Cursor(@JsonProperty("partition") String partition, @JsonProperty("offset") String offset, @JsonProperty("event_type") String eventType, @JsonProperty("cursor_token") String cursorToken) {
+    @Hack("Necessary to enable Jackson Wrapper working with multiple constructors but without @JsonCreator annotation")
+    private Cursor() {
+        this(null, null, null, null);
+    }
+
+    public Cursor(String partition, String offset, String eventType, String cursorToken) {
         this.partition = partition;
         this.offset = offset;
         this.eventType = eventType;
@@ -48,6 +51,8 @@ public final class Cursor {
         return "Cursor{" +
                 "partition='" + partition + '\'' +
                 ", offset='" + offset + '\'' +
+                ", eventType='" + eventType + '\'' +
+                ", cursorToken='" + cursorToken + '\'' +
                 '}';
     }
 
