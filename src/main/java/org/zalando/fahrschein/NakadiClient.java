@@ -52,20 +52,7 @@ public class NakadiClient {
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager, MetricsCollector metricsCollector) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
-        this.objectMapper = objectMapper;
-        this.cursorManager = cursorManager;
-        this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
-    }
-
-    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager) {
-        this(baseUri, clientHttpRequestFactory, backoffStrategy, cursorManager, NO_METRICS_COLLECTOR);
-    }
-
-    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, MetricsCollector metricsCollector) {
-        ObjectMapper objectMapper = setupBasicObjectMapper();
-        this.baseUri = baseUri;
-        this.clientHttpRequestFactory = clientHttpRequestFactory;
-        this.objectMapper = objectMapper;
+        this.objectMapper = setupBasicObjectMapper();
         this.cursorManager = cursorManager;
         this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
     }
@@ -77,10 +64,6 @@ public class NakadiClient {
         objectMapper.registerModules(new Jdk8Module(), new ParameterNamesModule(), new JavaTimeModule());
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
-        return objectMapper;
-    }
-
-    public ObjectMapper getObjectMapper() {
         return objectMapper;
     }
 
