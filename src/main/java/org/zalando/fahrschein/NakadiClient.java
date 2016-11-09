@@ -43,12 +43,10 @@ public class NakadiClient {
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
 
-    @Deprecated
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
         this(baseUri, clientHttpRequestFactory, backoffStrategy, objectMapper, cursorManager, NO_METRICS_COLLECTOR);
     }
 
-    @Deprecated
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager, MetricsCollector metricsCollector) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
@@ -113,7 +111,7 @@ public class NakadiClient {
         final String queryString = streamParameters.toQueryString();
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
 
-        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.<Subscription>empty(), eventType, listener);
+        final NakadiReader<T> nakadiReader = nakadiReaderFactory.createReader(uri, eventName, Optional.empty(), eventType, listener);
 
         nakadiReader.run();
     }
