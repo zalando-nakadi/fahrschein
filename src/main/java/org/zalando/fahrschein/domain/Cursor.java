@@ -5,30 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.concurrent.Immutable;
 
-import static org.zalando.fahrschein.domain.Cursor.FieldNames.*;
-
 @Immutable
 public final class Cursor {
-
-    static class FieldNames {
-        static final String EVENT_TYPE = "event_type";
-        static final String CURSOR_TOKEN = "cursor_token";
-        static final String PARTITION = "partition";
-        static final String OFFSET = "offset";
-    }
-
     private final String partition;
-
     private final String offset;
-
-    @JsonProperty(EVENT_TYPE)
     private final String eventType;
-
-    @JsonProperty(CURSOR_TOKEN)
     private final String cursorToken;
 
     @JsonCreator
-    public Cursor(@JsonProperty(PARTITION) String partition, @JsonProperty(OFFSET) String offset, @JsonProperty(EVENT_TYPE) String eventType, @JsonProperty(CURSOR_TOKEN) String cursorToken) {
+    public Cursor(@JsonProperty("partition") String partition, @JsonProperty("offset") String offset, @JsonProperty("event_type") String eventType, @JsonProperty("cursor_token") String cursorToken) {
         this.partition = partition;
         this.offset = offset;
         this.eventType = eventType;
