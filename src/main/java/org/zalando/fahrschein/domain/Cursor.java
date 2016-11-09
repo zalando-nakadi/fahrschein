@@ -1,7 +1,5 @@
 package org.zalando.fahrschein.domain;
 
-import com.google.gag.annotation.remark.Hack;
-
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
@@ -10,11 +8,6 @@ public final class Cursor {
     private final String offset;
     private final String eventType;
     private final String cursorToken;
-
-    @Hack("Necessary to enable Jackson Wrapper working with multiple constructors but without @JsonCreator annotation")
-    private Cursor() {
-        this(null, null, null, null);
-    }
 
     public Cursor(String partition, String offset, String eventType, String cursorToken) {
         this.partition = partition;
