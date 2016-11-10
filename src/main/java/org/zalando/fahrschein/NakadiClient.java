@@ -39,7 +39,7 @@ public class NakadiClient {
 
     private final URI baseUri;
     private final ClientHttpRequestFactory clientHttpRequestFactory;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper internalObjectMapper;
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
 
@@ -50,12 +50,12 @@ public class NakadiClient {
     public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager, MetricsCollector metricsCollector) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
-        this.objectMapper = createObjectMapper();
+        this.internalObjectMapper = createInternalObjectMapper();
         this.cursorManager = cursorManager;
         this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
     }
 
-    private ObjectMapper createObjectMapper() {
+    private ObjectMapper createInternalObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -69,7 +69,7 @@ public class NakadiClient {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         try (final ClientHttpResponse response = request.execute()) {
             try (final InputStream is = response.getBody()) {
-                return objectMapper.readValue(is, LIST_OF_PARTITIONS);
+                return internalObjectMapper.readValue(is, LIST_OF_PARTITIONS);
             }
         }
     }
@@ -83,12 +83,12 @@ public class NakadiClient {
         request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         try (final OutputStream os = request.getBody()) {
-            objectMapper.writeValue(os, subscription);
+            internalObjectMapper.writeValue(os, subscription);
         }
 
         try (final ClientHttpResponse response = request.execute()) {
             try (final InputStream is = response.getBody()) {
-                final Subscription subscriptionResponse = objectMapper.readValue(is, Subscription.class);
+                final Subscription subscriptionResponse = internalObjectMapper.readValue(is, Subscription.class);
                 LOG.info("Created subscription for event {} with id [{}]", subscription.getEventTypes(), subscriptionResponse.getId());
                 cursorManager.addSubscription(subscriptionResponse);
                 return subscriptionResponse;
