@@ -3,7 +3,6 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
@@ -19,6 +18,7 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.metrics.MetricsCollector;
 
 import java.io.IOException;
@@ -61,7 +61,6 @@ public class NakadiClient {
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         objectMapper.registerModules(new Jdk8Module(), new ParameterNamesModule(), new JavaTimeModule());
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
         return objectMapper;
     }
 
@@ -76,7 +75,7 @@ public class NakadiClient {
     }
 
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
-        final Subscription subscription = new Subscription(applicationName, Collections.singleton(eventName), consumerGroup);
+        final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, Collections.singleton(eventName), consumerGroup);
 
         final URI uri = baseUri.resolve("/subscriptions");
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.POST);
