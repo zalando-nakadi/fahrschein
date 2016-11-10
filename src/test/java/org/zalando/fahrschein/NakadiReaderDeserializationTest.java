@@ -109,7 +109,7 @@ public class NakadiReaderDeserializationTest {
 
         @JsonCreator
         public CustomerChanged(@JsonProperty("metadata") Metadata metadata, @JsonProperty("data_type") String dataType, @JsonProperty("data_op") DataOperation dataOp, @JsonProperty("data") Customer data) {
-            super(metadata, DATA_TYPE, dataOp, data);
+            super(metadata, dataType, dataOp, data);
         }
 
     }
@@ -120,7 +120,7 @@ public class NakadiReaderDeserializationTest {
 
         @JsonCreator
         public SalesOrderChanged(@JsonProperty("metadata") Metadata metadata, @JsonProperty("data_type") String dataType, @JsonProperty("data_op") DataOperation dataOp, @JsonProperty("data") SalesOrder data) {
-            super(metadata, DATA_TYPE, dataOp, data);
+            super(metadata, dataType, dataOp, data);
         }
     }
 
