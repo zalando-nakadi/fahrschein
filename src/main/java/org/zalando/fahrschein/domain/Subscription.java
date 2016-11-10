@@ -5,9 +5,11 @@ import com.google.gag.annotation.remark.Hack;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import static java.util.Collections.emptySet;
+import static java.util.Collections.unmodifiableSet;
 
 @Immutable
 public class Subscription {
@@ -27,20 +29,9 @@ public class Subscription {
     public Subscription(String id, String owningApplication, Set<String> eventTypes, String consumerGroup, OffsetDateTime createdAt) {
         this.id = id;
         this.owningApplication = owningApplication;
-        this.eventTypes = determineEventTypesToBeSet(eventTypes);
+        this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.createdAt = createdAt;
-    }
-
-    @Hack("Necessary to prevent NullPointerException on deserialization")
-    private Set<String> determineEventTypesToBeSet(Set<String> eventTypes) {
-        Set<String> eventTypesToBeSet;
-        if (eventTypes != null)
-            eventTypesToBeSet = Collections.unmodifiableSet(new HashSet<>(eventTypes));
-        else {
-            eventTypesToBeSet = new HashSet<>();
-        }
-        return eventTypesToBeSet;
     }
 
     public Subscription(String owningApplication, Set<String> eventTypes, String consumerGroup) {
