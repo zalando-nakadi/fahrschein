@@ -43,16 +43,16 @@ public class NakadiClient {
     private final CursorManager cursorManager;
     private final NakadiReaderFactory nakadiReaderFactory;
 
-    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager) {
-        this(baseUri, clientHttpRequestFactory, backoffStrategy, objectMapper, cursorManager, NO_METRICS_COLLECTOR);
+    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper eventObjectMapper, CursorManager cursorManager) {
+        this(baseUri, clientHttpRequestFactory, backoffStrategy, eventObjectMapper, cursorManager, NO_METRICS_COLLECTOR);
     }
 
-    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper objectMapper, CursorManager cursorManager, MetricsCollector metricsCollector) {
+    public NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, ObjectMapper eventObjectMapper, CursorManager cursorManager, MetricsCollector metricsCollector) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.internalObjectMapper = createInternalObjectMapper();
         this.cursorManager = cursorManager;
-        this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, metricsCollector);
+        this.nakadiReaderFactory = new NakadiReaderFactory(clientHttpRequestFactory, backoffStrategy, cursorManager, eventObjectMapper, metricsCollector);
     }
 
     private ObjectMapper createInternalObjectMapper() {
