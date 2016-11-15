@@ -1,10 +1,5 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
@@ -41,13 +36,8 @@ public class ManagedCursorManagerTest {
     public void foo() {
         final RestTemplate restTemplate = new RestTemplate();
         this.server = MockRestServiceServer.createServer(restTemplate);
-
         final ClientHttpRequestFactory requestFactory = restTemplate.getRequestFactory();
-        final ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
-        objectMapper.registerModules(new Jdk8Module(), new ParameterNamesModule(), new JavaTimeModule());
-
-        this.cursorManager = new ManagedCursorManager(URI.create("http://example.com/"), requestFactory, objectMapper);
+        this.cursorManager = new ManagedCursorManager(URI.create("http://example.com/"), requestFactory);
     }
 
 

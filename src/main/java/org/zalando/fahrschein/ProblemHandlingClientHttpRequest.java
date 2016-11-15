@@ -30,7 +30,7 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
 
     public ProblemHandlingClientHttpRequest(ClientHttpRequest clientHttpRequest) {
         this.clientHttpRequest = clientHttpRequest;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = DefaultObjectMapper.INSTANCE;
     }
 
     @Override
