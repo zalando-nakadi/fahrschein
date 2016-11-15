@@ -16,7 +16,7 @@ public final class Metadata {
 
     @JsonCreator
     @Deprecated
-    public Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occured_at") String occuredAt, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId) {
+    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occured_at") String occuredAt, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId) {
         this(eventType, eid, occuredAt == null ? null : OffsetDateTime.parse(occuredAt), receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId);
     }
 
