@@ -132,7 +132,7 @@ public void readSalesOrderPlacedEvents() throws IOException {
     if (optionalLock.isPresent()) {
         final Lock lock = optionalLock.get();
         try {
-            nakadiClient.listen(EVENT_NAME, SalesOrderPlaced.class, this::handleEvents, streamParameters);
+            nakadiClient.listen(EVENT_NAME, SalesOrderPlaced.class, this::handleEvents, lock, streamParameters);
         } finally {
             partitionManager.unlockPartitions(lock);
         }

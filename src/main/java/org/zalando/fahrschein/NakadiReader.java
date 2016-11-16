@@ -20,6 +20,8 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Lock;
+import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.MetricsCollector;
 
@@ -33,11 +35,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 
 class NakadiReader<T> implements IORunnable {
 
@@ -52,6 +57,7 @@ class NakadiReader<T> implements IORunnable {
 
     private final String eventName;
     private final Optional<Subscription> subscription;
+    private final Optional<Lock> lock;
     private final Class<T> eventClass;
     private final Listener<T> listener;
 
@@ -61,7 +67,7 @@ class NakadiReader<T> implements IORunnable {
 
     private final MetricsCollector metricsCollector;
 
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Class<T> eventClass, Listener<T> listener, final MetricsCollector metricsCollector) {
+    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, final MetricsCollector metricsCollector) {
         checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
 
         this.uri = uri;
@@ -70,6 +76,7 @@ class NakadiReader<T> implements IORunnable {
         this.cursorManager = cursorManager;
         this.eventName = eventName;
         this.subscription = subscription;
+        this.lock = lock;
         this.eventClass = eventClass;
         this.listener = listener;
         this.metricsCollector = metricsCollector;
@@ -125,8 +132,17 @@ class NakadiReader<T> implements IORunnable {
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
         if (!subscription.isPresent()) {
             final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
-            if (!cursors.isEmpty()) {
-                final String value = cursorHeaderWriter.writeValueAsString(cursors);
+            final Collection<Cursor> lockedCursors;
+            if (lock.isPresent()) {
+                final Map<String, String> offsets = cursors.stream().collect(Collectors.toMap(Cursor::getPartition, Cursor::getOffset));
+                final List<Partition> partitions = lock.get().getPartitions();
+                lockedCursors = partitions.stream().map(partition -> new Cursor(partition.getPartition(), offsets.getOrDefault(partition.getPartition(), "BEGIN"))).collect(toList());
+            } else {
+                lockedCursors = cursors;
+            }
+
+            if (!lockedCursors.isEmpty()) {
+                final String value = cursorHeaderWriter.writeValueAsString(lockedCursors);
                 request.getHeaders().put("X-Nakadi-Cursors", singletonList(value));
             }
         }
