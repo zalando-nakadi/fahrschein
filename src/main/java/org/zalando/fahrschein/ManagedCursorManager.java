@@ -74,10 +74,10 @@ public class ManagedCursorManager implements CursorManager {
     private final ObjectMapper objectMapper;
     private final Map<String, SubscriptionStream> streams;
 
-    public ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, ObjectMapper objectMapper) {
+    public ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
-        this.objectMapper = objectMapper;
+        this.objectMapper = DefaultObjectMapper.INSTANCE;
         this.streams = new HashMap<>();
     }
 

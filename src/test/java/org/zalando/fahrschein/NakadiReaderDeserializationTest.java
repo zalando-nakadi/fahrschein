@@ -3,6 +3,7 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
@@ -124,6 +125,14 @@ public class NakadiReaderDeserializationTest {
         }
     }
 
+    public static class NodeChangedEvent extends AbstractDataChangeEvent<JsonNode> {
+
+        @JsonCreator
+        public NodeChangedEvent(@JsonProperty("metadata") Metadata metadata, @JsonProperty("data_type") String dataType, @JsonProperty("data_op") DataOperation dataOp, @JsonProperty("data") JsonNode data) {
+            super(metadata, dataType, dataOp, data);
+        }
+    }
+
     private void setupResponse(int partition, int offset, final String data) throws IOException {
         final String body = String.format("{\"cursor\":{\"partition\":\"%d\",\"offset\":\"%d\"},\"events\":[%s]}", partition, offset, data);
         final ClientHttpResponse response = mock(ClientHttpResponse.class);
@@ -219,5 +228,25 @@ public class NakadiReaderDeserializationTest {
         assertThat(customer.getCustomerNumber(), Matchers.equalTo("1234"));
         assertThat(customer.getName(), Matchers.equalTo("Test"));
     }
+
+    @Test
+    public void shouldDeserializeDataChangeEventToJsonNode() throws IOException {
+        setupResponse(1, 1, "{\"data_type\":\"customer\",\"data_op\":\"C\",\"data\":{\"customer_number\":\"1234\",\"name\":\"Test\"}}");
+
+        final List<NodeChangedEvent> events = readSingleBatch("customer", NodeChangedEvent.class);
+
+        assertThat(events, Matchers.notNullValue());
+        assertThat(events, hasSize(1));
+
+        final DataChangeEvent<JsonNode> event = events.get(0);
+        assertThat(event.getDataType(), Matchers.equalTo("customer"));
+        assertThat(event.getDataOp(), Matchers.equalTo(DataOperation.CREATE));
+
+        final JsonNode customer = event.getData();
+        assertThat(customer, Matchers.notNullValue());
+        assertThat(customer.get("customer_number").asText(), Matchers.equalTo("1234"));
+        assertThat(customer.get("name").asText(), Matchers.equalTo("Test"));
+    }
+
 
 }

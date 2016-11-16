@@ -1,5 +1,7 @@
 package org.zalando.fahrschein.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
@@ -9,6 +11,7 @@ public final class Cursor {
     private final String eventType;
     private final String cursorToken;
 
+    @JsonCreator
     public Cursor(String partition, String offset, String eventType, String cursorToken) {
         this.partition = partition;
         this.offset = offset;
