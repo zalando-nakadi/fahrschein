@@ -32,6 +32,10 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
         this.maxRetries = maxRetries;
     }
 
+    public ExponentialBackoffStrategy withMaxRetries(int maxRetries) {
+        return new ExponentialBackoffStrategy(initialDelay, backoffFactor, maxDelay, maxRetries);
+    }
+
     private long calculateDelay(double count) {
         return Math.min((long)(initialDelay*Math.pow(backoffFactor, count)), maxDelay);
     }

@@ -20,6 +20,8 @@
     - No unnecessary buffering or line-based processing, causing less garbage
     - Less garbage and higher performance
     - No required base classes for events
+ - Support for both high-level (subscription) and low-level apis
+ - Pluggable HTTP client implementations using [`ClientHttpRequestFactory`](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/client/ClientHttpRequestFactory.html) interface
 
 ## Installation
 
@@ -36,32 +38,27 @@ Fahrschein is available in maven central, so you only have to add the following 
 ## Usage
 
 ```java
-final URI baseUri = new URI("https://nakadi-sandbox-hila.aruha-test.zalan.do");
-final String eventName = "sales-order-service.order-placed";
+final String eventName = "sales-order-placed";
 
-// Create an ObjectMapper that understands Nakadi naming conventions and problem responses
-final ObjectMapper objectMapper = new ObjectMapper();
-objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
-
-// Create a ClientHttpRequestFactory that automatically sends "Authorization: Bearer TOKEN" headers and handles proble responses
-final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
-final ProblemHandlingClientHttpRequestFactory problemHandlingRequestFactory = new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate, objectMapper);
-final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(problemHandlingRequestFactory, () -> "MY_ACCESS_TOKEN");
-
-final CursorManager cursorManager = new InMemoryCursorManager();
-final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
-final StreamParameters streamParameters = new StreamParameters();
-final NakadiClient nakadiClient = new NakadiClient(baseUri, requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager);
-
-// Create a listener for our event
+// Create a Listener for our event
 final Listener<SalesOrderPlaced> listener = events -> {
     for (SalesOrderPlaced salesOrderPlaced : events) {
         LOG.info("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
     }
 };
 
+// Configure client, defaults to using the high level api with ManagedCursorManger and SimpleClientHttpRequestFactory
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .build();
+
+// Create subscription using the high level api
+Subscription subscriptions = nakadiClient.subscribe(applicationName, eventName, String consumerGroup);
+
 // Start streaming, the listen call will block and automatically reconnect on IOException
-nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters);
+nakadiClient.stream(subscription)
+        .listen(SalesOrderPlaced.class, listener);
+
 ```
 
 See [`Main.java`](src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
@@ -70,8 +67,8 @@ See [`Main.java`](src/test/java/org/zalando/fahrschein/salesorder/Main.java) for
 
 |                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
 | -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
-| Dependencies         | Spring (http client and jdbc), Jackson, Postgres (optional)       | Scala, Akka, Jackson  | Scala, Akka             | None                |
-| Cursor Management    | In-Memory / Persistent (Postgres)                                 | In-Memory             | Persistent (Dynamo)     |                     |
+| Dependencies         | Spring (http client and jdbc), Jackson                            | Scala, Akka, Jackson  | Scala, Akka             | None                |
+| Cursor Management    | In-Memory / Persistent (Postgres or Redis)                        | In-Memory             | Persistent (Dynamo)     |                     |
 | Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
 | Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
 
@@ -92,9 +89,9 @@ cursorManager.fromNewestAvailableOffsets(eventName, partitions);
 cursorManager.updatePartitions(eventName, partitions);
 ```
 
-## Cursor persistence
+## Using the low-level api
 
-Offsets for each partition can be stored in a postgres database by configuring a different `CursorManager`.
+You can also use the low-level api, which requires local persistence of partition offsets. There are persistent `CursorManager` implementations using either Postgres or Redis.
 
 ```java
 final HikariConfig hikariConfig = new HikariConfig();
@@ -102,37 +99,37 @@ hikariConfig.setJdbcUrl("jdbc:postgresql://localhost:5432/local_nakadi_cursor_db
 hikariConfig.setUsername("postgres");
 hikariConfig.setPassword("postgres");
 final DataSource dataSource = new HikariDataSource(hikariConfig);
-final CursorManager cursorManager = new PersistentCursorManager(dataSource);
-```
 
-## Using the managed high-level api
+final CursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
 
-Using the high-level api works very similar to the low-level api. You have to use a different `CursorManager`, create a `Subscription` and then use this subscription to start streaming of event.
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .withCursorManager(cursorManager)
+        .build();
 
-```java
-final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
-...
-final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
-nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
+nakadiClient.stream(eventName)
+        .listen(SalesOrderPlaced.class, listener);
 ```
 
 ## Using multiple partitions and multiple consumers
 
 With the `PartitionManager` api it is possible to coordinate between multiple nodes of one application, so that only one node is consuming events from a partition at the same time.
 
-Partitions are locked by one node for a certain time. This requires that every node has an unique name or other identifier. The `listen` method will return after the lock timeout and can try to grab the lock again.
+Partitions are locked by one node for a certain time. This requires that every node has an unique name or other identifier.
 
 ```java
 @Scheduled(fixedDelay = 60*1000L)
 public void readSalesOrderPlacedEvents() throws IOException {
     final String lockedBy = ... // host name or another unique identifier for this node
-    final List<Partition> partitions = nakadiClient.getPartitions(EVENT_NAME);
-    final Optional<Lock> optionalLock = partitionManager.lockPartitions(EVENT_NAME, partitions, lockedBy);
+    final List<Partition> partitions = nakadiClient.getPartitions(eventName);
+    final Optional<Lock> lock = partitionManager.lockPartitions(eventName, partitions, lockedBy);
 
     if (optionalLock.isPresent()) {
         final Lock lock = optionalLock.get();
         try {
-            nakadiClient.listen(EVENT_NAME, SalesOrderPlaced.class, this::handleEvents, lock, streamParameters);
+            nakadiClient.stream(eventName)
+                    .withLock(lock))
+                    .listen(SalesOrderPlaced.class, listener);
         } finally {
             partitionManager.unlockPartitions(lock);
         }
@@ -142,7 +139,9 @@ public void readSalesOrderPlacedEvents() throws IOException {
 
 ## Using another ClientHttpRequestFactory
 
-This library is currently only tested and fully working with `SimpleClientHttpRequestFactory`. Please note that `HttpComponentsClientHttpRequestFactory` tries to consume the remaining stream on closing and so might block until the configured `streamTimeout` during reconnection.
+This library is currently tested and used in production with `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
+
+Please note that `HttpComponentsClientHttpRequestFactory` tries to consume the remaining stream on closing and so might block until the configured `streamTimeout` during reconnection. Since Spring 4.3.x, `SimpleClientHttpRequestFactory` also tries to consume the stream on close.
 
 ## Handling data binding problems
 

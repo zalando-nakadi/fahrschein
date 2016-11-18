@@ -11,7 +11,7 @@
 
 
     <Loggers>
-        <Logger name="org.zalando" level="debug"/>
+        <Logger name="org.zalando" level="info"/>
 
         <Root level="info">
             <AppenderRef ref="stdout"/>

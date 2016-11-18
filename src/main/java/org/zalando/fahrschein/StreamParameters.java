@@ -22,7 +22,7 @@ public class StreamParameters {
     @Nullable
     private final Integer maxUncommittedEvents;
 
-    private StreamParameters(Integer batchLimit, Integer streamLimit, Integer batchFlushTimeout, Integer streamTimeout, Integer streamKeepAliveLimit, Integer maxUncommittedEvents) {
+    private StreamParameters(@Nullable Integer batchLimit, @Nullable Integer streamLimit, @Nullable Integer batchFlushTimeout, @Nullable Integer streamTimeout, @Nullable Integer streamKeepAliveLimit, @Nullable Integer maxUncommittedEvents) {
         this.batchLimit = batchLimit;
         this.streamLimit = streamLimit;
         this.batchFlushTimeout = batchFlushTimeout;

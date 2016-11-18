@@ -10,38 +10,45 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.zalando.fahrschein.AccessTokenProvider;
-import org.zalando.fahrschein.AuthorizedClientHttpRequestFactory;
-import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
+import org.zalando.fahrschein.IORunnable;
 import org.zalando.fahrschein.InMemoryCursorManager;
-import org.zalando.fahrschein.InMemoryPartitionManager;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
-import org.zalando.fahrschein.ProblemHandlingClientHttpRequestFactory;
+import org.zalando.fahrschein.NoBackoffStrategy;
 import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
-import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
-import org.zalando.fahrschein.metrics.NoMetricsCollector;
+import org.zalando.fahrschein.jdbc.JdbcCursorManager;
+import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
+    private static final String SALES_ORDER_SERVICE_ORDER_PLACED = "sales-order-service.order-placed";
+    private static final URI NAKADI_URI = URI.create("https://nakadi-staging.aruha-test.zalan.do");
+    private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/local_nakadi_cursor_db";
+    private static final String JDBC_USERNAME = "postgres";
+    private static final String JDBC_PASSWORD = "postgres";
 
-    public static void main(String[] args) throws IOException {
-        final URI baseUri = URI.create("https://nakadi-sandbox.aruha-test.zalan.do");
-        final String eventName = "sales-order-service.order-placed";
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -58,76 +65,127 @@ public class Main {
         objectMapper.registerModule(new GuavaModule());
         objectMapper.registerModule(new ParameterNamesModule());
 
+        AtomicInteger counter = new AtomicInteger();
+
         final Listener<SalesOrderPlaced> listener = events -> {
-            if (Math.random() < 0.01) {
+            if (Math.random() < 0.0001) {
                 // For testing reconnection logic
                 throw new EventProcessingException("Random failure");
             } else {
                 for (SalesOrderPlaced salesOrderPlaced : events) {
-                    LOG.info("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
+                    LOG.debug("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
+                    final int count = counter.incrementAndGet();
+                    if (count % 1000 == 0) {
+                        LOG.info("Received [{}] sales orders", count);
+                    }
                 }
             }
         };
 
+        simpleListen(objectMapper, listener);
 
-        /*
-        HikariConfig hikariConfig = new HikariConfig();
-        //hikariConfig.setJdbcUrl("jdbc:h2:file:./nakadi-cursor.db;MODE=PostgreSQL");
-        hikariConfig.setJdbcUrl("jdbc:postgresql://localhost:5432/local_nakadi_cursor_db");
-        hikariConfig.setUsername("postgres");
-        hikariConfig.setPassword("postgres");
+        //persistentListen(objectMapper, listener);
+
+        //multiInstanceListen(objectMapper, listener);
+    }
+
+    private static void simpleListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+        final InMemoryCursorManager cursorManager = new InMemoryCursorManager();
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .withCursorManager(cursorManager)
+                .build();
+
+        final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
+        cursorManager.fromOldestAvailableOffset(SALES_ORDER_SERVICE_ORDER_PLACED, partitions);
+
+        nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+                .withObjectMapper(objectMapper)
+                .withBackoffStrategy(new ExponentialBackoffStrategy().withMaxRetries(10))
+                .listen(SalesOrderPlaced.class, listener);
+    }
+
+    private static void persistentListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+        final HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(JDBC_URL);
+        hikariConfig.setUsername(JDBC_USERNAME);
+        hikariConfig.setPassword(JDBC_PASSWORD);
 
         final DataSource dataSource = new HikariDataSource(hikariConfig);
 
-        final CursorManager cursorManager = new PersistentCursorManager(dataSource);
-        */
+        final JdbcCursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
 
-        final AccessTokenProvider tokenProvider = new ZignAccessTokenProvider();
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .withCursorManager(cursorManager)
+                .build();
 
-        final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
-        requestFactoryDelegate.setConnectTimeout(400);
-        requestFactoryDelegate.setReadTimeout(60*1000);
-        final ClientHttpRequestFactory requestFactory = new AuthorizedClientHttpRequestFactory(
-                new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate), tokenProvider);
+        final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
+        cursorManager.fromOldestAvailableOffset(SALES_ORDER_SERVICE_ORDER_PLACED, partitions);
 
-        final CursorManager cursorManager = new InMemoryCursorManager();
-        //final ManagedCursorManager cursorManager = new ManagedCursorManager(baseUri, requestFactory, objectMapper);
+        nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+                .withObjectMapper(objectMapper)
+                .listen(SalesOrderPlaced.class, listener);
+    }
 
-        final InMemoryPartitionManager partitionManager = new InMemoryPartitionManager();
+    private static void multiInstanceListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+        final HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(JDBC_URL);
+        hikariConfig.setUsername(JDBC_USERNAME);
+        hikariConfig.setPassword(JDBC_PASSWORD);
 
-        final ExponentialBackoffStrategy exponentialBackoffStrategy = new ExponentialBackoffStrategy();
+        final DataSource dataSource = new HikariDataSource(hikariConfig);
 
-        final NakadiClient nakadiClient = new NakadiClient(baseUri, requestFactory, exponentialBackoffStrategy, objectMapper, cursorManager, NoMetricsCollector.NO_METRICS_COLLECTOR);
+        final ZignAccessTokenProvider accessTokenProvider = new ZignAccessTokenProvider();
 
-        final List<Partition> partitions = nakadiClient.getPartitions(eventName);
+        final AtomicInteger name = new AtomicInteger();
+        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(16);
 
-        for (Partition partition : partitions) {
-            LOG.info("Partition [{}] has oldest offset [{}] and newest offset [{}]", partition.getPartition(), partition.getOldestAvailableOffset(), partition.getNewestAvailableOffset());
-            cursorManager.onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
+        for (int i = 0; i < 12; i++) {
+            final String instanceName = "consumer-" + name.getAndIncrement();
+            final JdbcPartitionManager partitionManager = new JdbcPartitionManager(dataSource, "fahrschein-demo");
+            final JdbcCursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
+
+            final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                    .withAccessTokenProvider(accessTokenProvider)
+                    .withCursorManager(cursorManager)
+                    .build();
+
+            final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
+
+            cursorManager.fromOldestAvailableOffset(SALES_ORDER_SERVICE_ORDER_PLACED, partitions);
+
+            final IORunnable instance = () -> {
+
+                final IORunnable runnable = () -> {
+                    final Optional<Lock> optionalLock = partitionManager.lockPartitions(SALES_ORDER_SERVICE_ORDER_PLACED, partitions, instanceName);
+
+                    if (optionalLock.isPresent()) {
+                        final Lock lock = optionalLock.get();
+                        try {
+                            nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+                                    .withLock(lock)
+                                    .withObjectMapper(objectMapper)
+                                    .withStreamParameters(new StreamParameters().withStreamLimit(10))
+                                    .withBackoffStrategy(new NoBackoffStrategy())
+                                    .listen(SalesOrderPlaced.class, listener);
+                        } finally {
+                            partitionManager.unlockPartitions(lock);
+                        }
+                    }
+                };
+
+                scheduledExecutorService.scheduleWithFixedDelay(runnable.unchecked(), 0, 1, TimeUnit.SECONDS);
+            };
+            scheduledExecutorService.submit(instance.unchecked());
         }
 
-        nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, new StreamParameters());
-        /*
-        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(4);
-
-
-
-        final IORunnable runnable = () -> {
-            final List<LockedPartition> lockedPartitions = partitionManager.lockPartitions("fahrschein-demo", eventName, partitions, Thread.currentThread().getName(), 30, TimeUnit.SECONDS);
-
-            if (!lockedPartitions.isEmpty()) {
-
-                final StreamParameters streamParameters = new StreamParameters().withStreamTimeout(5 * 60 * 1000);
-
-                //final Subscription subscription = nakadiClient.subscribe("fahrschein-demo2", eventName, "fahrschein-demo-sales-order-placed");
-                //nakadiClient.listen(subscription, SalesOrderPlaced.class, listener, streamParameters);
-
-                nakadiClient.listen(eventName, SalesOrderPlaced.class, listener, streamParameters, lockedPartitions);
-            }
-        };
-
-        scheduledExecutorService.scheduleWithFixedDelay(runnable.unchecked(), 0, 10, TimeUnit.SECONDS);
-        */
-
+        try {
+            Thread.sleep(60L*1000);
+            scheduledExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
