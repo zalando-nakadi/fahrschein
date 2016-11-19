@@ -3,6 +3,7 @@ package org.zalando.fahrschein;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
+import javax.annotation.Nullable;
 import java.net.URI;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -13,16 +14,19 @@ public final class NakadiClientBuilder {
     public static final int DEFAULT_READ_TIMEOUT = 60 * 1000;
 
     private final URI baseUri;
-    private AccessTokenProvider accessTokenProvider;
-    private ClientHttpRequestFactory clientHttpRequestFactory;
-    private CursorManager cursorManager;
+    @Nullable
+    private final AccessTokenProvider accessTokenProvider;
+    @Nullable
+    private final ClientHttpRequestFactory clientHttpRequestFactory;
+    @Nullable
+    private final CursorManager cursorManager;
 
     NakadiClientBuilder(final URI baseUri) {
-        this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
+        this(baseUri, null, null, null);
     }
 
-    private NakadiClientBuilder(URI baseUri, AccessTokenProvider accessTokenProvider, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager) {
-        this.baseUri = baseUri;
+    private NakadiClientBuilder(URI baseUri, @Nullable  AccessTokenProvider accessTokenProvider, @Nullable  ClientHttpRequestFactory clientHttpRequestFactory, @Nullable  CursorManager cursorManager) {
+        this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.accessTokenProvider = accessTokenProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
@@ -41,7 +45,7 @@ public final class NakadiClientBuilder {
     }
 
     private ClientHttpRequestFactory defaultClientHttpRequestFactory() {
-        SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
+        final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
         requestFactoryDelegate.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
         requestFactoryDelegate.setReadTimeout(DEFAULT_READ_TIMEOUT);
 
