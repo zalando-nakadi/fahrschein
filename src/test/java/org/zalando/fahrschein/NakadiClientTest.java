@@ -1,6 +1,5 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
@@ -37,7 +36,10 @@ public class NakadiClientTest {
         final MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
         final ClientHttpRequestFactory requestFactory = restTemplate.getRequestFactory();
 
-        final NakadiClient nakadiClient = new NakadiClient(URI.create("http://example.com/"), requestFactory, new NoBackoffStrategy(), new ObjectMapper(), new InMemoryCursorManager());
+        final NakadiClient nakadiClient = NakadiClient.builder(URI.create("http://example.com/"))
+                .withClientHttpRequestFactory(requestFactory)
+                .withCursorManager(new InMemoryCursorManager())
+                .build();
 
         this.server = mockServer;
         this.client = nakadiClient;
