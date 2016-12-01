@@ -79,8 +79,7 @@ class StreamBuilders {
 
         @Override
         protected URI getURI(String queryString) {
-            final String eventName = getEventName();
-            return baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
+            return baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
         }
 
         @Override
