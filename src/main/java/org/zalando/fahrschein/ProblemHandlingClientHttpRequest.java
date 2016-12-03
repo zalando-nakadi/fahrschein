@@ -41,20 +41,19 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
             final int statusCode = response.getRawStatusCode();
             if (statusCode >= 400) {
                 final String statusText = response.getStatusText();
-                final IOProblem.Status status = new IOProblem.Status(statusCode, statusText);
 
                 final MediaType contentType = response.getHeaders().getContentType();
                 if (contentType != null && isProblemContentType(contentType)) {
                     try (InputStream is = response.getBody()) {
-                        final IOProblem problem = deserializeProblem(is, status);
+                        final IOProblem problem = deserializeProblem(is, statusCode);
                         if (problem != null) {
                             throw problem;
                         } else {
-                            throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, status);
+                            throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, statusCode);
                         }
                     }
                 } else {
-                    throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, status);
+                    throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, statusCode);
                 }
             }
         } catch (Throwable throwable) {
@@ -80,7 +79,7 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
         return false;
     }
 
-    private @Nullable IOProblem deserializeProblem(final InputStream is, final IOProblem.Status status) throws IOException {
+    private @Nullable IOProblem deserializeProblem(final InputStream is, final int statusCode) throws IOException {
         final JsonNode rootNode = objectMapper.readTree(is);
 
         final JsonNode typeNode = rootNode.get("type");
@@ -96,7 +95,7 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
             final JsonNode instanceNode = rootNode.get("instance");
             final String instance = instanceNode == null ? null : instanceNode.asText(null);
 
-            return new IOProblem(URI.create(type), title, status, detail, instance == null ? null : URI.create(instance));
+            return new IOProblem(URI.create(type), title, statusCode, detail, instance == null ? null : URI.create(instance));
         } else {
             final JsonNode errorNode = rootNode.get("error");
             final JsonNode descriptionNode = rootNode.get("error_description");
@@ -105,7 +104,7 @@ public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
                 final String error = errorNode.asText();
                 final String description = descriptionNode.asText();
 
-                return new IOProblem(DEFAULT_PROBLEM_TYPE, error, status, description);
+                return new IOProblem(DEFAULT_PROBLEM_TYPE, error, statusCode, description);
             } else {
                 return null;
             }

@@ -13,8 +13,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class JdbcCursorManager implements CursorManager {
 

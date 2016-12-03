@@ -1,11 +1,10 @@
 package org.zalando.fahrschein;
 
-import com.google.common.base.Joiner;
-
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class StreamParameters {
     @Nullable
@@ -56,7 +55,8 @@ public class StreamParameters {
         if (maxUncommittedEvents != null) {
             params.add("max_uncommitted_events=" + maxUncommittedEvents);
         }
-        return Joiner.on("&").join(params);
+
+        return params.stream().collect(Collectors.joining());
     }
 
     public StreamParameters withBatchLimit(int batchLimit) {

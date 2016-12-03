@@ -1,7 +1,6 @@
 package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Subscription;
@@ -84,7 +83,7 @@ class StreamBuilders {
 
         @Override
         protected String getEventName() {
-            return Iterables.getOnlyElement(subscription.getEventTypes());
+            return subscription.getEventTypes().iterator().next();
         }
 
         @Override

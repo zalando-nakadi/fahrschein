@@ -9,9 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
-import org.zalando.problem.Problem;
 
-import javax.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -32,14 +30,6 @@ public class ProblemHandlingClientHttpRequestTest {
     private final ClientHttpResponse clientHttpResponse = Mockito.mock(ClientHttpResponse.class);
     private final ProblemHandlingClientHttpRequest problemHandlingClientHttpRequest = new ProblemHandlingClientHttpRequest(clientHttpRequest);
 
-    private Integer statusCode(final Problem problem) {
-        return problem.getStatus().getStatusCode();
-    }
-
-    private Response.Status.Family statusFamily(final Problem problem) {
-        return problem.getStatus().getFamily();
-    }
-
     @Test
     public void shouldCreateProblemFromStatusAndText() throws IOException {
         when(clientHttpResponse.getRawStatusCode()).thenReturn(HttpStatus.CONFLICT.value());
@@ -53,8 +43,7 @@ public class ProblemHandlingClientHttpRequestTest {
         when(clientHttpRequest.execute()).thenReturn(clientHttpResponse);
 
         expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", this::statusCode, equalTo(HttpStatus.CONFLICT.value())));
-        expectedException.expect(hasFeature("status family", this::statusFamily, equalTo(Response.Status.Family.CLIENT_ERROR)));
+        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(HttpStatus.CONFLICT.value())));
         expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
         expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("conflict")));
         expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.<String>empty())));
@@ -76,11 +65,10 @@ public class ProblemHandlingClientHttpRequestTest {
         when(clientHttpRequest.execute()).thenReturn(clientHttpResponse);
 
         expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", this::statusCode, equalTo(HttpStatus.NOT_FOUND.value())));
-        expectedException.expect(hasFeature("status family", this::statusFamily, equalTo(Response.Status.Family.CLIENT_ERROR)));
-        expectedException.expect(hasFeature("type", Problem::getType, equalTo(URI.create("http://httpstatus.es/404"))));
-        expectedException.expect(hasFeature("title", Problem::getTitle, equalTo("Not Found")));
-        expectedException.expect(hasFeature("detail", Problem::getDetail, equalTo(Optional.of("EventType does not exist."))));
+        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(HttpStatus.NOT_FOUND.value())));
+        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("http://httpstatus.es/404"))));
+        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("Not Found")));
+        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("EventType does not exist."))));
 
         problemHandlingClientHttpRequest.execute();
     }
@@ -99,11 +87,10 @@ public class ProblemHandlingClientHttpRequestTest {
         when(clientHttpRequest.execute()).thenReturn(clientHttpResponse);
 
         expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", this::statusCode, equalTo(HttpStatus.BAD_REQUEST.value())));
-        expectedException.expect(hasFeature("status family", this::statusFamily, equalTo(Response.Status.Family.CLIENT_ERROR)));
-        expectedException.expect(hasFeature("type", Problem::getType, equalTo(URI.create("about:blank"))));
-        expectedException.expect(hasFeature("title", Problem::getTitle, equalTo("invalid_request")));
-        expectedException.expect(hasFeature("detail", Problem::getDetail, equalTo(Optional.of("Access Token not valid"))));
+        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(HttpStatus.BAD_REQUEST.value())));
+        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
+        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("invalid_request")));
+        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Access Token not valid"))));
 
         problemHandlingClientHttpRequest.execute();
     }

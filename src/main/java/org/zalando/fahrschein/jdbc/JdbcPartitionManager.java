@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class JdbcPartitionManager implements PartitionManager {
     private static final Logger LOG = LoggerFactory.getLogger(JdbcPartitionManager.class);

@@ -8,8 +8,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -38,10 +36,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 class NakadiReader<T> implements IORunnable {
 
@@ -67,7 +65,7 @@ class NakadiReader<T> implements IORunnable {
     private final MetricsCollector metricsCollector;
 
     NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, String eventName, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, final MetricsCollector metricsCollector) {
-        checkState(!subscription.isPresent() || eventName.equals(Iterables.getOnlyElement(subscription.get().getEventTypes())), "Only subscriptions to single event types are currently supported");
+        checkState(!subscription.isPresent() || (subscription.get().getEventTypes().size() == 1 && eventName.equals(subscription.get().getEventTypes().iterator().next())), "Only subscriptions to single event types are currently supported");
 
         this.uri = uri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
@@ -83,10 +81,6 @@ class NakadiReader<T> implements IORunnable {
         this.jsonFactory = objectMapper.getFactory();
         this.eventReader = objectMapper.reader().forType(eventClass);
         this.cursorHeaderWriter = DefaultObjectMapper.INSTANCE.writerFor(COLLECTION_OF_CURSORS);
-
-        if (clientHttpRequestFactory instanceof HttpComponentsClientHttpRequestFactory) {
-            LOG.warn("Using [{}] might block during reconnection, please consider using another implementation of ClientHttpRequestFactory", clientHttpRequestFactory.getClass().getName());
-        }
     }
 
     static class JsonInput implements Closeable {
@@ -258,7 +252,9 @@ class NakadiReader<T> implements IORunnable {
         }
     }
 
-    @VisibleForTesting
+    /*
+     * @VisibleForTesting
+     */
     void runInternal() throws IOException, BackoffException {
         LOG.info("Starting to listen for events for [{}]", eventName);
 
@@ -307,7 +303,9 @@ class NakadiReader<T> implements IORunnable {
         }
     }
 
-    @VisibleForTesting
+    /*
+     * @VisibleForTesting
+     */
     void readSingleBatch() throws IOException {
         try (final JsonInput jsonInput = openJsonInput()) {
             final JsonParser jsonParser = jsonInput.getJsonParser();

@@ -6,8 +6,8 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import javax.annotation.Nullable;
 import java.net.URI;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Optional.ofNullable;
+import static org.zalando.fahrschein.Preconditions.checkNotNull;
 
 public final class NakadiClientBuilder {
     public static final int DEFAULT_CONNECT_TIMEOUT = 500;

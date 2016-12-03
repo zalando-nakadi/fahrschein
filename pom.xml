@@ -298,11 +298,6 @@
     </profiles>
     <dependencies>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>19.0</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
             <version>4.1.6.RELEASE</version>
@@ -325,13 +320,7 @@
             <version>1.0.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>problem</artifactId>
-            <version>0.7.0</version>
-        </dependency>
-
-        <!-- Jackson -->
+        <!-- Jackson and required modules -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -347,8 +336,6 @@
             <artifactId>jackson-databind</artifactId>
             <version>2.7.4</version>
         </dependency>
-
-        <!-- problem handling and dependencies -->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-parameter-names</artifactId>
@@ -362,11 +349,6 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>2.7.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-guava</artifactId>
             <version>2.7.4</version>
         </dependency>
 
@@ -386,7 +368,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.0.86-beta</version>
+            <version>2.2.28</version>
             <scope>test</scope>
         </dependency>
         <dependency>

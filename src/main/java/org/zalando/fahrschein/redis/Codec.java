@@ -1,22 +1,26 @@
 package org.zalando.fahrschein.redis;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-
 import java.nio.charset.Charset;
-
-import static com.google.common.collect.Iterables.toArray;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 
 class Codec {
 
-    public static final char DELIMITER = 0;
-    public static final Charset UTF8 = Charset.forName("UTF-8");
-
-    public static final Joiner JOINER = Joiner.on(DELIMITER);
-    public static final Splitter SPLITTER = Splitter.on(DELIMITER);
+    private static final char DELIMITER_CHAR = 0;
+    private static final String DELIMITER_STRING = String.valueOf(DELIMITER_CHAR);
+    private static final Charset UTF8 = Charset.forName("UTF-8");
 
     public byte[] serialize(final String... values) {
-        return JOINER.join(values).getBytes(UTF8);
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            sb.append(values[i]);
+            if (i < values.length-1) {
+                sb.append(DELIMITER_CHAR);
+            }
+
+        }
+        return sb.toString().getBytes(UTF8);
     }
 
     public String[] deserialize(final byte[] bytes) {
@@ -24,7 +28,12 @@ class Codec {
             return null;
         }
 
-        return toArray(SPLITTER.split(new String(bytes, UTF8)), String.class);
+        List<String> result = new ArrayList<>();
+        StringTokenizer st = new StringTokenizer(new String(bytes, UTF8), DELIMITER_STRING);
+        while (st.hasMoreTokens()) {
+            result.add(st.nextToken());
+        }
+        return result.toArray(new String[result.size()]);
     }
 
 }
