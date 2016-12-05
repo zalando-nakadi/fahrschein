@@ -44,6 +44,11 @@ public class CursorManagerTest {
     }
 
     @Test
+    public void shouldNotUpdatePartitionWhenOffsetStillAvailableAndMore() throws IOException {
+        run("234", "12", "2345", null);
+    }
+
+    @Test
     public void shouldUpdatePartitionWhenNoCursorAndLastConsumedOffsetNoLongerAvailable() throws IOException {
         run(null, "10", "20", "BEGIN");
     }
@@ -71,6 +76,11 @@ public class CursorManagerTest {
     @Test
     public void shouldUpdatePartitionToNewestAvailableWhenPartitionIsExpired() throws IOException {
         run("10", "22", "21", "BEGIN");
+    }
+
+    @Test
+    public void shouldUpdatePartitionToNewestAvailableWhenPartitionIsExpiredLongAgo() throws IOException {
+        run("10", "1234", "2345", "BEGIN");
     }
 
 }

@@ -28,8 +28,8 @@ class Codec {
             return null;
         }
 
-        List<String> result = new ArrayList<>();
-        StringTokenizer st = new StringTokenizer(new String(bytes, UTF8), DELIMITER_STRING);
+        final List<String> result = new ArrayList<>();
+        final StringTokenizer st = new StringTokenizer(new String(bytes, UTF8), DELIMITER_STRING);
         while (st.hasMoreTokens()) {
             result.add(st.nextToken());
         }

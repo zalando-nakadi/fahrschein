@@ -19,7 +19,7 @@ import java.util.Set;
 
 import static java.util.Arrays.asList;
 
-public class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
+class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
 
     private static final MediaType APPLICATION_PROBLEM_JSON = new MediaType("application", "problem+json");
     private static final Set<MediaType> PROBLEM_CONTENT_TYPES = new HashSet<>(asList(APPLICATION_PROBLEM_JSON, MediaType.APPLICATION_JSON));

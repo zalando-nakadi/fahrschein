@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.singletonList;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class ManagedCursorManager implements CursorManager {
 
@@ -82,6 +83,7 @@ public class ManagedCursorManager implements CursorManager {
 
     @Override
     public void addSubscription(Subscription subscription) {
+        checkState(subscription.getEventTypes().size() == 1);
         final String eventName = subscription.getEventTypes().iterator().next();
 
         LOG.debug("Adding subscription [{}] to event [{}]", subscription.getId(), eventName);
@@ -91,6 +93,7 @@ public class ManagedCursorManager implements CursorManager {
 
     @Override
     public void addStreamId(Subscription subscription, String streamId) {
+        checkState(subscription.getEventTypes().size() == 1);
         final String eventName = subscription.getEventTypes().iterator().next();
 
         LOG.debug("Adding stream id [{}] for subscription [{}] to event [{}]", streamId, subscription.getId(), eventName);

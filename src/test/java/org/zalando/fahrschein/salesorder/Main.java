@@ -24,6 +24,7 @@ import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
+import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.jdbc.JdbcCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
 import org.zalando.fahrschein.salesorder.domain.SalesOrderPlaced;
@@ -63,28 +64,37 @@ public class Main {
         objectMapper.registerModule(new MoneyModule());
         objectMapper.registerModule(new ParameterNamesModule());
 
-        AtomicInteger counter = new AtomicInteger();
-
         final Listener<SalesOrderPlaced> listener = events -> {
             if (Math.random() < 0.0001) {
                 // For testing reconnection logic
                 throw new EventProcessingException("Random failure");
             } else {
                 for (SalesOrderPlaced salesOrderPlaced : events) {
-                    LOG.debug("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
-                    final int count = counter.incrementAndGet();
-                    if (count % 1000 == 0) {
-                        LOG.info("Received [{}] sales orders", count);
-                    }
+                    LOG.info("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
                 }
             }
         };
 
-        simpleListen(objectMapper, listener);
+        subscriptionListen(objectMapper, listener);
+
+        //simpleListen(objectMapper, listener);
 
         //persistentListen(objectMapper, listener);
 
         //multiInstanceListen(objectMapper, listener);
+    }
+
+    private static void subscriptionListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .build();
+
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo");
+
+        nakadiClient.stream(subscription)
+                .withObjectMapper(objectMapper)
+                .listen(SalesOrderPlaced.class, listener);
     }
 
     private static void simpleListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {

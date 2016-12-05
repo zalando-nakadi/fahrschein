@@ -6,7 +6,6 @@ import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -15,8 +14,6 @@ import java.util.stream.Collectors;
  * Manages cursor offsets for one consumer. One consumer can handle several distinct events.
  */
 public interface CursorManager {
-
-    Comparator<String> OFFSET_COMPARATOR = Comparator.nullsFirst(Comparator.comparing((String offset) -> "BEGIN".equals(offset) ? null : Long.parseLong(offset)));
 
     void onSuccess(String eventName, Cursor cursor) throws IOException;
 
@@ -59,7 +56,7 @@ public interface CursorManager {
 
         for (Partition partition : partitions) {
             final Cursor cursor = cursorsByPartition.get(partition.getPartition());
-            if (cursor == null || (!"BEGIN".equals(cursor.getOffset()) && OFFSET_COMPARATOR.compare(cursor.getOffset(), partition.getOldestAvailableOffset()) < 0)) {
+            if (cursor == null || (!"BEGIN".equals(cursor.getOffset()) && OffsetComparator.INSTANCE.compare(cursor.getOffset(), partition.getOldestAvailableOffset()) < 0)) {
                 onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
             }
         }
