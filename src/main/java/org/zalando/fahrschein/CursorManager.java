@@ -1,6 +1,5 @@
 package org.zalando.fahrschein;
 
-import com.google.common.collect.Ordering;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
@@ -15,8 +14,6 @@ import java.util.stream.Collectors;
  * Manages cursor offsets for one consumer. One consumer can handle several distinct events.
  */
 public interface CursorManager {
-
-    Ordering<String> OFFSET_ORDERING = Ordering.natural().nullsFirst().onResultOf((String offset) -> "BEGIN".equals(offset) ? null : Long.parseLong(offset));
 
     void onSuccess(String eventName, Cursor cursor) throws IOException;
 
@@ -59,7 +56,7 @@ public interface CursorManager {
 
         for (Partition partition : partitions) {
             final Cursor cursor = cursorsByPartition.get(partition.getPartition());
-            if (cursor == null || (!"BEGIN".equals(cursor.getOffset()) && OFFSET_ORDERING.compare(cursor.getOffset(), partition.getOldestAvailableOffset()) < 0)) {
+            if (cursor == null || (!"BEGIN".equals(cursor.getOffset()) && OffsetComparator.INSTANCE.compare(cursor.getOffset(), partition.getOldestAvailableOffset()) < 0)) {
                 onSuccess(eventName, new Cursor(partition.getPartition(), "BEGIN"));
             }
         }

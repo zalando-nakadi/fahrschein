@@ -3,7 +3,6 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -24,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.singletonList;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class ManagedCursorManager implements CursorManager {
 
@@ -83,7 +83,8 @@ public class ManagedCursorManager implements CursorManager {
 
     @Override
     public void addSubscription(Subscription subscription) {
-        final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
+        checkState(subscription.getEventTypes().size() == 1);
+        final String eventName = subscription.getEventTypes().iterator().next();
 
         LOG.debug("Adding subscription [{}] to event [{}]", subscription.getId(), eventName);
 
@@ -92,7 +93,8 @@ public class ManagedCursorManager implements CursorManager {
 
     @Override
     public void addStreamId(Subscription subscription, String streamId) {
-        final String eventName = Iterables.getOnlyElement(subscription.getEventTypes());
+        checkState(subscription.getEventTypes().size() == 1);
+        final String eventName = subscription.getEventTypes().iterator().next();
 
         LOG.debug("Adding stream id [{}] for subscription [{}] to event [{}]", streamId, subscription.getId(), eventName);
 

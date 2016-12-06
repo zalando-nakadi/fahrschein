@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 @Immutable
 public final class Lock {

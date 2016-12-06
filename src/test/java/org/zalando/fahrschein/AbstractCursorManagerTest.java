@@ -1,14 +1,11 @@
 package org.zalando.fahrschein;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Ordering;
 import org.junit.Test;
 import org.springframework.transaction.annotation.Transactional;
 import org.zalando.fahrschein.domain.Cursor;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -36,7 +33,7 @@ public abstract class AbstractCursorManagerTest {
         assertNotNull(cursors);
         assertEquals(1, cursors.size());
 
-        final Cursor cursor = Iterables.getOnlyElement(cursors);
+        final Cursor cursor = cursors.iterator().next();
         assertEquals("0", cursor.getPartition());
         assertEquals("123", cursor.getOffset());
     }
@@ -50,7 +47,7 @@ public abstract class AbstractCursorManagerTest {
             assertNotNull(cursors);
             assertEquals(1, cursors.size());
 
-            final Cursor cursor = Iterables.getOnlyElement(cursors);
+            final Cursor cursor = cursors.iterator().next();
             assertEquals("0", cursor.getPartition());
             assertEquals("123", cursor.getOffset());
         }
@@ -61,7 +58,7 @@ public abstract class AbstractCursorManagerTest {
             assertNotNull(cursors);
             assertEquals(1, cursors.size());
 
-            final Cursor cursor = Iterables.getOnlyElement(cursors);
+            final Cursor cursor = cursors.iterator().next();
             assertEquals("0", cursor.getPartition());
             assertEquals("124", cursor.getOffset());
         }
@@ -72,8 +69,9 @@ public abstract class AbstractCursorManagerTest {
         cursorManager().onSuccess("test", new Cursor("0", "12"));
         cursorManager().onSuccess("test", new Cursor("1", "13"));
 
+        final List<Cursor> cursors = new ArrayList<>(cursorManager().getCursors("test"));
+        Collections.sort(cursors, Comparator.comparing(Cursor::getPartition));
 
-        final List<Cursor> cursors = Ordering.natural().onResultOf(Cursor::getPartition).sortedCopy(cursorManager().getCursors("test"));
         assertNotNull(cursors);
         assertEquals(2, cursors.size());
 

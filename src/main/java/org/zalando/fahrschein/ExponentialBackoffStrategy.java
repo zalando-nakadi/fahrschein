@@ -5,7 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.zalando.fahrschein.Preconditions.checkState;
+
 
 public class ExponentialBackoffStrategy implements BackoffStrategy {
     private static final Logger LOG = LoggerFactory.getLogger(ExponentialBackoffStrategy.class);

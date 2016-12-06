@@ -20,7 +20,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkState;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
