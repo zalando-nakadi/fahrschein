@@ -110,7 +110,12 @@ class NakadiReader<T> implements IORunnable {
                 LOG.warn("Could not close json parser", e);
             } finally {
                 LOG.trace("Trying to close response");
-                response.close();
+                try {
+                	response.getBody().close();
+                	response.close();
+                } catch (IOException e) {
+                	LOG.warn("Could not close response stream.", e);
+                }
                 LOG.trace("Closed response");
             }
         }
