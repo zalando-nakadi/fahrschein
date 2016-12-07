@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn">
+
+    <Appenders>
+        <Console name="stdout" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%date {%level} [%thread] [%X{X-Flow-ID}] [%logger] %message%n"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="org.zalando" level="error"/>
+
+        <Root level="info">
+            <AppenderRef ref="stdout"/>
+        </Root>
+    </Loggers>
+
+</Configuration>
