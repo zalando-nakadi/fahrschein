@@ -22,14 +22,19 @@ import org.zalando.fahrschein.domain.Partition;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.SequenceInputStream;
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -276,6 +281,55 @@ public class NakadiReaderTest {
         });
 
         Assert.assertNull("Thread should have completed normally", future.get());
+    }
+
+
+    @Test(timeout = 2000)
+    public void shouldBeInterruptibleWhenReadingFromSocket() throws IOException, InterruptedException, BackoffException, ExecutionException, TimeoutException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+        final ServerSocket serverSocket = new ServerSocket(0, 0, loopbackAddress);
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.submit(() -> {
+            try {
+                try (final Socket socket = serverSocket.accept()) {
+                    try (OutputStream out = socket.getOutputStream()) {
+                        while (true) {
+                            out.write("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}\n".getBytes("utf-8"));
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+        final int localPort = serverSocket.getLocalPort();
+        final Socket socket = new Socket(loopbackAddress, localPort);
+        socket.setSoTimeout(1000);
+        final InputStream inputStream = socket.getInputStream();
+        when(response.getBody()).thenReturn(inputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+
+        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
+        final Future<?> future = scheduledExecutorService.submit(() -> {
+            final Thread currentThread = Thread.currentThread();
+            scheduledExecutorService.schedule(currentThread::interrupt, 100, TimeUnit.MILLISECONDS);
+            nakadiReader.unchecked().run();
+        });
+
+        Assert.assertNull("Thread should have completed normally", future.get(500, TimeUnit.MILLISECONDS));
     }
 
     @Test
