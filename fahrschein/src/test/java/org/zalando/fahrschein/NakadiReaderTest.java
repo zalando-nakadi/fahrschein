@@ -1,6 +1,9 @@
 package org.zalando.fahrschein;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.hobsoft.hamcrest.compose.ComposeMatchers;
@@ -10,6 +13,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.mockito.InOrder;
+import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
@@ -30,6 +35,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +53,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -536,7 +543,66 @@ public class NakadiReaderTest {
 
         nakadiReader.run();
 
+        // todo: This assertion is never reached.
         assertEquals(singletonList("[{\"partition\":\"0\",\"offset\":\"0\"},{\"partition\":\"1\",\"offset\":\"10\"}"), headers.get("X-Nakadi-Cursors"));
     }
 
+    @Test
+    public void shouldCallMetricsCollectorWithoutMetadataBeingPresent() throws Exception {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"},{\"id\":\"790\"}]}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final MetricsCollector metricsCollector = mock(MetricsCollector.class);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, metricsCollector);
+
+        try {
+            nakadiReader.runInternal();
+            fail("Expected IOException on reconnect");
+        } catch (BackoffException e) {
+            InOrder inOrder = inOrder(metricsCollector);
+            inOrder.verify(metricsCollector).markMessageReceived();
+            inOrder.verify(metricsCollector).markEventsReceived(2, Optional.empty(), Optional.empty());
+            inOrder.verify(metricsCollector).markMessageSuccessfullyProcessed();
+            inOrder.verify(metricsCollector).markErrorWhileConsuming();
+        }
+    }
+
+    @Test
+    public void shouldCallMetricsCollectorWithOccurredAtFromEventMetadata() throws Exception {
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+        final OffsetDateTime olderOccurredAt = OffsetDateTime.parse("2007-12-03T10:14:30+01:00");
+        final OffsetDateTime newerOccurredAt = OffsetDateTime.parse("2007-12-03T10:15:30+01:00");
+
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\",\"metadata\":\"illegal\"},{\"id\":\"790\",\"metadata\":{\"occurred_at\":\"2007-12-03T10:15:30+01:00\"}},{\"id\":\"791\",\"metadata\":{\"occurred_at\":\"2007-12-03T10:14:30+01:00\"}}]}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final MetricsCollector metricsCollector = mock(MetricsCollector.class);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, metricsCollector);
+
+        try {
+            nakadiReader.runInternal();
+            fail("Expected IOException on reconnect");
+        } catch (BackoffException e) {
+            verify(metricsCollector).markEventsReceived(3, Optional.of(olderOccurredAt), Optional.of(newerOccurredAt));
+        }
+    }
 }

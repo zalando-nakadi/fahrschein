@@ -1,5 +1,8 @@
 package org.zalando.fahrschein;
 
+import java.time.OffsetDateTime;
+import java.util.Optional;
+
 public class NoMetricsCollector implements MetricsCollector {
 
     public static final NoMetricsCollector NO_METRICS_COLLECTOR = new NoMetricsCollector();
@@ -10,7 +13,7 @@ public class NoMetricsCollector implements MetricsCollector {
     }
 
     @Override
-    public void markEventsReceived(final int size) {
+    public void markEventsReceived(final int size, final Optional<OffsetDateTime> oldestOccurredAt, final Optional<OffsetDateTime> latestOccurredAt) {
         // do nothing
     }
 
