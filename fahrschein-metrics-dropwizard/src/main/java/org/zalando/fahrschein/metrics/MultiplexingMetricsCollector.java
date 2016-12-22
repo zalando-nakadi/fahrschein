@@ -2,8 +2,10 @@ package org.zalando.fahrschein.metrics;
 
 import org.zalando.fahrschein.MetricsCollector;
 
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Optional;
 
 public class MultiplexingMetricsCollector implements MetricsCollector {
 
@@ -15,8 +17,8 @@ public class MultiplexingMetricsCollector implements MetricsCollector {
     }
 
     @Override
-    public void markEventsReceived(final int i) {
-        delegates.stream().forEach(mc -> mc.markEventsReceived(i));
+    public void markEventsReceived(final int i, final Optional<OffsetDateTime> oldestOccurredAt, final Optional<OffsetDateTime> latestOccurredAt) {
+        delegates.stream().forEach(mc -> mc.markEventsReceived(i, oldestOccurredAt, latestOccurredAt));
     }
 
     @Override
