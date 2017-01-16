@@ -56,7 +56,7 @@ public class StreamParameters {
             params.add("max_uncommitted_events=" + maxUncommittedEvents);
         }
 
-        return params.stream().collect(Collectors.joining());
+        return params.stream().collect(Collectors.joining("&"));
     }
 
     public StreamParameters withBatchLimit(int batchLimit) {
