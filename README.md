@@ -137,15 +137,24 @@ public void readSalesOrderPlacedEvents() throws IOException {
 }
 ```
 
+## Exception handling
+
+Exception handling while streaming events follows some simple rules
+
+ - `IOException` and its subclasses are treated as temporary failures and will be retried as specified by the `BackoffStrategy`
+ - `RuntimeException` aborts streaming of events, the user is responsible for handling these
+ - If an `IOException` happens when opening the initial connection, this is not retried as it probably indicates a configuration problem (wrong host name or missing scopes)
+ - Exceptions in other client methods are not automatically retried
+
+### Handling data binding problems
+
+You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing. To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
+
 ## Using another ClientHttpRequestFactory
 
 This library is currently tested and used in production with `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
 
-Please note that `HttpComponentsClientHttpRequestFactory` tries to consume the remaining stream on closing and so might block until the configured `streamTimeout` during reconnection. Since Spring 4.3.x, `SimpleClientHttpRequestFactory` also tries to consume the stream on close.
-
-## Handling data binding problems
-
-You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing. To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
+Please note that `HttpComponentsClientHttpRequestFactory` and also `SimpleClientHttpRequestFactory` since spring 4.3.x try to consume the remaining stream on closing and so might block during reconnection.
 
 ## Getting help
 

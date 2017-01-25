@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -34,7 +35,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.zalando.fahrschein.Preconditions.checkState;
@@ -82,30 +82,38 @@ class NakadiReader<T> implements IORunnable {
     }
 
     static class JsonInput implements Closeable {
+        private final JsonFactory jsonFactory;
         private final ClientHttpResponse response;
-        private final JsonParser jsonParser;
+        private JsonParser jsonParser;
 
-        JsonInput(ClientHttpResponse response, JsonParser jsonParser) {
+        JsonInput(JsonFactory jsonFactory, ClientHttpResponse response) {
+            this.jsonFactory = jsonFactory;
             this.response = response;
-            this.jsonParser = jsonParser;
         }
 
         ClientHttpResponse getResponse() {
             return response;
         }
 
-        JsonParser getJsonParser() {
+        JsonParser getJsonParser() throws IOException {
+            if (jsonParser == null) {
+                jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
+            }
             return jsonParser;
         }
 
         @Override
         public void close() {
             try {
-                LOG.trace("Trying to close json parser");
-                jsonParser.close();
-                LOG.trace("Closed json parser");
-            } catch (IOException e) {
-                LOG.warn("Could not close json parser", e);
+                if (jsonParser != null) {
+                    try {
+                        LOG.trace("Trying to close json parser");
+                        jsonParser.close();
+                        LOG.trace("Closed json parser");
+                    } catch (IOException e) {
+                        LOG.warn("Could not close json parser", e);
+                    }
+                }
             } finally {
                 LOG.trace("Trying to close response");
                 response.close();
@@ -115,8 +123,9 @@ class NakadiReader<T> implements IORunnable {
     }
 
     private static Optional<String> getStreamId(ClientHttpResponse response) {
-        return Optional.ofNullable(response.getHeaders())
-                .flatMap(h -> h.getOrDefault("X-Nakadi-StreamId", emptyList()).stream().findFirst());
+        final HttpHeaders headers = response.getHeaders();
+        final String streamId = headers == null ? null : headers.getFirst("X-Nakadi-StreamId");
+        return Optional.ofNullable(streamId);
     }
 
     private JsonInput openJsonInput() throws IOException {
@@ -140,13 +149,12 @@ class NakadiReader<T> implements IORunnable {
         final ClientHttpResponse response = request.execute();
         try {
             final Optional<String> streamId = getStreamId(response);
-            final JsonParser jsonParser = jsonFactory.createParser(response.getBody()).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE);
 
             if (subscription.isPresent() && streamId.isPresent()) {
                 cursorManager.addStreamId(subscription.get(), streamId.get());
             }
 
-            return new JsonInput(response, jsonParser);
+            return new JsonInput(jsonFactory, response);
         } catch (Throwable throwable) {
             try {
                 response.close();
@@ -257,12 +265,13 @@ class NakadiReader<T> implements IORunnable {
         LOG.info("Starting to listen for events for [{}]", eventName);
 
         JsonInput jsonInput = openJsonInput();
-        JsonParser jsonParser = jsonInput.getJsonParser();
 
         int errorCount = 0;
 
         while (true) {
             try {
+                final JsonParser jsonParser = jsonInput.getJsonParser();
+
                 if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedIOException("Interrupted");
                 }
@@ -290,7 +299,6 @@ class NakadiReader<T> implements IORunnable {
                 try {
                     LOG.debug("Reconnecting after [{}] errors", errorCount);
                     jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
-                    jsonParser = jsonInput.getJsonParser();
                     LOG.info("Reconnected after [{}] errors", errorCount);
                     metricsCollector.markReconnection();
                 } catch (InterruptedException interruptedException) {
