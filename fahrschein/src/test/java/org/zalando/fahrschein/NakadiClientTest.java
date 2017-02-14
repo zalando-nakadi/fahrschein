@@ -9,6 +9,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.domain.SubscriptionRequest;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,7 +33,7 @@ public class NakadiClientTest {
     private NakadiClient client;
 
     @Before
-    public void foo() {
+    public void setup() {
         final RestTemplate restTemplate = new RestTemplate();
         final MockRestServiceServer mockServer = MockRestServiceServer.createServer(restTemplate);
         final ClientHttpRequestFactory requestFactory = restTemplate.getRequestFactory();
@@ -66,9 +67,31 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.owning_application", equalTo("nakadi-client-test")))
                 .andExpect(jsonPath("$.event_types[0]", equalTo("foo")))
                 .andExpect(jsonPath("$.consumer_group", equalTo("bar")))
+                .andExpect(jsonPath("$.read_from", equalTo("end")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
         final Subscription subscription = client.subscribe("nakadi-client-test", "foo", "bar");
+
+        assertNotNull(subscription);
+        assertEquals("1234", subscription.getId());
+        assertEquals("nakadi-client-test", subscription.getOwningApplication());
+        assertEquals(Collections.singleton("foo"), subscription.getEventTypes());
+        assertEquals("bar", subscription.getConsumerGroup());
+        assertNotNull(subscription.getCreatedAt());
+    }
+
+
+    @Test
+    public void shouldIncludeReadFromProperty() throws IOException {
+        server.expect(requestTo("http://example.com/subscriptions"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(jsonPath("$.owning_application", equalTo("nakadi-client-test")))
+                .andExpect(jsonPath("$.event_types[0]", equalTo("foo")))
+                .andExpect(jsonPath("$.consumer_group", equalTo("bar")))
+                .andExpect(jsonPath("$.read_from", equalTo("begin")))
+                .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
+
+        final Subscription subscription = client.subscribe("nakadi-client-test", "foo", "bar", SubscriptionRequest.Position.BEGIN);
 
         assertNotNull(subscription);
         assertEquals("1234", subscription.getId());

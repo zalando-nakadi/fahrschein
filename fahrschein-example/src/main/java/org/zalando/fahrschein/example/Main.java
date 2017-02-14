@@ -24,6 +24,7 @@ import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
@@ -92,7 +93,7 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo");
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.END);
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)

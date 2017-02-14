@@ -55,7 +55,11 @@ public class NakadiClient {
     }
 
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
-        final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, Collections.singleton(eventName), consumerGroup);
+        return subscribe(applicationName, eventName, consumerGroup, SubscriptionRequest.Position.END);
+    }
+
+    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom) throws IOException {
+        final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, Collections.singleton(eventName), consumerGroup, readFrom);
 
         final URI uri = baseUri.resolve("/subscriptions");
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.POST);
