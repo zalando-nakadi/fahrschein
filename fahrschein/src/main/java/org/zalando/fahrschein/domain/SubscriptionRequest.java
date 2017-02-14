@@ -3,9 +3,14 @@ package org.zalando.fahrschein.domain;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import javax.annotation.concurrent.Immutable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-import static java.util.Collections.*;
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableSet;
 
 @Immutable
 public class SubscriptionRequest {
@@ -34,14 +39,14 @@ public class SubscriptionRequest {
 
     public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom, List<Cursor> initialCursors) {
         this.owningApplication = owningApplication;
-        this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
+        this.eventTypes = unmodifiableSet(eventTypes == null ? Collections.<String>emptySet() : new LinkedHashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.readFrom = readFrom;
-        this.initialCursors = unmodifiableList((initialCursors == null) ? emptyList() : new ArrayList<>(initialCursors));
+        this.initialCursors = unmodifiableList(initialCursors == null ? Collections.<Cursor>emptyList() : new ArrayList<>(initialCursors));
     }
 
     public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup) {
-        this(owningApplication, eventTypes, consumerGroup, Position.END, emptyList());
+        this(owningApplication, eventTypes, consumerGroup, Position.END, Collections.<Cursor>emptyList());
     }
 
     public String getOwningApplication() {

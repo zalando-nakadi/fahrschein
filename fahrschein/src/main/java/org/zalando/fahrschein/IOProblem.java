@@ -1,12 +1,9 @@
 package org.zalando.fahrschein;
 
 
-import org.springframework.http.HttpStatus;
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Optional;
 
 @SuppressWarnings("serial")
 public class IOProblem extends IOException {
@@ -52,12 +49,14 @@ public class IOProblem extends IOException {
         return statusCode;
     }
 
-    public Optional<String> getDetail() {
-        return Optional.ofNullable(detail);
+    @Nullable
+    public String getDetail() {
+        return detail;
     }
 
-    public Optional<URI> getInstance() {
-        return Optional.ofNullable(instance);
+    @Nullable
+    public URI getInstance() {
+        return instance;
     }
 
 }

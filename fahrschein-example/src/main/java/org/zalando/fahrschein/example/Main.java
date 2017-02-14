@@ -1,10 +1,11 @@
 package org.zalando.fahrschein.example;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.http.client.config.RequestConfig;
@@ -14,7 +15,15 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.zalando.fahrschein.*;
+import org.zalando.fahrschein.EventAlreadyProcessedException;
+import org.zalando.fahrschein.EventProcessingException;
+import org.zalando.fahrschein.ExponentialBackoffStrategy;
+import org.zalando.fahrschein.IORunnable;
+import org.zalando.fahrschein.Listener;
+import org.zalando.fahrschein.NakadiClient;
+import org.zalando.fahrschein.NoBackoffStrategy;
+import org.zalando.fahrschein.StreamParameters;
+import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
@@ -27,14 +36,12 @@ import org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
-import org.zalando.jackson.datatype.money.MoneyModule;
 
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -65,19 +72,17 @@ public class Main {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
 
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.registerModule(new Jdk8Module());
-        objectMapper.registerModule(new MoneyModule());
-        objectMapper.registerModule(new ParameterNamesModule());
-
-        final Listener<SalesOrderPlaced> listener = events -> {
-            if (Math.random() < 0.0001) {
-                // For testing reconnection logic
-                throw new EventProcessingException("Random failure");
-            } else {
-                for (SalesOrderPlaced salesOrderPlaced : events) {
-                    final SalesOrder order = salesOrderPlaced.getSalesOrder();
-                    LOG.info("Received sales order [{}] created at [{}]", order.getOrderNumber(), order.getCreatedAt());
+        final Listener<SalesOrderPlaced> listener = new Listener<SalesOrderPlaced>() {
+            @Override
+            public void accept(List<SalesOrderPlaced> events) throws IOException, EventAlreadyProcessedException {
+                if (Math.random() < 0.0001) {
+                    // For testing reconnection logic
+                    throw new EventProcessingException("Random failure");
+                } else {
+                    for (SalesOrderPlaced salesOrderPlaced : events) {
+                        final SalesOrder order = salesOrderPlaced.getSalesOrder();
+                        LOG.info("Received sales order [{}] created at [{}]", order.getOrderNumber(), order.getCreatedAt());
+                    }
                 }
             }
         };
@@ -100,9 +105,12 @@ public class Main {
     private static void subscriptionMultipleEvents(ObjectMapper objectMapper) throws IOException {
         final OrderEventProcessor processor = new OrderEventProcessor();
 
-        final Listener<OrderEvent> listener = events -> {
-            for (OrderEvent event: events) {
-                event.process(processor);
+        final Listener<OrderEvent> listener = new Listener<OrderEvent>() {
+            @Override
+            public void accept(List<OrderEvent> events) throws IOException, EventAlreadyProcessedException {
+                for (OrderEvent event : events) {
+                    event.process(processor);
+                }
             }
         };
 
@@ -243,7 +251,7 @@ public class Main {
                 .listen(SalesOrderPlaced.class, listener);
     }
 
-    private static void multiInstanceListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+    private static void multiInstanceListen(final ObjectMapper objectMapper, final Listener<SalesOrderPlaced> listener) throws IOException {
         final HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(JDBC_URL);
         hikariConfig.setUsername(JDBC_USERNAME);
@@ -268,29 +276,34 @@ public class Main {
 
             final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
 
-            final IORunnable instance = () -> {
+            final IORunnable instance = new IORunnable() {
+                @Override
+                public void run() throws IOException {
 
-                final IORunnable runnable = () -> {
-                    final Optional<Lock> optionalLock = partitionManager.lockPartitions(SALES_ORDER_SERVICE_ORDER_PLACED, partitions, instanceName);
+                    final IORunnable runnable = new IORunnable() {
+                        @Override
+                        public void run() throws IOException {
+                            final Lock lock = partitionManager.lockPartitions(SALES_ORDER_SERVICE_ORDER_PLACED, partitions, instanceName);
 
-                    if (optionalLock.isPresent()) {
-                        final Lock lock = optionalLock.get();
-                        try {
-                            nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
-                                    .withLock(lock)
-                                    .withObjectMapper(objectMapper)
-                                    .withStreamParameters(new StreamParameters().withStreamLimit(10))
-                                    .withBackoffStrategy(new NoBackoffStrategy())
-                                    .listen(SalesOrderPlaced.class, listener);
-                        } finally {
-                            partitionManager.unlockPartitions(lock);
+                            if (lock != null) {
+                                try {
+                                    nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+                                            .withLock(lock)
+                                            .withObjectMapper(objectMapper)
+                                            .withStreamParameters(new StreamParameters().withStreamLimit(10))
+                                            .withBackoffStrategy(new NoBackoffStrategy())
+                                            .listen(SalesOrderPlaced.class, listener);
+                                } finally {
+                                    partitionManager.unlockPartitions(lock);
+                                }
+                            }
                         }
-                    }
-                };
+                    };
 
-                scheduledExecutorService.scheduleWithFixedDelay(runnable.unchecked(), 0, 1, TimeUnit.SECONDS);
+                    scheduledExecutorService.scheduleWithFixedDelay(new IORunnable.Wrapper(runnable), 0, 1, TimeUnit.SECONDS);
+                }
             };
-            scheduledExecutorService.submit(instance.unchecked());
+            scheduledExecutorService.submit(new IORunnable.Wrapper(instance));
         }
 
         try {

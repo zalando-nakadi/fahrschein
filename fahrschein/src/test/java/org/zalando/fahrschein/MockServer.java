@@ -5,6 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -23,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -80,7 +80,7 @@ class MockServer implements ClientHttpRequestFactory {
     }
 
     public MockServer andExpectHeader(String key, String value) {
-        return andExpectHeader(key, equalTo(value));
+        return andExpectHeader(key, Matchers.equalTo(value));
     }
 
     public MockServer andRespondWith(HttpStatus responseStatus, @Nullable MediaType responseContentType, String responseBody) {
@@ -94,13 +94,14 @@ class MockServer implements ClientHttpRequestFactory {
         return andRespondWith(responseStatus, null, "");
     }
 
-    public MockServer andExpectJsonPath(String jsonPath, Matcher<Object> matcher) {
-        expectedJsonPaths.put(jsonPath, matcher);
+    @SuppressWarnings("unchecked")
+    public <T> MockServer andExpectJsonPath(String jsonPath, Matcher<T> matcher) {
+        expectedJsonPaths.put(jsonPath, (Matcher<Object>)matcher);
         return this;
     }
 
     public MockServer andExpectJsonPath(String jsonPath, Object value) {
-        return andExpectJsonPath(jsonPath, equalTo(value));
+        return andExpectJsonPath(jsonPath, Matchers.equalTo(value));
     }
 
     public void setup() throws IOException {

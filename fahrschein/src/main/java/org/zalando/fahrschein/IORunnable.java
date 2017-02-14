@@ -1,20 +1,25 @@
 package org.zalando.fahrschein;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 
-@FunctionalInterface
 public interface IORunnable {
-    void run() throws IOException;
+    class Wrapper implements Runnable {
+        private final IORunnable delegate;
 
-    default Runnable unchecked() {
-        return () -> {
+        public Wrapper(IORunnable delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void run() {
             try {
-                run();
+                delegate.run();
             } catch (IOException e) {
-                throw new UncheckedIOException(e);
+                throw new RuntimeException(e);
             }
-        };
+        }
     }
+
+    void run() throws IOException;
 
 }

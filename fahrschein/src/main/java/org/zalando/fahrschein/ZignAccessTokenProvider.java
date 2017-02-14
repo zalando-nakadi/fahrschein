@@ -3,14 +3,11 @@ package org.zalando.fahrschein;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ZignAccessTokenProvider implements AccessTokenProvider {
     private static final Logger LOG = LoggerFactory.getLogger(ZignAccessTokenProvider.class);
@@ -26,7 +23,8 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
         }
     }
 
-    private final AtomicReference<Entry> token = new AtomicReference<>();
+    private final Object lock = new Object();
+    private Entry token = null;
 
     private static String readAll(InputStream inputStream) throws IOException {
         try (final Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
@@ -50,22 +48,18 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
         }
     }
 
-    private static Entry update(@Nullable Entry entry)  {
-        final long now = System.currentTimeMillis();
-        try {
-            return entry == null || entry.timestamp < now - CACHE_DURATION ? new Entry(now, zign()) : entry;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
     @Override
     public String getAccessToken() throws IOException {
-        try {
-            return token.updateAndGet(ZignAccessTokenProvider::update).value;
-        } catch (UncheckedIOException e) {
-            throw e.getCause();
+        long now = System.currentTimeMillis();
+        Entry token = this.token;
+        synchronized (lock) {
+            if (token == null || token.timestamp < now - CACHE_DURATION) {
+                token = new Entry(now, zign());
+                this.token = token;
+            }
         }
+
+        return token.value;
     }
 
 }

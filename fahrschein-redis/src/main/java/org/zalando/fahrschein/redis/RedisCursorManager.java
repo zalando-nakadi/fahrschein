@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +22,16 @@ public class RedisCursorManager implements CursorManager {
     public RedisCursorManager(final JedisConnectionFactory jedisConnectionFactory, final String consumerName) {
         this.redisTemplate = new CursorRedisTemplate(jedisConnectionFactory);
         this.consumerName = consumerName;
+    }
+
+    @Override
+    public void addSubscription(Subscription subscription) {
+        
+    }
+
+    @Override
+    public void addStreamId(Subscription subscription, String streamId) {
+
     }
 
     @Override

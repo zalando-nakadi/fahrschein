@@ -30,16 +30,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
 class NakadiReader<T> implements IORunnable {
@@ -54,8 +51,10 @@ class NakadiReader<T> implements IORunnable {
     private final CursorManager cursorManager;
 
     private final Set<String> eventNames;
-    private final Optional<Subscription> subscription;
-    private final Optional<Lock> lock;
+    @Nullable
+    private final Subscription subscription;
+    @Nullable
+    private final Lock lock;
     private final Class<T> eventClass;
     private final Listener<T> listener;
     private final ErrorHandler errorHandler;
@@ -66,9 +65,9 @@ class NakadiReader<T> implements IORunnable {
 
     private final MetricsCollector metricsCollector;
 
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, final MetricsCollector metricsCollector) {
+    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, final MetricsCollector metricsCollector) {
 
-        checkState(subscription.isPresent() || eventNames.size() == 1, "Low level api only supports reading from a single event");
+        checkState(subscription != null || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
         this.uri = uri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
@@ -128,10 +127,25 @@ class NakadiReader<T> implements IORunnable {
         }
     }
 
-    private static Optional<String> getStreamId(ClientHttpResponse response) {
+    @Nullable
+    private static String getStreamId(ClientHttpResponse response) {
         final HttpHeaders headers = response.getHeaders();
-        final String streamId = headers == null ? null : headers.getFirst("X-Nakadi-StreamId");
-        return Optional.ofNullable(streamId);
+        return headers == null ? null : headers.getFirst("X-Nakadi-StreamId");
+    }
+
+    private static Collection<Cursor> getLockedCursors(Collection<Cursor> cursors, List<Partition> partitions) {
+        final Map<String, String> offsetsByPartition = new HashMap<>();
+        for (Cursor cursor : cursors) {
+            offsetsByPartition.put(cursor.getPartition(), cursor.getOffset());
+        }
+
+        final Collection<Cursor> lockedCursors = new ArrayList<>(partitions.size());
+        for (Partition partition : partitions) {
+            final String offset = offsetsByPartition.get(partition.getPartition());
+            lockedCursors.add(new Cursor(partition.getPartition(), offset != null ? offset : "BEGIN"));
+        }
+
+        return lockedCursors;
     }
 
     private JsonInput openJsonInput() throws IOException {
@@ -142,10 +156,10 @@ class NakadiReader<T> implements IORunnable {
         }
         final ClientHttpResponse response = request.execute();
         try {
-            final Optional<String> streamId = getStreamId(response);
+            final String streamId = getStreamId(response);
 
-            if (subscription.isPresent() && streamId.isPresent()) {
-                cursorManager.addStreamId(subscription.get(), streamId.get());
+            if (subscription != null && streamId != null) {
+                cursorManager.addStreamId(subscription, streamId);
             }
 
             return new JsonInput(jsonFactory, response);
@@ -161,7 +175,7 @@ class NakadiReader<T> implements IORunnable {
 
     @Nullable
     private String getCursorsHeader() throws IOException {
-        if (!subscription.isPresent()) {
+        if (subscription == null) {
             final Collection<Cursor> lockedCursors = getLockedCursors();
 
             if (!lockedCursors.isEmpty()) {
@@ -173,10 +187,8 @@ class NakadiReader<T> implements IORunnable {
 
     private Collection<Cursor> getLockedCursors() throws IOException {
         final Collection<Cursor> cursors = cursorManager.getCursors(eventNames.iterator().next());
-        if (lock.isPresent()) {
-            final Map<String, String> offsets = cursors.stream().collect(toMap(Cursor::getPartition, Cursor::getOffset));
-            final List<Partition> partitions = lock.get().getPartitions();
-            return partitions.stream().map(partition -> new Cursor(partition.getPartition(), offsets.getOrDefault(partition.getPartition(), "BEGIN"))).collect(toList());
+        if (lock != null) {
+            return getLockedCursors(cursors, lock.getPartitions());
         } else {
             return cursors;
         }
@@ -321,7 +333,12 @@ class NakadiReader<T> implements IORunnable {
 
                 try {
                     LOG.debug("Reconnecting after [{}] errors", errorCount);
-                    jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
+                    jsonInput = backoffStrategy.call(errorCount, e, new IOCallable<JsonInput>() {
+                        @Override
+                        public JsonInput call() throws IOException {
+                            return NakadiReader.this.openJsonInput();
+                        }
+                    });
                     LOG.info("Reconnected after [{}] errors", errorCount);
                     metricsCollector.markReconnection();
                 } catch (InterruptedException interruptedException) {
