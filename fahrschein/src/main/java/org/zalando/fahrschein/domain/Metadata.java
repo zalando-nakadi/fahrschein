@@ -1,6 +1,7 @@
 package org.zalando.fahrschein.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.concurrent.Immutable;
@@ -10,22 +11,26 @@ import java.time.OffsetDateTime;
 public final class Metadata {
     private final String eventType;
     private final String eid;
-    private final OffsetDateTime occuredAt;
+    private final OffsetDateTime occurredAt;
     private final OffsetDateTime receivedAt;
     private final String flowId;
 
     @JsonCreator
     @Deprecated
-    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occured_at") String occuredAt, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId) {
-        this(eventType, eid, occuredAt == null ? null : OffsetDateTime.parse(occuredAt), receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId);
+    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId) {
+        this(eventType, eid, occurredAt == null ? null : OffsetDateTime.parse(occurredAt), receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId);
     }
 
-    public Metadata(String eventType, String eid, OffsetDateTime occuredAt, OffsetDateTime receivedAt, String flowId) {
+    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, OffsetDateTime receivedAt, String flowId) {
         this.eventType = eventType;
         this.eid = eid;
-        this.occuredAt = occuredAt;
+        this.occurredAt = occurredAt;
         this.receivedAt = receivedAt;
         this.flowId = flowId;
+    }
+
+    public Metadata(String eid, OffsetDateTime occurredAt) {
+        this(null, eid, occurredAt, null, null);
     }
 
     public String getEventType() {
@@ -36,8 +41,17 @@ public final class Metadata {
         return eid;
     }
 
+    public OffsetDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    /**
+     * @deprecated use getOccurredAt instead
+     */
+    @Deprecated
+    @JsonIgnore
     public OffsetDateTime getOccuredAt() {
-        return occuredAt;
+        return getOccurredAt();
     }
 
     public OffsetDateTime getReceivedAt() {

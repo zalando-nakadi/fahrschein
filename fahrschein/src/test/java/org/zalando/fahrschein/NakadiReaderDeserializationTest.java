@@ -169,7 +169,7 @@ public class NakadiReaderDeserializationTest {
 
     @Test
     public void shouldDeserializeBusinessEventMetadata() throws IOException {
-        setupResponse(1, 1, "{\"metadata\":{\"eid\":\"5678\",\"occured_at\":\"2016-10-26T19:20:21.123Z\",\"received_at\":\"2016-10-26T20:21:22+01:00\",\"flow_id\":\"ABCD\"},\"sales_order\":{\"order_number\":\"1234\"}}");
+        setupResponse(1, 1, "{\"metadata\":{\"eid\":\"5678\",\"occurred_at\":\"2016-10-26T19:20:21.123Z\",\"received_at\":\"2016-10-26T20:21:22+01:00\",\"flow_id\":\"ABCD\"},\"sales_order\":{\"order_number\":\"1234\"}}");
 
         final List<SalesOrderPlaced> events = readSingleBatch("sales-salesOrder-placed", SalesOrderPlaced.class);
 
@@ -182,7 +182,7 @@ public class NakadiReaderDeserializationTest {
         assertThat(metadata, Matchers.notNullValue());
         assertThat(metadata.getEid(), Matchers.equalTo("5678"));
         assertThat(metadata.getFlowId(), Matchers.equalTo("ABCD"));
-        assertThat(metadata.getOccuredAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 19, 20, 21, 123_000_000, ZoneOffset.UTC)));
+        assertThat(metadata.getOccurredAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 19, 20, 21, 123_000_000, ZoneOffset.UTC)));
         assertThat(metadata.getReceivedAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 20, 21, 22, 0, ZoneOffset.ofHours(1))));
     }
 
