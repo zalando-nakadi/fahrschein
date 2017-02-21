@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Formatter;
 import java.util.Locale;
 
+@SuppressWarnings("serial")
 public class EventPublishingException extends IOException {
     private final BatchItemResponse[] responses;
 
