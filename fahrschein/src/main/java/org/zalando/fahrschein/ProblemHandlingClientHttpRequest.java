@@ -39,7 +39,7 @@ class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
 
         try {
             final int statusCode = response.getRawStatusCode();
-            if (statusCode >= 400) {
+            if (statusCode >= 400 && statusCode != 422) {
                 final String statusText = response.getStatusText();
 
                 final MediaType contentType = response.getHeaders().getContentType();
