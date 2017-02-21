@@ -182,7 +182,7 @@ public class NakadiReaderDeserializationTest {
         assertThat(metadata, Matchers.notNullValue());
         assertThat(metadata.getEid(), Matchers.equalTo("5678"));
         assertThat(metadata.getFlowId(), Matchers.equalTo("ABCD"));
-        assertThat(metadata.getOccuredAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 19, 20, 21, 123_000_000, ZoneOffset.UTC)));
+        assertThat(metadata.getOccurredAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 19, 20, 21, 123_000_000, ZoneOffset.UTC)));
         assertThat(metadata.getReceivedAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 20, 21, 22, 0, ZoneOffset.ofHours(1))));
     }
 
