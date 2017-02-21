@@ -169,7 +169,7 @@ public class NakadiReaderDeserializationTest {
 
     @Test
     public void shouldDeserializeBusinessEventMetadata() throws IOException {
-        setupResponse(1, 1, "{\"metadata\":{\"eid\":\"5678\",\"occured_at\":\"2016-10-26T19:20:21.123Z\",\"received_at\":\"2016-10-26T20:21:22+01:00\",\"flow_id\":\"ABCD\"},\"sales_order\":{\"order_number\":\"1234\"}}");
+        setupResponse(1, 1, "{\"metadata\":{\"eid\":\"5678\",\"occurred_at\":\"2016-10-26T19:20:21.123Z\",\"received_at\":\"2016-10-26T20:21:22+01:00\",\"flow_id\":\"ABCD\"},\"sales_order\":{\"order_number\":\"1234\"}}");
 
         final List<SalesOrderPlaced> events = readSingleBatch("sales-salesOrder-placed", SalesOrderPlaced.class);
 
