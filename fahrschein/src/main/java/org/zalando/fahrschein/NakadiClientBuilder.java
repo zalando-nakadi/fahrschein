@@ -56,8 +56,6 @@ public final class NakadiClientBuilder {
         final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
         requestFactoryDelegate.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
         requestFactoryDelegate.setReadTimeout(DEFAULT_READ_TIMEOUT);
-        requestFactoryDelegate.setBufferRequestBody(true);
-        requestFactoryDelegate.setOutputStreaming(false);
 
         ClientHttpRequestFactory requestFactory = new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate);
         if (accessTokenProvider != null) {
