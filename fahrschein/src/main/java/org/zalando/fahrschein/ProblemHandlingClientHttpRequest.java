@@ -14,9 +14,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+
 class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
 
     private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
+    private static final MediaType APPLICATION_PROBLEM_JSON = MediaType.parseMediaType("application/problem+json");
 
     private final ClientHttpRequest clientHttpRequest;
     private final ObjectMapper objectMapper;
@@ -36,7 +39,7 @@ class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
                 final String statusText = response.getStatusText();
 
                 final MediaType contentType = response.getHeaders().getContentType();
-                if (MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
+                if (APPLICATION_JSON.isCompatibleWith(contentType) || APPLICATION_PROBLEM_JSON.isCompatibleWith(contentType)) {
                     try (final InputStream is = response.getBody()) {
                         final IOProblem problem = deserializeProblem(is, statusCode);
                         if (problem != null) {
