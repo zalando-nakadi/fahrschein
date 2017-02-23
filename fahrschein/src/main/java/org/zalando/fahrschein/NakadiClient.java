@@ -69,7 +69,8 @@ public class NakadiClient {
         }
 
         try (final ClientHttpResponse response = request.execute()) {
-            if ((response.getRawStatusCode() == 207 || response.getRawStatusCode() == 422)) {
+            final MediaType contentType = response.getHeaders().getContentType();
+            if (MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
                 try (final InputStream is = response.getBody()) {
                     final BatchItemResponse[] responses = internalObjectMapper.readValue(is, BatchItemResponse[].class);
                     final List<BatchItemResponse> failed = new ArrayList<>(responses.length);
