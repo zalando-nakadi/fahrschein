@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.zalando.fahrschein.Preconditions.checkState;
 
@@ -54,12 +55,58 @@ public class NakadiClient {
         }
     }
 
+    /**
+     * Create Subscription for one event type.
+     *
+     * @param applicationName
+     * @param eventName
+     * @param consumerGroup
+     * @return
+     * @throws IOException
+     */
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
-        return subscribe(applicationName, eventName, consumerGroup, SubscriptionRequest.Position.END);
+        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, SubscriptionRequest.Position.END);
     }
 
+    /**
+     * Create Subscription for one event type with specified "read_from" position.
+     *
+     * @param applicationName
+     * @param eventName
+     * @param consumerGroup
+     * @param readFrom
+     * @return
+     * @throws IOException
+     */
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom) throws IOException {
-        final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, Collections.singleton(eventName), consumerGroup, readFrom);
+        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, readFrom);
+    }
+
+    /**
+     * Create Subscription for multiple event types.
+     *
+     * @param applicationName
+     * @param eventNames
+     * @param consumerGroup
+     * @return
+     * @throws IOException
+     */
+    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup) throws IOException {
+        return subscribe(applicationName, eventNames, consumerGroup, SubscriptionRequest.Position.END);
+    }
+
+    /**
+     * Create Subscription for multiple event types from specified "read_from" position.
+     *
+     * @param applicationName
+     * @param eventNames
+     * @param consumerGroup
+     * @param readFrom
+     * @return
+     * @throws IOException
+     */
+    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom) throws IOException {
+        final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom);
 
         final URI uri = baseUri.resolve("/subscriptions");
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.POST);
