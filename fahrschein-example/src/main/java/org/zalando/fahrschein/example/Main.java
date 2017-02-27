@@ -1,11 +1,7 @@
 package org.zalando.fahrschein.example;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
@@ -13,18 +9,13 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zalando.fahrschein.EventProcessingException;
-import org.zalando.fahrschein.ExponentialBackoffStrategy;
-import org.zalando.fahrschein.IORunnable;
-import org.zalando.fahrschein.Listener;
-import org.zalando.fahrschein.NakadiClient;
-import org.zalando.fahrschein.NoBackoffStrategy;
-import org.zalando.fahrschein.StreamParameters;
-import org.zalando.fahrschein.ZignAccessTokenProvider;
+import org.zalando.fahrschein.*;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
+import org.zalando.fahrschein.example.domain.OrderCreatedEvent;
+import org.zalando.fahrschein.example.domain.OrderPaymentAcceptedEvent;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
@@ -35,6 +26,7 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -49,6 +41,8 @@ public class Main {
     private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/local_nakadi_cursor_db";
     private static final String JDBC_USERNAME = "postgres";
     private static final String JDBC_PASSWORD = "postgres";
+    public static final String ORDER_CREATED = "eventlog.e96001_order_created";
+    public static final String ORDER_PAYMENT_STATUS_ACCEPTED = "eventlog.e62001_order_payment_status_accepted";
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -78,13 +72,45 @@ public class Main {
             }
         };
 
-        subscriptionListen(objectMapper, listener);
+        subscriptionMultipleEvents(objectMapper);
+
+        //subscriptionListen(objectMapper, listener);
 
         //simpleListen(objectMapper, listener);
 
         //persistentListen(objectMapper, listener);
 
         //multiInstanceListen(objectMapper, listener);
+    }
+
+    private static void subscriptionMultipleEvents(ObjectMapper objectMapper) throws IOException {
+
+        final Listener<JsonNode> listener = events -> {
+            for(JsonNode node: events){
+                String eventType = node.get("metadata").get("event_type").textValue();
+                if(eventType.equals(ORDER_PAYMENT_STATUS_ACCEPTED)){
+                    OrderPaymentAcceptedEvent event = objectMapper.convertValue(node, OrderPaymentAcceptedEvent.class);
+                    LOG.info("OrderPaymentAcceptedEvent {}", event.getOrderNumber());
+                } else if (eventType.equals(ORDER_CREATED)){
+                    OrderCreatedEvent event = objectMapper.convertValue(node, OrderCreatedEvent.class);
+                    LOG.info("OrderCreatedEvent {}", event.getOrderNumber());
+                }
+            }
+        };
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .build();
+
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", new HashSet<String>() {{
+            add(ORDER_CREATED);
+            add(ORDER_PAYMENT_STATUS_ACCEPTED);
+        }}, "fahrschein-demo", SubscriptionRequest.Position.END);
+
+        nakadiClient.stream(subscription)
+                .withObjectMapper(objectMapper)
+                .listen(JsonNode.class, listener);
+
     }
 
     private static void subscriptionListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
