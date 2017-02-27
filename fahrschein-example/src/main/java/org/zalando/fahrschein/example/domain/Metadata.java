@@ -13,19 +13,15 @@ import java.util.Date;
 public class MetaData {
 
     private Date occuredAt;
-    private String eid;
     private String eventType;
     private Date receivedAt;
-    private String flowId;
 
     @JsonCreator
-    public MetaData(@JsonProperty("occurred_at") Date occuredAt, @JsonProperty("eid") String eid,
-                    @JsonProperty("event_type") String eventType, @JsonProperty("received_at") Date receivedAt,
-                    @JsonProperty("flow_id") String flowId) {
+    public MetaData(@JsonProperty("occurred_at") Date occuredAt,
+                    @JsonProperty("event_type") String eventType,
+                    @JsonProperty("received_at") Date receivedAt) {
         this.occuredAt = occuredAt;
-        this.eid = eid;
         this.eventType = eventType;
-        this.flowId = flowId;
         this.receivedAt = receivedAt;
     }
 
@@ -33,46 +29,12 @@ public class MetaData {
         return occuredAt;
     }
 
-    public void setOccuredAt(Date occuredAt) {
-        this.occuredAt = occuredAt;
-    }
-
-    public String getEid() {
-        return eid;
-    }
-
-    public void setEid(String eid) {
-        this.eid = eid;
-    }
-
     public String getEventType() {
         return eventType;
     }
 
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
-    }
-
     public Date getReceivedAt() {
         return receivedAt;
-    }
-
-    public void setReceivedAt(Date receivedAt) {
-        this.receivedAt = receivedAt;
-    }
-
-    public String getFlowId() {
-        return flowId;
-    }
-
-    public void setFlowId(String flowId) {
-        this.flowId = flowId;
-    }
-
-    @Override
-    public String toString() {
-        return "{\"occuredAt\":" + occuredAt.getTime() + ", \"eid\":\"" + eid + "\", \"eventType\":\"" + eventType
-                + "\", \"receivedAt\":" + receivedAt.getTime() + ", \"flowId\":\"" + flowId + "\"}";
     }
 
 }

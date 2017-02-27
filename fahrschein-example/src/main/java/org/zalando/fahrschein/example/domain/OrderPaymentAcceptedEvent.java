@@ -21,7 +21,8 @@ public class OrderPaymentAcceptedEvent {
 
     @JsonCreator
     public OrderPaymentAcceptedEvent(@JsonProperty("orderNumber") String orderNumber,
-                                           @JsonProperty("paymentMethod") String paymentMethod, @JsonProperty("metadata") MetaData metaData) {
+                                     @JsonProperty("paymentMethod") String paymentMethod,
+                                     @JsonProperty("metadata") MetaData metaData) {
         this.orderNumber = orderNumber;
         this.paymentMethod = paymentMethod;
         this.metaData = metaData;
@@ -33,18 +34,6 @@ public class OrderPaymentAcceptedEvent {
 
     public String getPaymentMethod() {
         return paymentMethod;
-    }
-
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public void setOrderNumber(String orderNumber) {
-        this.orderNumber = orderNumber;
-    }
-
-    public void setMetaData(MetaData metaData) {
-        this.metaData = metaData;
     }
 
     public MetaData getMetaData() {
