@@ -29,12 +29,14 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
+
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
     private static final String SALES_ORDER_SERVICE_ORDER_PLACED = "sales-order-service.order-placed";
     private static final URI NAKADI_URI = URI.create("https://nakadi-staging.aruha-test.zalan.do");
@@ -102,10 +104,11 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", new HashSet<String>() {{
-            add(ORDER_CREATED);
-            add(ORDER_PAYMENT_STATUS_ACCEPTED);
-        }}, "fahrschein-demo", SubscriptionRequest.Position.END);
+        Set<String> events = new HashSet<>();
+        events.add(ORDER_CREATED);
+        events.add(ORDER_PAYMENT_STATUS_ACCEPTED);
+
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events, "fahrschein-demo", SubscriptionRequest.Position.END);
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)

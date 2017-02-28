@@ -89,17 +89,19 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.read_from", equalTo("end")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo1\", \"foo2\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
-        Set<String> eventNames = new HashSet<String>() {{
-            add("foo1");
-            add("foo2");
-        }};
+        Set<String> eventNames = new HashSet<String>();
+        eventNames.add("foo1");
+        eventNames.add("foo2");
+
         final Subscription subscription = client.subscribe("nakadi-client-test", eventNames, "bar");
 
         assertNotNull(subscription);
         assertEquals("1234", subscription.getId());
         assertEquals("nakadi-client-test", subscription.getOwningApplication());
         assertEquals(2, subscription.getEventTypes().size());
-        Set<String> expectedRows = new HashSet<String>() {{ add("foo1"); add("foo2"); }};
+        Set<String> expectedRows = new HashSet<String>();
+        expectedRows.add("foo1");
+        expectedRows.add("foo2");
         subscription.getEventTypes().stream().filter(eventType -> !expectedRows.contains(eventType)).forEach(eventType -> fail());
         assertEquals(2, subscription.getEventTypes().size());
         assertEquals("bar", subscription.getConsumerGroup());
