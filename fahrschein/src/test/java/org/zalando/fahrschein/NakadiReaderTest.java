@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
@@ -87,7 +88,7 @@ public class NakadiReaderTest {
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
 
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(IOException.class);
         expectedException.expectMessage(equalTo("Initial connection failed"));
@@ -107,7 +108,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature("retries", BackoffException::getRetries, equalTo(0)));
@@ -128,7 +129,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
@@ -150,7 +151,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
@@ -172,7 +173,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 1);
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(1)));
@@ -194,7 +195,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(4)));
@@ -216,7 +217,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(4)));
@@ -269,7 +270,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         //expectedException.expect(InterruptedException.class);
 
@@ -320,7 +321,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2);
         final Future<?> future = scheduledExecutorService.submit(() -> {
@@ -347,7 +348,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         final Future<?> future = Executors.newCachedThreadPool().submit(nakadiReader.unchecked());
         Assert.assertNull("Thread should have completed normally", future.get());
@@ -372,7 +373,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         final Future<?> future = Executors.newCachedThreadPool().submit(nakadiReader.unchecked());
         Assert.assertNull("Thread should have completed normally", future.get());
@@ -381,7 +382,8 @@ public class NakadiReaderTest {
     @Test
     public void shouldProcessEventsAndCommitCursor() throws IOException, InterruptedException, BackoffException, EventAlreadyProcessedException {
         final ClientHttpResponse response = mock(ClientHttpResponse.class);
-        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"}]}".getBytes("utf-8"));
+        String input = "{\"cursor\":{\"event_type\":\""+EVENT_NAME+"\",\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"}]}";
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream(input.getBytes("utf-8"));
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
         when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
 
@@ -391,7 +393,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         // cannot use expectedException since there should be assertions afterwards
         try {
@@ -436,7 +438,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
@@ -459,7 +461,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
@@ -482,7 +484,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
@@ -505,7 +507,7 @@ public class NakadiReaderTest {
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(BackoffException.class);
         expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
@@ -529,7 +531,7 @@ public class NakadiReaderTest {
         when(cursorManager.getCursors(EVENT_NAME)).thenReturn(asList(new Cursor("0", "0"), new Cursor("1", "10"), new Cursor("2", "20"), new Cursor("3", "30")));
 
         final Lock lock = new Lock(EVENT_NAME, "test", asList(new Partition("0", "0", "100"), new Partition("1", "0", "100")));
-        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, EVENT_NAME, Optional.empty(), Optional.of(lock), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.of(lock), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
 
         expectedException.expect(IOException.class);
         expectedException.expectMessage(equalTo("Initial connection failed"));

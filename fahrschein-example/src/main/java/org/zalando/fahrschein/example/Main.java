@@ -72,11 +72,11 @@ public class Main {
             }
         };
 
-        subscriptionMultipleEvents(objectMapper);
-
         //subscriptionListen(objectMapper, listener);
 
-        //simpleListen(objectMapper, listener);
+        //subscriptionMultipleEvents(objectMapper);
+
+        simpleListen(objectMapper, listener);
 
         //persistentListen(objectMapper, listener);
 

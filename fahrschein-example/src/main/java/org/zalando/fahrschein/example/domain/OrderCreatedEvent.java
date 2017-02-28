@@ -16,20 +16,13 @@ public class OrderCreatedEvent {
 
     private Integer grandTotal;
 
-    private MetaData metaData;
-
-    public OrderCreatedEvent() {
-    }
-
     @JsonCreator
     public OrderCreatedEvent(@JsonProperty("orderNumber") String orderNumber,
                              @JsonProperty("grandTotal") Integer grandTotal,
-                             @JsonProperty("customerNumber") String customerNumber,
-                             @JsonProperty("metadata") MetaData metaData) {
+                             @JsonProperty("customerNumber") String customerNumber) {
         this.orderNumber = orderNumber;
         this.grandTotal = grandTotal;
         this.customerNumber = customerNumber;
-        this.metaData = metaData;
     }
 
     public String getOrderNumber() {
@@ -43,10 +36,5 @@ public class OrderCreatedEvent {
     public String getCustomerNumber() {
         return customerNumber;
     }
-
-    public MetaData getMetaData() {
-        return metaData;
-    }
-
 
 }
