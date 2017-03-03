@@ -13,17 +13,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 
-import static java.util.Arrays.asList;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
 
-    private static final MediaType APPLICATION_PROBLEM_JSON = new MediaType("application", "problem+json");
-    private static final Set<MediaType> PROBLEM_CONTENT_TYPES = new HashSet<>(asList(APPLICATION_PROBLEM_JSON, MediaType.APPLICATION_JSON));
     private static final URI DEFAULT_PROBLEM_TYPE = URI.create("about:blank");
+    private static final MediaType APPLICATION_PROBLEM_JSON = MediaType.parseMediaType("application/problem+json");
 
     private final ClientHttpRequest clientHttpRequest;
     private final ObjectMapper objectMapper;
@@ -39,12 +35,12 @@ class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
 
         try {
             final int statusCode = response.getRawStatusCode();
-            if (statusCode >= 400) {
+            if (statusCode >= 400 && statusCode != 422) {
                 final String statusText = response.getStatusText();
 
                 final MediaType contentType = response.getHeaders().getContentType();
-                if (contentType != null && isProblemContentType(contentType)) {
-                    try (InputStream is = response.getBody()) {
+                if (APPLICATION_JSON.isCompatibleWith(contentType) || APPLICATION_PROBLEM_JSON.isCompatibleWith(contentType)) {
+                    try (final InputStream is = response.getBody()) {
                         final IOProblem problem = deserializeProblem(is, statusCode);
                         if (problem != null) {
                             throw problem;
@@ -66,17 +62,6 @@ class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
         }
 
         return response;
-    }
-
-    private boolean isProblemContentType(final MediaType contentType) {
-        for (MediaType problemContentType : PROBLEM_CONTENT_TYPES) {
-            if (Objects.equals(problemContentType.getType(), contentType.getType())
-                    && Objects.equals(problemContentType.getSubtype(), contentType.getSubtype())) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private @Nullable IOProblem deserializeProblem(final InputStream is, final int statusCode) throws IOException {
