@@ -1,8 +1,11 @@
 package org.zalando.fahrschein;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -16,6 +19,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
@@ -25,9 +29,24 @@ import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 public class NakadiClientTest {
+    public static class SomeEvent {
+        private final String id;
+
+        public SomeEvent(String id) {
+            this.id = id;
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
+
+    @Rule
+    public final ExpectedException expectedException = ExpectedException.none();
 
     private MockRestServiceServer server;
     private NakadiClient client;
@@ -99,6 +118,31 @@ public class NakadiClientTest {
         assertEquals(Collections.singleton("foo"), subscription.getEventTypes());
         assertEquals("bar", subscription.getConsumerGroup());
         assertNotNull(subscription.getCreatedAt());
+    }
+
+    @Test
+    public void shouldPublishEvents() throws IOException {
+        server.expect(requestTo("http://example.com/event-types/foobar/events"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(jsonPath("$[0].id", equalTo("1")))
+                .andExpect(jsonPath("$[1].id", equalTo("2")))
+                .andRespond(withStatus(HttpStatus.OK));
+
+        client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+    }
+
+    @Test
+    public void shouldHandleBatchItemResponseWhenPublishing() throws IOException {
+        server.expect(requestTo("http://example.com/event-types/foobar/events"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(jsonPath("$[0].id", equalTo("1")))
+                .andExpect(jsonPath("$[1].id", equalTo("2")))
+                .andRespond(withStatus(HttpStatus.MULTI_STATUS).contentType(MediaType.APPLICATION_JSON).body("[{\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]"));
+
+        expectedException.expect(EventPublishingException.class);
+        expectedException.expectMessage("returned status [failed] in step [validating] with detail [baz]");
+
+        client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
     }
 
 }
