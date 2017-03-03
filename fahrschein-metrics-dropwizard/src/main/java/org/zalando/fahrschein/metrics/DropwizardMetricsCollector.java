@@ -4,6 +4,9 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import org.zalando.fahrschein.MetricsCollector;
 
+import java.time.OffsetDateTime;
+import java.util.Optional;
+
 public class DropwizardMetricsCollector implements MetricsCollector {
 
     public static final String DEFAULT_PREFIX = "org.zalando.fahrschein.";
@@ -32,7 +35,7 @@ public class DropwizardMetricsCollector implements MetricsCollector {
     }
 
     @Override
-    public void markEventsReceived(final int size) {
+    public void markEventsReceived(final int size, final Optional<OffsetDateTime> oldestOccurredAt, final Optional<OffsetDateTime> latestOccurredAt) {
         eventsReceivedMeter.mark(size);
     }
 

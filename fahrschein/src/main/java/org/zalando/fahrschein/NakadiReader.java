@@ -3,11 +3,12 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.node.ValueNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -26,10 +27,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.URI;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -119,6 +121,28 @@ class NakadiReader<T> implements IORunnable {
                 response.close();
                 LOG.trace("Closed response");
             }
+        }
+    }
+
+    private static class EventsStatistic {
+        private OffsetDateTime oldestOccurredAt = null;
+        private OffsetDateTime latestOccurredAt = null;
+
+        void applyOccurredAt(final OffsetDateTime occurredAt) {
+            if(oldestOccurredAt == null || occurredAt.isBefore(oldestOccurredAt)) {
+                oldestOccurredAt = occurredAt;
+            }
+            if(latestOccurredAt == null || occurredAt.isAfter(latestOccurredAt)) {
+                latestOccurredAt = occurredAt;
+            }
+        }
+
+        Optional<OffsetDateTime> getOldestOccurredAt() {
+            return Optional.ofNullable(oldestOccurredAt);
+        }
+
+        Optional<OffsetDateTime> getLatestOccurredAt() {
+            return Optional.ofNullable(latestOccurredAt);
         }
     }
 
@@ -220,33 +244,31 @@ class NakadiReader<T> implements IORunnable {
         return new Cursor(partition, offset, eventType, cursorToken);
     }
 
-    private List<T> readEvents(final JsonParser jsonParser) throws IOException {
+    private List<T> readEvents(final JsonParser jsonParser, final EventsStatistic eventsStatistic) throws IOException {
         expectToken(jsonParser, JsonToken.START_ARRAY);
         jsonParser.clearCurrentToken();
 
-        final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventClass);
-
         final List<T> events = new ArrayList<>();
-        while (true) {
-            try {
-                // MappingIterator#hasNext can theoretically also throw RuntimeExceptions, that's why we use this strange loop structure
-                if (eventIterator.hasNext()) {
-                    events.add(eventClass.cast(eventIterator.next()));
-                } else {
-                    break;
-                }
-            } catch (RuntimeException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof JsonMappingException) {
-                    listener.onMappingException((JsonMappingException) cause);
-                } else if (cause instanceof IOException) {
-                    throw (IOException)cause;
-                } else {
-                    throw e;
-                }
-            }
+        while (jsonParser.nextToken() != JsonToken.END_ARRAY) {
+            final TreeNode eventAsTree = jsonParser.readValueAsTree();
+
+            events.add(eventReader.treeToValue(eventAsTree, eventClass));
+            extractOccurredAt(eventAsTree).ifPresent(eventsStatistic::applyOccurredAt);
         }
         return events;
+    }
+
+    private Optional<OffsetDateTime> extractOccurredAt(final TreeNode eventAsTree) {
+        final Optional<String> occurredAtAsString = Optional.of(eventAsTree.path("metadata").path("occurred_at"))
+                .filter(TreeNode::isValueNode)
+                .map(node -> (ValueNode) node)
+                .map(ValueNode::asText);
+        try {
+            return occurredAtAsString.map(OffsetDateTime::parse);
+        } catch (DateTimeParseException ex) {
+            LOG.info("Could not parse \"metadata.occurred_at\":\"{}\" as offset date time: {}", occurredAtAsString.get(), ex.getMessage());
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -334,6 +356,7 @@ class NakadiReader<T> implements IORunnable {
 
         Cursor cursor = null;
         List<T> events = null;
+        final EventsStatistic eventsStatistic = new EventsStatistic();
 
         while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
             final String field = jsonParser.getCurrentName();
@@ -343,7 +366,7 @@ class NakadiReader<T> implements IORunnable {
                     break;
                 }
                 case "events": {
-                    events = readEvents(jsonParser);
+                    events = readEvents(jsonParser, eventsStatistic);
                     break;
                 }
                 case "info": {
@@ -368,9 +391,9 @@ class NakadiReader<T> implements IORunnable {
         LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
 
         if (events == null) {
-            metricsCollector.markEventsReceived(0);
+            metricsCollector.markEventsReceived(0, Optional.empty(), Optional.empty());
         } else {
-            metricsCollector.markEventsReceived(events.size());
+            metricsCollector.markEventsReceived(events.size(), eventsStatistic.getOldestOccurredAt(), eventsStatistic.getLatestOccurredAt());
 
             final Batch<T> batch = new Batch<>(cursor, Collections.unmodifiableList(events));
 

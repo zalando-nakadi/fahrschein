@@ -4,6 +4,8 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import org.zalando.fahrschein.MetricsCollector;
 
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.function.LongSupplier;
 
 import static com.codahale.metrics.MetricRegistry.name;
@@ -17,11 +19,7 @@ public class LastActivityMetricsCollector implements MetricsCollector {
     private long lastErrorHappend = 0;
     private long lastReconnect = 0;
 
-    private final MetricRegistry metricRegistry;
-
     public LastActivityMetricsCollector(final MetricRegistry metricRegistry, final String metricsNamePrefix) {
-        this.metricRegistry = metricRegistry;
-
         createOrReplaceGauge(metricRegistry,
                 name(this.getClass(), metricsNamePrefix, "lastMessageReceived"),
                 () -> ((currentTimeMillis() - lastMessageReceived) / 1000));
@@ -50,7 +48,7 @@ public class LastActivityMetricsCollector implements MetricsCollector {
     }
 
     @Override
-    public void markEventsReceived(final int size) {
+    public void markEventsReceived(final int size, final Optional<OffsetDateTime> oldestOccurredAt, final Optional<OffsetDateTime> latestOccurredAt) {
         lastEventReceived = currentTimeMillis();
     }
 
