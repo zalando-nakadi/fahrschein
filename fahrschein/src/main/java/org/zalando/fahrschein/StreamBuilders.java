@@ -8,7 +8,9 @@ import org.zalando.fahrschein.domain.Subscription;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Optional.ofNullable;
 
@@ -36,7 +38,7 @@ class StreamBuilders {
         }
 
         protected abstract URI getURI(String queryString);
-        protected abstract String getEventName();
+        protected abstract Set<String> getEventName();
         protected abstract Optional<Subscription> getSubscription();
         protected abstract Optional<Lock> getLock();
 
@@ -46,7 +48,7 @@ class StreamBuilders {
             final String queryString = streamParameters.toQueryString();
 
             final URI uri = getURI(queryString);
-            final String eventName = getEventName();
+            final Set<String> eventName = getEventName();
             final Optional<Subscription> subscription = getSubscription();
             final Optional<Lock> lock = getLock();
 
@@ -79,8 +81,8 @@ class StreamBuilders {
         }
 
         @Override
-        protected String getEventName() {
-            return subscription.getEventTypes().iterator().next();
+        protected Set<String> getEventName() {
+            return subscription.getEventTypes();
         }
 
         @Override
@@ -134,8 +136,8 @@ class StreamBuilders {
         }
 
         @Override
-        protected String getEventName() {
-            return eventName;
+        protected Set<String> getEventName() {
+            return Collections.singleton(eventName);
         }
 
         @Override

@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Collections.singletonList;
-import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class ManagedCursorManager implements CursorManager {
 
@@ -83,22 +82,18 @@ public class ManagedCursorManager implements CursorManager {
 
     @Override
     public void addSubscription(Subscription subscription) {
-        checkState(subscription.getEventTypes().size() == 1);
-        final String eventName = subscription.getEventTypes().iterator().next();
-
-        LOG.debug("Adding subscription [{}] to event [{}]", subscription.getId(), eventName);
-
-        streams.put(eventName, new SubscriptionStream(eventName, subscription.getId()));
+        for(String eventName: subscription.getEventTypes()){
+            LOG.debug("Adding subscription [{}] to event [{}]", subscription.getId(), eventName);
+            streams.put(eventName, new SubscriptionStream(eventName, subscription.getId()));
+        }
     }
 
     @Override
     public void addStreamId(Subscription subscription, String streamId) {
-        checkState(subscription.getEventTypes().size() == 1);
-        final String eventName = subscription.getEventTypes().iterator().next();
-
-        LOG.debug("Adding stream id [{}] for subscription [{}] to event [{}]", streamId, subscription.getId(), eventName);
-
-        streams.get(eventName).setStreamId(streamId);
+        for(String eventName: subscription.getEventTypes()) {
+            LOG.debug("Adding stream id [{}] for subscription [{}] to event [{}]", streamId, subscription.getId(), eventName);
+            streams.get(eventName).setStreamId(streamId);
+        }
     }
 
     @Override

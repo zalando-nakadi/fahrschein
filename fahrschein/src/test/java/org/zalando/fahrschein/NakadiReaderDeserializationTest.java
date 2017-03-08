@@ -25,6 +25,7 @@ import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,7 +70,8 @@ public class NakadiReaderDeserializationTest {
         private final SalesOrder salesOrder;
 
         @JsonCreator
-        public SalesOrderPlaced(Metadata metadata, @JsonProperty("sales_order") SalesOrder salesOrder) {
+        public SalesOrderPlaced(@JsonProperty("metadata") Metadata metadata,
+                                @JsonProperty("sales_order") SalesOrder salesOrder) {
             this.metadata = metadata;
             this.salesOrder = salesOrder;
         }
@@ -89,7 +91,8 @@ public class NakadiReaderDeserializationTest {
         private final String name;
 
         @JsonCreator
-        public Customer(@JsonProperty("customer_number") String customerNumber, String name) {
+        public Customer(@JsonProperty("customer_number") String customerNumber,
+                        @JsonProperty("name")String name) {
             this.customerNumber = customerNumber;
             this.name = name;
         }
@@ -147,7 +150,7 @@ public class NakadiReaderDeserializationTest {
     private <T> List<T> readSingleBatch(String eventName, Class<T> eventClass) throws IOException {
         final List<T> result = new ArrayList<>();
         final NakadiReader<T> nakadiReader = new NakadiReader<T>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
-                eventName, Optional.empty(), Optional.empty(), eventClass, result::addAll, NoMetricsCollector.NO_METRICS_COLLECTOR);
+                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll, NoMetricsCollector.NO_METRICS_COLLECTOR);
         nakadiReader.readSingleBatch();
 
         return result;
