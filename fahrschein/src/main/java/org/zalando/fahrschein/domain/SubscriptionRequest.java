@@ -13,7 +13,7 @@ import static java.util.Collections.unmodifiableSet;
 public class SubscriptionRequest {
 
     public enum Position {
-        BEGIN("begin"), END("end");
+        BEGIN("begin"), END("end"), CURSORS("cursors");
 
         private final String value;
 
@@ -32,16 +32,18 @@ public class SubscriptionRequest {
     private final Set<String> eventTypes;
     private final String consumerGroup;
     private final Position readFrom;
+    private final Set<SubscriptionCursorWithoutToken> initialCursors;
 
-    public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom) {
+    public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom, Set<SubscriptionCursorWithoutToken> initialCursors) {
         this.owningApplication = owningApplication;
         this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.readFrom = readFrom;
+        this.initialCursors = initialCursors;
     }
 
     public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup) {
-        this(owningApplication, eventTypes, consumerGroup, Position.END);
+        this(owningApplication, eventTypes, consumerGroup, Position.END, new HashSet<>());
     }
 
     public String getOwningApplication() {
@@ -58,5 +60,9 @@ public class SubscriptionRequest {
 
     public Position getReadFrom() {
         return readFrom;
+    }
+
+    public Set<SubscriptionCursorWithoutToken> getInitialCursors() {
+        return initialCursors;
     }
 }

@@ -9,19 +9,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
-import org.zalando.fahrschein.domain.BatchItemResponse;
-import org.zalando.fahrschein.domain.Partition;
-import org.zalando.fahrschein.domain.Subscription;
-import org.zalando.fahrschein.domain.SubscriptionRequest;
+import org.zalando.fahrschein.domain.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.zalando.fahrschein.Preconditions.checkState;
 
@@ -99,11 +93,12 @@ public class NakadiClient {
      * @throws IOException
      */
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
-        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, SubscriptionRequest.Position.END);
+        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, SubscriptionRequest.Position.END, new HashSet<>());
     }
 
     /**
-     * Create Subscription for one event type with specified "read_from" position.
+     * Create Subscription for one event type with specified "read_from" position. If SubscriptionRequest.Position == "cursors"
+     * then initialCursors parameter is required.
      *
      * @param applicationName
      * @param eventName
@@ -112,8 +107,8 @@ public class NakadiClient {
      * @return
      * @throws IOException
      */
-    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom) throws IOException {
-        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, readFrom);
+    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom, Set<SubscriptionCursorWithoutToken> initialCursors) throws IOException {
+        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, readFrom, initialCursors);
     }
 
     /**
@@ -126,7 +121,7 @@ public class NakadiClient {
      * @throws IOException
      */
     public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup) throws IOException {
-        return subscribe(applicationName, eventNames, consumerGroup, SubscriptionRequest.Position.END);
+        return subscribe(applicationName, eventNames, consumerGroup, SubscriptionRequest.Position.END, new HashSet<>());
     }
 
     /**
@@ -139,8 +134,9 @@ public class NakadiClient {
      * @return
      * @throws IOException
      */
-    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom) throws IOException {
-        final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom);
+    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, Set<SubscriptionCursorWithoutToken> initialCursors) throws IOException {
+
+        final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors);
 
         final URI uri = baseUri.resolve("/subscriptions");
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.POST);

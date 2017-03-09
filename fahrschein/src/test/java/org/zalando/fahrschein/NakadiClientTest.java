@@ -26,9 +26,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -139,7 +137,7 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.read_from", equalTo("begin")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
-        final Subscription subscription = client.subscribe("nakadi-client-test", "foo", "bar", SubscriptionRequest.Position.BEGIN);
+        final Subscription subscription = client.subscribe("nakadi-client-test", "foo", "bar", SubscriptionRequest.Position.BEGIN, new HashSet<>());
 
         assertNotNull(subscription);
         assertEquals("1234", subscription.getId());
