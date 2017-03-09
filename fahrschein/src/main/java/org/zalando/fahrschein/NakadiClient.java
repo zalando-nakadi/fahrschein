@@ -107,7 +107,7 @@ public class NakadiClient {
      * @return
      * @throws IOException
      */
-    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom, Set<SubscriptionCursorWithoutToken> initialCursors) throws IOException {
+    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom, Set<Cursor> initialCursors) throws IOException {
         return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, readFrom, initialCursors);
     }
 
@@ -134,7 +134,7 @@ public class NakadiClient {
      * @return
      * @throws IOException
      */
-    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, Set<SubscriptionCursorWithoutToken> initialCursors) throws IOException {
+    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, Set<Cursor> initialCursors) throws IOException {
 
         final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors);
 

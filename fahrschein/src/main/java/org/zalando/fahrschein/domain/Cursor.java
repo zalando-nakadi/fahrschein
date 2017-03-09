@@ -19,6 +19,13 @@ public final class Cursor {
         this.cursorToken = cursorToken;
     }
 
+    public Cursor(String partition, String offset, String eventType) {
+        this.partition = partition;
+        this.offset = offset;
+        this.eventType = eventType;
+        this.cursorToken = null;
+    }
+
     public Cursor(String partition, String offset) {
         this.partition = partition;
         this.offset = offset;

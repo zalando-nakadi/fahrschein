@@ -32,9 +32,9 @@ public class SubscriptionRequest {
     private final Set<String> eventTypes;
     private final String consumerGroup;
     private final Position readFrom;
-    private final Set<SubscriptionCursorWithoutToken> initialCursors;
+    private final Set<Cursor> initialCursors;
 
-    public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom, Set<SubscriptionCursorWithoutToken> initialCursors) {
+    public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom, Set<Cursor> initialCursors) {
         this.owningApplication = owningApplication;
         this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
@@ -62,7 +62,7 @@ public class SubscriptionRequest {
         return readFrom;
     }
 
-    public Set<SubscriptionCursorWithoutToken> getInitialCursors() {
+    public Set<Cursor> getInitialCursors() {
         return initialCursors;
     }
 }

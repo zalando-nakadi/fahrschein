@@ -10,10 +10,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.*;
-import org.zalando.fahrschein.domain.Lock;
-import org.zalando.fahrschein.domain.Partition;
-import org.zalando.fahrschein.domain.Subscription;
-import org.zalando.fahrschein.domain.SubscriptionRequest;
+import org.zalando.fahrschein.domain.*;
 import org.zalando.fahrschein.example.domain.OrderCreatedEvent;
 import org.zalando.fahrschein.example.domain.OrderPaymentAcceptedEvent;
 import org.zalando.fahrschein.example.domain.SalesOrder;
@@ -74,11 +71,11 @@ public class Main {
             }
         };
 
-        //subscriptionListen(objectMapper, listener);
+        subscriptionListen(objectMapper, listener);
 
         //subscriptionMultipleEvents(objectMapper);
 
-        simpleListen(objectMapper, listener);
+        //simpleListen(objectMapper, listener);
 
         //persistentListen(objectMapper, listener);
 
@@ -108,7 +105,7 @@ public class Main {
         events.add(ORDER_CREATED);
         events.add(ORDER_PAYMENT_STATUS_ACCEPTED);
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events, "fahrschein-demo", SubscriptionRequest.Position.END);
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events, "fahrschein-demo", SubscriptionRequest.Position.END, new HashSet<Cursor>());
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
@@ -122,7 +119,7 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.END);
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.END, new HashSet<Cursor>());
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
