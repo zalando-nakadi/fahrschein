@@ -11,6 +11,8 @@ import java.io.IOException;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -32,7 +34,7 @@ public class CursorManagerDefaultMethodsTest {
         when(cursorManager.getCursors("test")).thenReturn(initialOffset == null ? emptyList() : singletonList(new Cursor("0", initialOffset)));
         cursorManager.updatePartitions("test", singletonList(new Partition("0", oldestAvailableOffset, newestAvailableOffset)));
         if (expectedOffset != null) {
-            verify(cursorManager).onSuccess("test", new Cursor("0", expectedOffset));
+            verify(cursorManager).onSuccess(eq("test"), refEq(new Cursor("0", expectedOffset)));
         } else {
             verify(cursorManager, never()).onSuccess(any(), any());
         }
