@@ -137,7 +137,7 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.read_from", equalTo("begin")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
-        final Subscription subscription = client.subscribe("nakadi-client-test", "foo", "bar", SubscriptionRequest.Position.BEGIN, new HashSet<>());
+        final Subscription subscription = client.subscribe("nakadi-client-test", "foo", "bar", SubscriptionRequest.Position.BEGIN, Collections.emptyList());
 
         assertNotNull(subscription);
         assertEquals("1234", subscription.getId());

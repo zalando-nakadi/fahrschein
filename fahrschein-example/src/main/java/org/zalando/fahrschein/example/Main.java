@@ -23,10 +23,7 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -73,6 +70,8 @@ public class Main {
 
         subscriptionListen(objectMapper, listener);
 
+        //subscriptionListenWithPositionCursors(objectMapper, listener);
+
         //subscriptionMultipleEvents(objectMapper);
 
         //simpleListen(objectMapper, listener);
@@ -105,12 +104,35 @@ public class Main {
         events.add(ORDER_CREATED);
         events.add(ORDER_PAYMENT_STATUS_ACCEPTED);
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events, "fahrschein-demo", SubscriptionRequest.Position.END, new HashSet<Cursor>());
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events, "fahrschein-demo", SubscriptionRequest.Position.END, Collections.emptyList());
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
                 .listen(JsonNode.class, listener);
 
+    }
+
+    private static void subscriptionListenWithPositionCursors(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+
+        List<Cursor> cursors = new ArrayList<>();
+        cursors.add(new Cursor("0", "000000000000109993", "sales-order-service.order-placed"));
+        cursors.add(new Cursor("1", "000000000000110085", "sales-order-service.order-placed"));
+        cursors.add(new Cursor("2", "000000000000109128", "sales-order-service.order-placed"));
+        cursors.add(new Cursor("3", "000000000000110205", "sales-order-service.order-placed"));
+        cursors.add(new Cursor("4", "000000000000109161", "sales-order-service.order-placed"));
+        cursors.add(new Cursor("5", "000000000000109087", "sales-order-service.order-placed"));
+        cursors.add(new Cursor("6", "000000000000109100", "sales-order-service.order-placed"));
+        cursors.add(new Cursor("7", "000000000000109146", "sales-order-service.order-placed"));
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .build();
+
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.CURSORS, cursors);
+
+        nakadiClient.stream(subscription)
+                .withObjectMapper(objectMapper)
+                .listen(SalesOrderPlaced.class, listener);
     }
 
     private static void subscriptionListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
@@ -119,7 +141,7 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.END, new HashSet<Cursor>());
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.END, Collections.emptyList());
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)

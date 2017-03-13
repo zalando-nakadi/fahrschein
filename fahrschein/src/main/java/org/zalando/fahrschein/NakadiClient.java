@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.*;
 
+import static org.zalando.fahrschein.Preconditions.checkArgument;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class NakadiClient {
@@ -93,7 +94,7 @@ public class NakadiClient {
      * @throws IOException
      */
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
-        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, SubscriptionRequest.Position.END, new HashSet<>());
+        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, SubscriptionRequest.Position.END, Collections.emptyList());
     }
 
     /**
@@ -107,7 +108,7 @@ public class NakadiClient {
      * @return
      * @throws IOException
      */
-    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom, Set<Cursor> initialCursors) throws IOException {
+    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom, List<Cursor> initialCursors) throws IOException {
         return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, readFrom, initialCursors);
     }
 
@@ -121,7 +122,7 @@ public class NakadiClient {
      * @throws IOException
      */
     public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup) throws IOException {
-        return subscribe(applicationName, eventNames, consumerGroup, SubscriptionRequest.Position.END, new HashSet<>());
+        return subscribe(applicationName, eventNames, consumerGroup, SubscriptionRequest.Position.END, Collections.emptyList());
     }
 
     /**
@@ -134,7 +135,11 @@ public class NakadiClient {
      * @return
      * @throws IOException
      */
-    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, Set<Cursor> initialCursors) throws IOException {
+    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, List<Cursor> initialCursors) throws IOException {
+
+        if(readFrom.equals(SubscriptionRequest.Position.CURSORS)){
+            checkArgument(!initialCursors.isEmpty(), "Initial cursors are required for SubscriptionRequest.Position: cursors");
+        }
 
         final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors);
 
