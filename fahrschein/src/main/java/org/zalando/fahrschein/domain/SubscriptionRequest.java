@@ -37,7 +37,7 @@ public class SubscriptionRequest {
         this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.readFrom = readFrom;
-        this.initialCursors = unmodifiableList((initialCursors == null) ? emptyList() : initialCursors);
+        this.initialCursors = unmodifiableList((initialCursors == null) ? emptyList() : new ArrayList<>(initialCursors));
     }
 
     public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup) {
