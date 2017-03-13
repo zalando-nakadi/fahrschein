@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import javax.annotation.concurrent.Immutable;
 import java.util.*;
 
-import static java.util.Collections.emptySet;
-import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableSet;
+import static java.util.Collections.*;
 
 @Immutable
 public class SubscriptionRequest {
@@ -39,11 +37,11 @@ public class SubscriptionRequest {
         this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.readFrom = readFrom;
-        this.initialCursors = unmodifiableList(initialCursors);
+        this.initialCursors = unmodifiableList((initialCursors == null) ? emptyList() : initialCursors);
     }
 
     public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup) {
-        this(owningApplication, eventTypes, consumerGroup, Position.END, Collections.emptyList());
+        this(owningApplication, eventTypes, consumerGroup, Position.END, emptyList());
     }
 
     public String getOwningApplication() {

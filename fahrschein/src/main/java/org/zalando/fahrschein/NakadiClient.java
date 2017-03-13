@@ -138,7 +138,8 @@ public class NakadiClient {
     public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, List<Cursor> initialCursors) throws IOException {
 
         if(readFrom.equals(SubscriptionRequest.Position.CURSORS)){
-            checkArgument(!initialCursors.isEmpty(), "Initial cursors are required for SubscriptionRequest.Position: cursors");
+            checkArgument(initialCursors != null, "Initial cursors are required for position: cursors");
+            checkArgument(!initialCursors.isEmpty(), "Initial cursors are required for position: cursors");
         }
 
         final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors);
