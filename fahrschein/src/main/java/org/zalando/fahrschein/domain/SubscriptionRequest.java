@@ -3,17 +3,15 @@ package org.zalando.fahrschein.domain;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import javax.annotation.concurrent.Immutable;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-import static java.util.Collections.emptySet;
-import static java.util.Collections.unmodifiableSet;
+import static java.util.Collections.*;
 
 @Immutable
 public class SubscriptionRequest {
 
     public enum Position {
-        BEGIN("begin"), END("end");
+        BEGIN("begin"), END("end"), CURSORS("cursors");
 
         private final String value;
 
@@ -32,16 +30,18 @@ public class SubscriptionRequest {
     private final Set<String> eventTypes;
     private final String consumerGroup;
     private final Position readFrom;
+    private final List<Cursor> initialCursors;
 
-    public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom) {
+    public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom, List<Cursor> initialCursors) {
         this.owningApplication = owningApplication;
         this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.readFrom = readFrom;
+        this.initialCursors = unmodifiableList((initialCursors == null) ? emptyList() : new ArrayList<>(initialCursors));
     }
 
     public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup) {
-        this(owningApplication, eventTypes, consumerGroup, Position.END);
+        this(owningApplication, eventTypes, consumerGroup, Position.END, emptyList());
     }
 
     public String getOwningApplication() {
@@ -58,5 +58,9 @@ public class SubscriptionRequest {
 
     public Position getReadFrom() {
         return readFrom;
+    }
+
+    public List<Cursor> getInitialCursors() {
+        return initialCursors;
     }
 }
