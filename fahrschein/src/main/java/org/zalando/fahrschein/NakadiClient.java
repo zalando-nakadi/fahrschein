@@ -11,6 +11,7 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.*;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -71,7 +72,7 @@ public class NakadiClient {
                     final BatchItemResponse[] responses = internalObjectMapper.readValue(is, BatchItemResponse[].class);
                     final List<BatchItemResponse> failed = new ArrayList<>(responses.length);
                     for (BatchItemResponse batchItemResponse : responses) {
-                        if (!BatchItemResponse.PublishingStatus.SUBMITTED.equals(batchItemResponse.getPublishingStatus())) {
+                        if (batchItemResponse.getPublishingStatus() != BatchItemResponse.PublishingStatus.SUBMITTED) {
                             failed.add(batchItemResponse);
                         }
                     }
@@ -85,62 +86,32 @@ public class NakadiClient {
     }
 
     /**
-     * Create Subscription for one event type.
+     * Create a subscription for a single event type.
      *
-     * @param applicationName
-     * @param eventName
-     * @param consumerGroup
-     * @return
-     * @throws IOException
+     * @deprecated Use the {@link SubscriptionBuilder} and {@link NakadiClient#subscribe(String, String)} instead.
      */
+    @Deprecated
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
-        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, SubscriptionRequest.Position.END, Collections.emptyList());
+        return subscribe(applicationName, eventName).withConsumerGroup(consumerGroup).create();
     }
 
     /**
-     * Create Subscription for one event type with specified "read_from" position. If SubscriptionRequest.Position == "cursors"
-     * then initialCursors parameter is required.
-     *
-     * @param applicationName
-     * @param eventName
-     * @param consumerGroup
-     * @param readFrom
-     * @return
-     * @throws IOException
+     * Build a subscription for a single event type.
      */
-    public Subscription subscribe(String applicationName, String eventName, String consumerGroup, SubscriptionRequest.Position readFrom, List<Cursor> initialCursors) throws IOException {
-        return subscribe(applicationName,  Collections.singleton(eventName), consumerGroup, readFrom, initialCursors);
+    public SubscriptionBuilder subscribe(String applicationName, String eventName) throws IOException {
+        return new SubscriptionBuilder(this, applicationName, Collections.singleton(eventName));
     }
 
     /**
-     * Create Subscription for multiple event types.
-     *
-     * @param applicationName
-     * @param eventNames
-     * @param consumerGroup
-     * @return
-     * @throws IOException
+     * Build a subscription for a multiple event types.
      */
-    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup) throws IOException {
-        return subscribe(applicationName, eventNames, consumerGroup, SubscriptionRequest.Position.END, Collections.emptyList());
+    public SubscriptionBuilder subscribe(String applicationName, Set<String> eventNames) throws IOException {
+        return new SubscriptionBuilder(this, applicationName, eventNames);
     }
 
-    /**
-     * Create Subscription for multiple event types from specified "read_from" position.
-     *
-     * @param applicationName
-     * @param eventNames
-     * @param consumerGroup
-     * @param readFrom
-     * @return
-     * @throws IOException
-     */
-    public Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, List<Cursor> initialCursors) throws IOException {
+    Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, @Nullable List<Cursor> initialCursors) throws IOException {
 
-        if(readFrom == SubscriptionRequest.Position.CURSORS){
-            checkArgument(initialCursors != null, "Initial cursors are required for position: cursors");
-            checkArgument(!initialCursors.isEmpty(), "Initial cursors are required for position: cursors");
-        }
+        checkArgument(readFrom != SubscriptionRequest.Position.CURSORS || (initialCursors != null && !initialCursors.isEmpty()), "Initial cursors are required for position: cursors");
 
         final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors);
 

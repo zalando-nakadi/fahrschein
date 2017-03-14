@@ -29,6 +29,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.util.Arrays.asList;
+
 public class Main {
 
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
@@ -68,13 +70,13 @@ public class Main {
             }
         };
 
-        subscriptionListen(objectMapper, listener);
+        //subscriptionListen(objectMapper, listener);
 
         //subscriptionListenWithPositionCursors(objectMapper, listener);
 
         //subscriptionMultipleEvents(objectMapper);
 
-        //simpleListen(objectMapper, listener);
+        simpleListen(objectMapper, listener);
 
         //persistentListen(objectMapper, listener);
 
@@ -84,13 +86,13 @@ public class Main {
     private static void subscriptionMultipleEvents(ObjectMapper objectMapper) throws IOException {
 
         final Listener<JsonNode> listener = events -> {
-            for(JsonNode node: events){
+            for (JsonNode node: events) {
                 String eventType = node.get("metadata").get("event_type").textValue();
-                if(eventType.equals(ORDER_PAYMENT_STATUS_ACCEPTED)){
-                    OrderPaymentAcceptedEvent event = objectMapper.convertValue(node, OrderPaymentAcceptedEvent.class);
+                if (eventType.equals(ORDER_PAYMENT_STATUS_ACCEPTED)) {
+                    final OrderPaymentAcceptedEvent event = objectMapper.convertValue(node, OrderPaymentAcceptedEvent.class);
                     LOG.info("OrderPaymentAcceptedEvent {}", event.getOrderNumber());
-                } else if (eventType.equals(ORDER_CREATED)){
-                    OrderCreatedEvent event = objectMapper.convertValue(node, OrderCreatedEvent.class);
+                } else if (eventType.equals(ORDER_CREATED)) {
+                    final OrderCreatedEvent event = objectMapper.convertValue(node, OrderCreatedEvent.class);
                     LOG.info("OrderCreatedEvent {}", event.getOrderNumber());
                 }
             }
@@ -100,35 +102,38 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        Set<String> events = new HashSet<>();
-        events.add(ORDER_CREATED);
-        events.add(ORDER_PAYMENT_STATUS_ACCEPTED);
+        final Set<String> events = new HashSet<>(asList(ORDER_CREATED, ORDER_PAYMENT_STATUS_ACCEPTED));
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events, "fahrschein-demo", SubscriptionRequest.Position.END, Collections.emptyList());
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events)
+                .withConsumerGroup("fahrschein-demo")
+                .readFromEnd()
+                .create();
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
                 .listen(JsonNode.class, listener);
-
     }
 
     private static void subscriptionListenWithPositionCursors(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
 
-        List<Cursor> cursors = new ArrayList<>();
-        cursors.add(new Cursor("0", "000000000000109993", "sales-order-service.order-placed"));
-        cursors.add(new Cursor("1", "000000000000110085", "sales-order-service.order-placed"));
-        cursors.add(new Cursor("2", "000000000000109128", "sales-order-service.order-placed"));
-        cursors.add(new Cursor("3", "000000000000110205", "sales-order-service.order-placed"));
-        cursors.add(new Cursor("4", "000000000000109161", "sales-order-service.order-placed"));
-        cursors.add(new Cursor("5", "000000000000109087", "sales-order-service.order-placed"));
-        cursors.add(new Cursor("6", "000000000000109100", "sales-order-service.order-placed"));
-        cursors.add(new Cursor("7", "000000000000109146", "sales-order-service.order-placed"));
+        final List<Cursor> cursors = asList(
+                new Cursor("0", "000000000000109993", "sales-order-service.order-placed"),
+                new Cursor("1", "000000000000110085", "sales-order-service.order-placed"),
+                new Cursor("2", "000000000000109128", "sales-order-service.order-placed"),
+                new Cursor("3", "000000000000110205", "sales-order-service.order-placed"),
+                new Cursor("4", "000000000000109161", "sales-order-service.order-placed"),
+                new Cursor("5", "000000000000109087", "sales-order-service.order-placed"),
+                new Cursor("6", "000000000000109100", "sales-order-service.order-placed"),
+                new Cursor("7", "000000000000109146", "sales-order-service.order-placed"));
 
         final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.CURSORS, cursors);
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+                .withConsumerGroup("fahrschein-demo")
+                .readFromCursors(cursors)
+                .create();
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
@@ -141,7 +146,10 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED, "fahrschein-demo", SubscriptionRequest.Position.END, Collections.emptyList());
+        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+                .withConsumerGroup("fahrschein-demo")
+                .readFromEnd()
+                .create();
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
