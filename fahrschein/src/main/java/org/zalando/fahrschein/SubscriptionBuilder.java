@@ -55,7 +55,7 @@ public class SubscriptionBuilder {
         return new SubscriptionBuilder(nakadiClient, applicationName, eventNames, consumerGroup, readFrom, initialCursors);
     }
 
-    public Subscription create() throws IOException {
+    public Subscription subscribe() throws IOException {
         return nakadiClient.subscribe(applicationName, eventNames, consumerGroup, readFrom, initialCursors);
     }
 

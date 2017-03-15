@@ -104,10 +104,10 @@ public class Main {
 
         final Set<String> events = new HashSet<>(asList(ORDER_CREATED, ORDER_PAYMENT_STATUS_ACCEPTED));
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", events)
+        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", events)
                 .withConsumerGroup("fahrschein-demo")
                 .readFromEnd()
-                .create();
+                .subscribe();
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
@@ -130,10 +130,10 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
                 .withConsumerGroup("fahrschein-demo")
                 .readFromCursors(cursors)
-                .create();
+                .subscribe();
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
@@ -146,10 +146,10 @@ public class Main {
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
-        final Subscription subscription = nakadiClient.subscribe("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
                 .withConsumerGroup("fahrschein-demo")
                 .readFromEnd()
-                .create();
+                .subscribe();
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)

@@ -91,7 +91,9 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.read_from", equalTo("end")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
-        final Subscription subscription = client.subscribe("nakadi-client-test", "foo").withConsumerGroup("bar").create();
+        final Subscription subscription = client.subscription("nakadi-client-test", "foo")
+                .withConsumerGroup("bar")
+                .subscribe();
 
         assertNotNull(subscription);
         assertEquals("1234", subscription.getId());
@@ -112,11 +114,9 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.read_from", equalTo("end")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo1\", \"foo2\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
-        Set<String> eventNames = new HashSet<String>();
-        eventNames.add("foo1");
-        eventNames.add("foo2");
-
-        final Subscription subscription = client.subscribe("nakadi-client-test", eventNames).withConsumerGroup("bar").create();
+        final Subscription subscription = client.subscription("nakadi-client-test", new HashSet<>(asList("foo1", "foo2")))
+                .withConsumerGroup("bar")
+                .subscribe();
 
         assertNotNull(subscription);
         assertEquals("1234", subscription.getId());
@@ -141,7 +141,10 @@ public class NakadiClientTest {
                 .andExpect(jsonPath("$.read_from", equalTo("begin")))
                 .andRespond(withSuccess("{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}", MediaType.APPLICATION_JSON));
 
-        final Subscription subscription = client.subscribe("nakadi-client-test", "foo").withConsumerGroup("bar").readFromBegin().create();
+        final Subscription subscription = client.subscription("nakadi-client-test", "foo")
+                .withConsumerGroup("bar")
+                .readFromBegin()
+                .subscribe();
 
         assertNotNull(subscription);
         assertEquals("1234", subscription.getId());

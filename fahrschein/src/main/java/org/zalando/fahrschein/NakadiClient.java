@@ -88,24 +88,24 @@ public class NakadiClient {
     /**
      * Create a subscription for a single event type.
      *
-     * @deprecated Use the {@link SubscriptionBuilder} and {@link NakadiClient#subscribe(String, String)} instead.
+     * @deprecated Use the {@link SubscriptionBuilder} and {@link NakadiClient#subscription(String, String)} instead.
      */
     @Deprecated
     public Subscription subscribe(String applicationName, String eventName, String consumerGroup) throws IOException {
-        return subscribe(applicationName, eventName).withConsumerGroup(consumerGroup).create();
+        return subscription(applicationName, eventName).withConsumerGroup(consumerGroup).subscribe();
     }
 
     /**
      * Build a subscription for a single event type.
      */
-    public SubscriptionBuilder subscribe(String applicationName, String eventName) throws IOException {
+    public SubscriptionBuilder subscription(String applicationName, String eventName) throws IOException {
         return new SubscriptionBuilder(this, applicationName, Collections.singleton(eventName));
     }
 
     /**
-     * Build a subscription for a multiple event types.
+     * Build a subscription for multiple event types.
      */
-    public SubscriptionBuilder subscribe(String applicationName, Set<String> eventNames) throws IOException {
+    public SubscriptionBuilder subscription(String applicationName, Set<String> eventNames) throws IOException {
         return new SubscriptionBuilder(this, applicationName, eventNames);
     }
 
