@@ -2,17 +2,20 @@ package org.zalando.fahrschein.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public final class Cursor {
     private final String partition;
     private final String offset;
+    @Nullable
     private final String eventType;
+    @Nullable
     private final String cursorToken;
 
     @JsonCreator
-    public Cursor(String partition, String offset, String eventType, String cursorToken) {
+    public Cursor(String partition, String offset, @Nullable String eventType, @Nullable String cursorToken) {
         this.partition = partition;
         this.offset = offset;
         this.eventType = eventType;
@@ -41,10 +44,19 @@ public final class Cursor {
         return offset;
     }
 
+    /**
+     * The event type of this cursor. Only available if the batch was received using the subscription api.
+     */
+    @Nullable
     public String getEventType() {
         return eventType;
     }
 
+    /**
+     * A token identifying this cursor and offset which has to be used when committing using the subscription api.
+     * Only available if the batch was received using the subscription api.
+     */
+    @Nullable
     public String getCursorToken() {
         return cursorToken;
     }
@@ -59,22 +71,4 @@ public final class Cursor {
                 '}';
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        final Cursor cursor = (Cursor) o;
-
-        if (partition != null ? !partition.equals(cursor.partition) : cursor.partition != null) return false;
-        return offset != null ? offset.equals(cursor.offset) : cursor.offset == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = partition != null ? partition.hashCode() : 0;
-        result = 31 * result + (offset != null ? offset.hashCode() : 0);
-        return result;
-    }
 }

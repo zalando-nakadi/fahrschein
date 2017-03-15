@@ -1,6 +1,5 @@
 package org.zalando.fahrschein.redis;
 
-import org.hamcrest.core.IsEqual;
 import org.junit.Test;
 import org.zalando.fahrschein.domain.Cursor;
 
@@ -11,6 +10,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public class CursorRedisSerializerTest {
@@ -35,8 +35,8 @@ public class CursorRedisSerializerTest {
 
             final Cursor actualCursor = serializer.deserialize(bytes);
 
-            assertThat("Could not serialize and deserialize cursor " + cursor.toString(),
-                    actualCursor, IsEqual.equalTo(cursor));
+            assertEquals("Should roundtrip partition", cursor.getPartition(), actualCursor.getPartition());
+            assertEquals("Should roundtrip offset", cursor.getOffset(), actualCursor.getOffset());
         }
     }
 

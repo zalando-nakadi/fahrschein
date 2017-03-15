@@ -38,7 +38,7 @@ class StreamBuilders {
         }
 
         protected abstract URI getURI(String queryString);
-        protected abstract Set<String> getEventName();
+        protected abstract Set<String> getEventNames();
         protected abstract Optional<Subscription> getSubscription();
         protected abstract Optional<Lock> getLock();
 
@@ -48,7 +48,7 @@ class StreamBuilders {
             final String queryString = streamParameters.toQueryString();
 
             final URI uri = getURI(queryString);
-            final Set<String> eventName = getEventName();
+            final Set<String> eventNames = getEventNames();
             final Optional<Subscription> subscription = getSubscription();
             final Optional<Lock> lock = getLock();
 
@@ -56,7 +56,7 @@ class StreamBuilders {
             final ObjectMapper objectMapper = ofNullable(this.objectMapper).orElse(DefaultObjectMapper.INSTANCE);
             final MetricsCollector metricsCollector = ofNullable(this.metricsCollector).orElse(NoMetricsCollector.NO_METRICS_COLLECTOR);
 
-            final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventName, subscription, lock, eventClass, listener, metricsCollector);
+            final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, metricsCollector);
 
             nakadiReader.run();
         }
@@ -81,7 +81,7 @@ class StreamBuilders {
         }
 
         @Override
-        protected Set<String> getEventName() {
+        protected Set<String> getEventNames() {
             return subscription.getEventTypes();
         }
 
@@ -136,7 +136,7 @@ class StreamBuilders {
         }
 
         @Override
-        protected Set<String> getEventName() {
+        protected Set<String> getEventNames() {
             return Collections.singleton(eventName);
         }
 

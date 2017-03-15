@@ -14,6 +14,7 @@
 
  - Consistent error handling
     - `IOException` handled as retryable
+    - `EventAlreadyProcessedException` is ignored
     - `RuntimeException` aborts processing and can be handled outside the main loop
  - Stream-based parsing
     - Optimized utf-8 decoding by [Jackson](https://github.com/FasterXML/jackson)
@@ -53,7 +54,7 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .build();
 
 // Create subscription using the high level api
-Subscription subscriptions = nakadiClient.subscribe(applicationName, eventName, String consumerGroup);
+Subscription subscriptions = nakadiClient.subscription(applicationName, eventName).subscribe();
 
 // Start streaming, the listen call will block and automatically reconnect on IOException
 nakadiClient.stream(subscription)

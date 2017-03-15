@@ -1,17 +1,11 @@
 package org.zalando.fahrschein.example.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Created by akukuljac on 27/02/2017.
- */
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class OrderPaymentAcceptedEvent {
 
     private String orderNumber;
-
     private String paymentMethod;
 
     @JsonCreator

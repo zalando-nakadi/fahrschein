@@ -15,18 +15,30 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
-import org.zalando.fahrschein.domain.*;
+import org.zalando.fahrschein.domain.Batch;
+import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Lock;
+import org.zalando.fahrschein.domain.Partition;
+import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.zalando.fahrschein.Preconditions.checkState;
 
 class NakadiReader<T> implements IORunnable {
 
@@ -52,6 +64,8 @@ class NakadiReader<T> implements IORunnable {
     private final MetricsCollector metricsCollector;
 
     NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, final MetricsCollector metricsCollector) {
+
+        checkState(subscription.isPresent() || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
         this.uri = uri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
@@ -153,15 +167,21 @@ class NakadiReader<T> implements IORunnable {
         }
     }
 
+    private String getCurrentEventName(Cursor cursor) {
+        final String eventName = cursor.getEventType();
+        return eventName != null ? eventName : eventNames.iterator().next();
+    }
+
     private void processBatch(Batch<T> batch) throws IOException {
         final Cursor cursor = batch.getCursor();
+        final String eventName = getCurrentEventName(cursor);
         try {
             listener.accept(batch.getEvents());
-            cursorManager.onSuccess(eventNames.iterator().next(), cursor);
+            cursorManager.onSuccess(eventName, cursor);
         } catch (EventAlreadyProcessedException e) {
-            LOG.info("Events for [{}] partition [{}] at offset [{}] were already processed", eventNames.iterator().next(), cursor.getPartition(), cursor.getOffset());
+            LOG.info("Events for [{}] partition [{}] at offset [{}] were already processed", eventName, cursor.getPartition(), cursor.getOffset());
         } catch (Throwable throwable) {
-            cursorManager.onError(eventNames.iterator().next(), cursor, throwable);
+            cursorManager.onError(eventName, cursor, throwable);
             throw throwable;
         }
     }
@@ -171,7 +191,6 @@ class NakadiReader<T> implements IORunnable {
         String offset = null;
         String eventType = null;
         String cursorToken = null;
-
 
         expectToken(jsonParser, JsonToken.START_OBJECT);
 
@@ -353,7 +372,8 @@ class NakadiReader<T> implements IORunnable {
             throw new IOException("Could not read cursor");
         }
 
-        LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventNames.iterator().next(), cursor.getPartition(), cursor.getOffset());
+        final String eventName = getCurrentEventName(cursor);
+        LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
 
         if (events == null) {
             metricsCollector.markEventsReceived(0);
