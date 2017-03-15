@@ -2,22 +2,37 @@ package org.zalando.fahrschein.example.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.zalando.fahrschein.domain.Metadata;
 
-public class OrderCreatedEvent {
+@JsonTypeName("eventlog.e96001_order_created")
+public class OrderCreatedEvent extends OrderEvent {
 
-    private String orderNumber;
-    private String customerNumber;
-    private Integer grandTotal;
+    private final Metadata metadata;
+    private final String orderNumber;
+    private final String customerNumber;
+    private final Integer grandTotal;
+    private final String paymentMethod;
 
     @JsonCreator
-    public OrderCreatedEvent(@JsonProperty("orderNumber") String orderNumber,
+    public OrderCreatedEvent(@JsonProperty("metadata") Metadata metadata,
+                             @JsonProperty("orderNumber") String orderNumber,
                              @JsonProperty("grandTotal") Integer grandTotal,
-                             @JsonProperty("customerNumber") String customerNumber) {
+                             @JsonProperty("customerNumber") String customerNumber,
+                             @JsonProperty("paymentMethod") String paymentMethod) {
+        this.metadata = metadata;
         this.orderNumber = orderNumber;
         this.grandTotal = grandTotal;
         this.customerNumber = customerNumber;
+        this.paymentMethod = paymentMethod;
     }
 
+    @Override
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    @Override
     public String getOrderNumber() {
         return orderNumber;
     }
@@ -30,4 +45,7 @@ public class OrderCreatedEvent {
         return customerNumber;
     }
 
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
 }

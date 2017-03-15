@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.*;
 import org.zalando.fahrschein.domain.*;
+import org.zalando.fahrschein.example.domain.OrderEvent;
 import org.zalando.fahrschein.example.domain.OrderCreatedEvent;
 import org.zalando.fahrschein.example.domain.OrderPaymentAcceptedEvent;
 import org.zalando.fahrschein.example.domain.SalesOrder;
@@ -23,6 +24,7 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -74,9 +76,9 @@ public class Main {
 
         //subscriptionListenWithPositionCursors(objectMapper, listener);
 
-        //subscriptionMultipleEvents(objectMapper);
+        subscriptionMultipleEvents(objectMapper);
 
-        simpleListen(objectMapper, listener);
+        //simpleListen(objectMapper, listener);
 
         //persistentListen(objectMapper, listener);
 
@@ -85,15 +87,16 @@ public class Main {
 
     private static void subscriptionMultipleEvents(ObjectMapper objectMapper) throws IOException {
 
-        final Listener<JsonNode> listener = events -> {
-            for (JsonNode node: events) {
-                String eventType = node.get("metadata").get("event_type").textValue();
-                if (eventType.equals(ORDER_PAYMENT_STATUS_ACCEPTED)) {
-                    final OrderPaymentAcceptedEvent event = objectMapper.convertValue(node, OrderPaymentAcceptedEvent.class);
-                    LOG.info("OrderPaymentAcceptedEvent {}", event.getOrderNumber());
-                } else if (eventType.equals(ORDER_CREATED)) {
-                    final OrderCreatedEvent event = objectMapper.convertValue(node, OrderCreatedEvent.class);
-                    LOG.info("OrderCreatedEvent {}", event.getOrderNumber());
+        final Listener<OrderEvent> listener = events -> {
+            for (OrderEvent event: events) {
+                final String orderNumber = event.getOrderNumber();
+                final OffsetDateTime occurredAt = event.getMetadata().getOccurredAt();
+                if (event instanceof OrderPaymentAcceptedEvent) {
+                    final OrderPaymentAcceptedEvent paymentAccepted = (OrderPaymentAcceptedEvent)event;
+                    LOG.info("[{}] ]OrderPaymentAcceptedEvent [{}] [{}]", occurredAt, orderNumber, paymentAccepted.getPaymentMethod());
+                } else if (event instanceof OrderCreatedEvent) {
+                    final OrderCreatedEvent orderCreated = (OrderCreatedEvent) event;
+                    LOG.info("[{}] OrderCreatedEvent [{}] [{}]", occurredAt, orderNumber, orderCreated.getCustomerNumber());
                 }
             }
         };
@@ -111,7 +114,7 @@ public class Main {
 
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
-                .listen(JsonNode.class, listener);
+                .listen(OrderEvent.class, listener);
     }
 
     private static void subscriptionListenWithPositionCursors(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
