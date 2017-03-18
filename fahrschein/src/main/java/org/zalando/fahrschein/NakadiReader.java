@@ -107,7 +107,7 @@ class NakadiReader<T> implements IORunnable {
         @Override
         public void close() {
             try {
-                if (jsonParser != null) {
+                if (jsonParser != null && !jsonParser.isClosed()) {
                     try {
                         LOG.trace("Trying to close json parser");
                         jsonParser.close();
@@ -275,48 +275,52 @@ class NakadiReader<T> implements IORunnable {
 
         int errorCount = 0;
 
-        while (true) {
-            try {
-                final JsonParser jsonParser = jsonInput.getJsonParser();
-
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new InterruptedIOException("Interrupted");
-                }
-
-                readBatch(jsonParser);
-
-                errorCount = 0;
-            } catch (IOException e) {
-
-                metricsCollector.markErrorWhileConsuming();
-
-                if (errorCount > 0) {
-                    LOG.warn("Got [{}] [{}] while reading events for {} after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventNames, errorCount, e);
-                } else {
-                    LOG.info("Got [{}] [{}] while reading events for {}", e.getClass().getSimpleName(), e.getMessage(), eventNames, e);
-                }
-
-                jsonInput.close();
-
-                if (Thread.currentThread().isInterrupted()) {
-                    LOG.warn("Thread was interrupted");
-                    break;
-                }
-
+        try {
+            while (true) {
                 try {
-                    LOG.debug("Reconnecting after [{}] errors", errorCount);
-                    jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
-                    LOG.info("Reconnected after [{}] errors", errorCount);
-                    metricsCollector.markReconnection();
-                } catch (InterruptedException interruptedException) {
-                    LOG.warn("Interrupted during reconnection", interruptedException);
+                    final JsonParser jsonParser = jsonInput.getJsonParser();
 
-                    Thread.currentThread().interrupt();
-                    return;
+                    if (Thread.currentThread().isInterrupted()) {
+                        throw new InterruptedIOException("Interrupted");
+                    }
+
+                    readBatch(jsonParser);
+
+                    errorCount = 0;
+                } catch (IOException e) {
+
+                    metricsCollector.markErrorWhileConsuming();
+
+                    if (errorCount > 0) {
+                        LOG.warn("Got [{}] [{}] while reading events for {} after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventNames, errorCount, e);
+                    } else {
+                        LOG.info("Got [{}] [{}] while reading events for {}", e.getClass().getSimpleName(), e.getMessage(), eventNames, e);
+                    }
+
+                    jsonInput.close();
+
+                    if (Thread.currentThread().isInterrupted()) {
+                        LOG.warn("Thread was interrupted");
+                        break;
+                    }
+
+                    try {
+                        LOG.debug("Reconnecting after [{}] errors", errorCount);
+                        jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
+                        LOG.info("Reconnected after [{}] errors", errorCount);
+                        metricsCollector.markReconnection();
+                    } catch (InterruptedException interruptedException) {
+                        LOG.warn("Interrupted during reconnection", interruptedException);
+
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+
+                    errorCount++;
                 }
-
-                errorCount++;
             }
+        } finally {
+            jsonInput.close();
         }
     }
 
