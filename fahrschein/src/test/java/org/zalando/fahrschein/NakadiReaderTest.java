@@ -20,6 +20,7 @@ import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,6 +50,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.zalando.fahrschein.NoMetricsCollector.NO_METRICS_COLLECTOR;
@@ -539,6 +541,68 @@ public class NakadiReaderTest {
         nakadiReader.run();
 
         assertEquals(singletonList("[{\"partition\":\"0\",\"offset\":\"0\"},{\"partition\":\"1\",\"offset\":\"10\"}"), headers.get("X-Nakadi-Cursors"));
+    }
+
+    @Test
+    public void shouldCloseOnIOException() throws IOException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final byte[] bytes = "{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"}]}".getBytes("utf-8");
+        when(response.getBody()).thenReturn(new ByteArrayInputStream(bytes), new ByteArrayInputStream(bytes), new ByteArrayInputStream(bytes), new ByteArrayInputStream(bytes));
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+        final HttpHeaders headers = new HttpHeaders();
+        when(request.getHeaders()).thenReturn(headers);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy().withMaxRetries(2);
+
+        final Listener<SomeEvent> listener = events -> {
+            throw new FileNotFoundException("from listener");
+        };
+
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+
+        try {
+            nakadiReader.run();
+        } catch (FileNotFoundException e) {
+            assertEquals("from listener", e.getMessage());
+
+            verify(request, times(3)).execute();
+            verify(response, times(3)).close();
+        }
+    }
+
+    @Test
+    public void shouldCloseOnRuntimeException() throws IOException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"foo\":\"bar\",\"events\":[{\"id\":\"789\"}],\"metadata\":{\"foo\":\"bar\"}}".getBytes("utf-8"));
+        when(response.getBody()).thenReturn(inputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+        final HttpHeaders headers = new HttpHeaders();
+        when(request.getHeaders()).thenReturn(headers);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+
+        final Listener<SomeEvent> listener = events -> {
+            throw new RuntimeException("from listener");
+        };
+
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, NO_METRICS_COLLECTOR);
+
+        try {
+            nakadiReader.run();
+        } catch (RuntimeException e) {
+            assertEquals("from listener", e.getMessage());
+
+            verify(request).execute();
+            verify(response).close();
+        }
     }
 
 }
