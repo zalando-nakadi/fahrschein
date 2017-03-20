@@ -316,6 +316,13 @@ class NakadiReader<T> implements IORunnable {
                 }
 
                 errorCount++;
+            } catch (Throwable e) {
+                try {
+                    jsonInput.close();
+                } catch (Throwable suppressed) {
+                    e.addSuppressed(e);
+                }
+                throw e;
             }
         }
     }
