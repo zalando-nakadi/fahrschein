@@ -129,11 +129,6 @@ public class ManagedCursorManager implements CursorManager {
     }
 
     @Override
-    public void onError(String eventName, Cursor cursor, Throwable throwable) {
-
-    }
-
-    @Override
     public Collection<Cursor> getCursors(String eventName) throws IOException {
         final SubscriptionStream stream = streams.get(eventName);
         final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", stream.getSubscriptionId()));

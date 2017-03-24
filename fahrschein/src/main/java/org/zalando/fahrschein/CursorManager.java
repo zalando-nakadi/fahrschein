@@ -17,8 +17,6 @@ public interface CursorManager {
 
     void onSuccess(String eventName, Cursor cursor) throws IOException;
 
-    void onError(String eventName, Cursor cursor, Throwable throwable) throws IOException;
-
     Collection<Cursor> getCursors(String eventName) throws IOException;
 
     default void addSubscription(Subscription subscription) {
