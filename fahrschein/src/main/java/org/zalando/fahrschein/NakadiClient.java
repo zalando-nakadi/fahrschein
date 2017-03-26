@@ -137,11 +137,11 @@ public class NakadiClient {
     public StreamBuilder.SubscriptionStreamBuilder stream(Subscription subscription) {
         checkState(cursorManager instanceof ManagedCursorManager, "Subscription api requires a ManagedCursorManager");
 
-        return new StreamBuilders.SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, null, subscription);
+        return new StreamBuilders.SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, subscription);
     }
 
     public StreamBuilder.LowLevelStreamBuilder stream(String eventName) {
-        return new StreamBuilders.LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, null, eventName);
+        return new StreamBuilders.LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, eventName);
     }
 
 }
