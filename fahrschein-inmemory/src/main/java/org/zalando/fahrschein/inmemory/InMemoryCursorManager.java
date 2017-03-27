@@ -5,8 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class InMemoryCursorManager implements CursorManager {
@@ -22,6 +24,13 @@ public final class InMemoryCursorManager implements CursorManager {
     @Override
     public void onSuccess(final String eventName, final Cursor cursor) {
         cursorsByPartition(eventName).put(cursor.getPartition(), cursor);
+    }
+
+    @Override
+    public void onSuccess(String eventName, List<Cursor> cursors) throws IOException {
+        for (Cursor cursor : cursors) {
+            onSuccess(eventName, cursor);
+        }
     }
 
     @Override

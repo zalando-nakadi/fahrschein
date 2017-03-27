@@ -128,6 +128,13 @@ public class ManagedCursorManager implements CursorManager {
     }
 
     @Override
+    public void onSuccess(String eventName, List<Cursor> cursors) throws IOException {
+        for (Cursor cursor : cursors) {
+            onSuccess(eventName, cursor);
+        }
+    }
+
+    @Override
     public Collection<Cursor> getCursors(String eventName) throws IOException {
         final SubscriptionStream stream = streams.get(eventName);
         final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", stream.getSubscriptionId()));

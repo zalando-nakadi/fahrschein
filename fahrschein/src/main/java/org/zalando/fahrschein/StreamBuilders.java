@@ -2,17 +2,22 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
+import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 class StreamBuilders {
     abstract static class AbstractStreamBuilder implements StreamBuilder {
@@ -186,6 +191,44 @@ class StreamBuilders {
         @Override
         public LowLevelStreamBuilder withLock(Lock lock) {
             return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock);
+        }
+
+        /**
+         * Initializes offsets to start streaming at the oldest available offset (BEGIN).
+         */
+        public LowLevelStreamBuilder readFromBegin(List<Partition> partitions) throws IOException {
+            final List<Cursor> cursors = partitions.stream().map(p -> new Cursor(p.getPartition(), "BEGIN")).collect(toList());
+            cursorManager.onSuccess(eventName, cursors);
+            return this;
+        }
+
+        /**
+         * Updates cursors to the newest available offset.
+         * This is similar to the default behaviour, but allows to specify the partitions to stream from instead of getting events from all partitions.
+         */
+        public LowLevelStreamBuilder readFromNewestAvailableOffset(List<Partition> partitions) throws IOException {
+            final List<Cursor> cursors = partitions.stream().map(p -> new Cursor(p.getPartition(), p.getNewestAvailableOffset())).collect(toList());
+            cursorManager.onSuccess(eventName, cursors);
+            return this;
+        }
+
+        /**
+         * Updates cursors in case the currently stored offset is no longer available. Streaming will start at the oldest available offset (BEGIN) to minimize the amount of events skipped.
+         */
+        public LowLevelStreamBuilder skipUnavailableOffsets(List<Partition> partitions) throws IOException {
+            final Map<String, Cursor> cursorsByPartition = cursorManager.getCursors(eventName).stream().collect(toMap(Cursor::getPartition, identity()));
+            final List<Cursor> cursors = partitions.stream().filter(p -> isNoLongerAvailable(cursorsByPartition, p)).map(p -> new Cursor(p.getPartition(), "BEGIN")).collect(toList());
+
+            if (!cursors.isEmpty()) {
+                cursorManager.onSuccess(eventName, cursors);
+            }
+
+            return this;
+        }
+
+        private static boolean isNoLongerAvailable(Map<String, Cursor> cursorsByPartition, Partition p) {
+            final Cursor cursor = cursorsByPartition.get(p.getPartition());
+            return (cursor == null || (!"BEGIN".equals(cursor.getOffset()) && OffsetComparator.INSTANCE.compare(cursor.getOffset(), p.getOldestAvailableOffset()) < 0));
         }
     }
 }

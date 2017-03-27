@@ -2,8 +2,10 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zalando.fahrschein.domain.Lock;
+import org.zalando.fahrschein.domain.Partition;
 
 import java.io.IOException;
+import java.util.List;
 
 public interface StreamBuilder {
 
@@ -29,11 +31,15 @@ public interface StreamBuilder {
         LowLevelStreamBuilder withStreamParameters(StreamParameters streamParameters);
 
         LowLevelStreamBuilder withLock(Lock lock);
+
+        LowLevelStreamBuilder readFromBegin(List<Partition> partitions) throws IOException;
+        LowLevelStreamBuilder readFromNewestAvailableOffset(List<Partition> partitions) throws IOException;
+        LowLevelStreamBuilder skipUnavailableOffsets(List<Partition> partitions) throws IOException;
     }
 
-    StreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
-
     StreamBuilder withErrorHandler(ErrorHandler errorHandler);
+
+    StreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
 
     StreamBuilder withStreamParameters(StreamParameters streamParameters);
 
