@@ -1,7 +1,5 @@
 package org.zalando.fahrschein.jdbc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.zalando.fahrschein.CursorManager;
@@ -13,11 +11,13 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class JdbcCursorManager implements CursorManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JdbcCursorManager.class);
+    private static final String FIND_BY_EVENT_NAME = "SELECT * FROM %snakadi_cursor_find_by_event_name(?, ?)";
+    private static final String UPDATE = "SELECT * FROM %snakadi_cursor_update(?, ?, ?, ?)";
 
     private final JdbcTemplate template;
     private final String consumerName;
@@ -47,23 +47,28 @@ public class JdbcCursorManager implements CursorManager {
     @Override
     @Transactional
     public void onSuccess(final String eventName, final Cursor cursor) throws IOException {
-        final String sql = format("SELECT * FROM %snakadi_cursor_update(?, ?, ?, ?)", schemaPrefix);
+        final String sql = format(UPDATE, schemaPrefix);
+        final Object[] params = mapParams(eventName, cursor);
 
-        template.queryForObject(sql, new Object[]{consumerName, eventName, cursor.getPartition(), cursor.getOffset()}, Integer.class);
+        template.queryForObject(sql, params, Integer.class);
     }
 
     @Override
     @Transactional
     public void onSuccess(final String eventName, final List<Cursor> cursors) throws IOException {
-        // TODO: Use batch updates
-        for (Cursor cursor : cursors) {
-            onSuccess(eventName, cursor);
-        }
+        final String sql = format(UPDATE, schemaPrefix);
+        final List<Object[]> params = cursors.stream().map(c -> mapParams(eventName, c)).collect(toList());
+
+        template.batchUpdate(sql, params);
+    }
+
+    private Object[] mapParams(String eventName, Cursor cursor) {
+        return new Object[]{consumerName, eventName, cursor.getPartition(), cursor.getOffset()};
     }
 
     @Override
     public Collection<Cursor> getCursors(final String eventName) throws IOException {
-        final String sql = format("SELECT * FROM %snakadi_cursor_find_by_event_name(?, ?)", schemaPrefix);
+        final String sql = format(FIND_BY_EVENT_NAME, schemaPrefix);
 
         return template.query(sql, new Object[]{consumerName, eventName}, (resultSet, i) -> {
             final String partition = resultSet.getString(2);
