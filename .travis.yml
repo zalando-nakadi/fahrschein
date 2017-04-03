@@ -2,6 +2,12 @@ language: java
 sudo: false
 jdk:
   - oraclejdk8
-script: mvn clean verify
+install: true
+env:
+  matrix:
+    - VERSION_JACKSON='-Dversion.jackson=2.6.7' PROJECTS='-pl !fahrschein-typeresolver,!fahrschein-example'
+    - VERSION_JACKSON='-Dversion.jackson=2.7.9' PROJECTS='-pl !fahrschein-typeresolver,!fahrschein-example'
+    - VERSION_JACKSON='' PROJECTS=''
+script: mvn -V $VERSION_JACKSON $PROJECTS clean verify
 addons:
   postgresql: "9.4"

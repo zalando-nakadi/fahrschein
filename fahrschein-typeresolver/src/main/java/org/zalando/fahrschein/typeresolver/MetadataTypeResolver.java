@@ -66,7 +66,10 @@ public class MetadataTypeResolver implements TypeResolverBuilder<MetadataTypeRes
     @Override
     public TypeDeserializer buildTypeDeserializer(DeserializationConfig config, JavaType baseType, Collection<NamedType> subtypes) {
         final TypeNameIdResolver typeNameIdResolver = TypeNameIdResolver.construct(config, baseType, subtypes, false, true);
-        return new MetadataTypeDeserializer(baseType, typeNameIdResolver, defaultImpl);
+        return new MetadataTypeDeserializer(
+                baseType,
+                typeNameIdResolver,
+                this.defaultImpl == null ? null : config.getTypeFactory().constructSpecializedType(baseType, this.defaultImpl));
     }
 
     /**
@@ -74,7 +77,7 @@ public class MetadataTypeResolver implements TypeResolverBuilder<MetadataTypeRes
      */
     static class MetadataTypeDeserializer extends TypeDeserializerBase {
 
-        public MetadataTypeDeserializer(JavaType baseType, TypeNameIdResolver typeNameIdResolver, Class<?> defaultImpl) {
+        public MetadataTypeDeserializer(JavaType baseType, TypeNameIdResolver typeNameIdResolver, JavaType defaultImpl) {
             super(baseType, typeNameIdResolver, null, false, defaultImpl);
         }
 

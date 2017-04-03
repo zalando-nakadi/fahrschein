@@ -48,7 +48,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <version.jackson>2.7.4</version.jackson>
+        <version.jackson>2.8.7</version.jackson>
         <version.spring>4.1.6.RELEASE</version.spring>
         <version.slf4j>1.7.13</version.slf4j>
         <version.log4j>2.4.1</version.log4j>
