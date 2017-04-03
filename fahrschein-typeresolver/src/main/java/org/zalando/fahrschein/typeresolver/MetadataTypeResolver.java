@@ -139,7 +139,7 @@ public class MetadataTypeResolver implements TypeResolverBuilder<MetadataTypeRes
                             }
                             final String typeId = p.getText();
                             tb.writeString(typeId);
-                            final JsonParser pb = JsonParserSequence.createFlattened(tb.asParser(p), p);
+                            final JsonParser pb = JsonParserSequence.createFlattened(false, tb.asParser(p), p);
                             return deserialize(pb, ctxt, typeId);
                         } else {
                             tb.copyCurrentStructure(p);
