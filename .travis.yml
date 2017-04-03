@@ -7,7 +7,9 @@ env:
   matrix:
     - VERSION_JACKSON='-Dversion.jackson=2.6.7' PROJECTS='-pl !fahrschein-typeresolver,!fahrschein-example'
     - VERSION_JACKSON='-Dversion.jackson=2.7.9' PROJECTS='-pl !fahrschein-typeresolver,!fahrschein-example'
-    - VERSION_JACKSON='' PROJECTS=''
-script: mvn -V $VERSION_JACKSON $PROJECTS clean verify
+    - VERSION_SPRING='-Dversion.spring=4.3.7.RELEASE' FAIL_ON_WARN='-Dmaven.compiler.failOnWarning=false'
+    - VERSION_SPRING='-Dversion.spring=4.2.9.RELEASE' FAIL_ON_WARN='-Dmaven.compiler.failOnWarning=false'
+    - DEFAULTS=''
+script: mvn -V $VERSION_JACKSON $VERSION_SPRING $PROJECTS $FAIL_ON_WARN clean verify
 addons:
   postgresql: "9.4"
