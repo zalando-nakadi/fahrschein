@@ -62,6 +62,7 @@
         <module>fahrschein-metrics-dropwizard</module>
         <module>fahrschein-example</module>
         <module>fahrschein-test-support</module>
+        <module>fahrschein-typeresolver</module>
     </modules>
 
     <build>

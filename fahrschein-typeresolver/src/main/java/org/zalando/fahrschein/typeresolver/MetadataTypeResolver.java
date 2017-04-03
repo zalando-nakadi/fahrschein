@@ -1,4 +1,4 @@
-package org.zalando.fahrschein;
+package org.zalando.fahrschein.typeresolver;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonParser;
