@@ -13,6 +13,8 @@ public interface StreamBuilder {
         @Override
         SubscriptionStreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
         @Override
+        SubscriptionStreamBuilder withErrorHandler(ErrorHandler errorHandler);
+        @Override
         SubscriptionStreamBuilder withStreamParameters(StreamParameters streamParameters);
     }
 
@@ -22,12 +24,16 @@ public interface StreamBuilder {
         @Override
         LowLevelStreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
         @Override
+        LowLevelStreamBuilder withErrorHandler(ErrorHandler errorHandler);
+        @Override
         LowLevelStreamBuilder withStreamParameters(StreamParameters streamParameters);
 
         LowLevelStreamBuilder withLock(Lock lock);
     }
 
     StreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
+
+    StreamBuilder withErrorHandler(ErrorHandler errorHandler);
 
     StreamBuilder withStreamParameters(StreamParameters streamParameters);
 

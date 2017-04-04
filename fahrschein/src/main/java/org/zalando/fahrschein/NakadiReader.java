@@ -56,6 +56,7 @@ class NakadiReader<T> implements IORunnable {
     private final Optional<Lock> lock;
     private final Class<T> eventClass;
     private final Listener<T> listener;
+    private final ErrorHandler errorHandler;
 
     private final JsonFactory jsonFactory;
     private final ObjectReader eventReader;
@@ -63,7 +64,7 @@ class NakadiReader<T> implements IORunnable {
 
     private final MetricsCollector metricsCollector;
 
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, final MetricsCollector metricsCollector) {
+    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, final MetricsCollector metricsCollector) {
 
         checkState(subscription.isPresent() || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
@@ -76,6 +77,7 @@ class NakadiReader<T> implements IORunnable {
         this.lock = lock;
         this.eventClass = eventClass;
         this.listener = listener;
+        this.errorHandler = errorHandler;
         this.metricsCollector = metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
@@ -181,7 +183,8 @@ class NakadiReader<T> implements IORunnable {
         } catch (EventAlreadyProcessedException e) {
             LOG.info("Events for [{}] partition [{}] at offset [{}] were already processed", eventName, cursor.getPartition(), cursor.getOffset());
         } catch (Throwable throwable) {
-            cursorManager.onError(eventName, cursor, throwable);
+            LOG.warn("Exception while processing events for [{}] on partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset(), throwable);
+
             throw throwable;
         }
     }
@@ -245,7 +248,7 @@ class NakadiReader<T> implements IORunnable {
             } catch (RuntimeException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof JsonMappingException) {
-                    listener.onMappingException((JsonMappingException) cause);
+                    errorHandler.onMappingException((JsonMappingException) cause);
                 } else if (cause instanceof IOException) {
                     throw (IOException)cause;
                 } else {

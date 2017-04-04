@@ -29,11 +29,6 @@ public class RedisCursorManager implements CursorManager {
     }
 
     @Override
-    public void onError(final String eventName, final Cursor cursor, final Throwable throwable) throws IOException {
-        LOG.warn("Exception while processing events for [{}] on partition [{}] at offset [{}]. Don't update cursor.", eventName, cursor.getPartition(), cursor.getOffset(), throwable);
-    }
-
-    @Override
     public Collection<Cursor> getCursors(final String eventName) throws IOException {
         final RedisCursorKey pattern = new RedisCursorKey(consumerName, eventName, "*");
 

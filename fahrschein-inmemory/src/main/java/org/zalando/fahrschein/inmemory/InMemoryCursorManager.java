@@ -25,11 +25,6 @@ public final class InMemoryCursorManager implements CursorManager {
     }
 
     @Override
-    public void onError(final String eventName, final Cursor cursor, final Throwable throwable) {
-        LOG.warn("Exception while processing events for [{}] on partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset(), throwable);
-    }
-
-    @Override
     public Collection<Cursor> getCursors(final String eventName) {
         return Collections.unmodifiableCollection(cursorsByPartition(eventName).values());
     }

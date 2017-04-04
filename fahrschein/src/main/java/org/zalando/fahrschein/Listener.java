@@ -10,7 +10,4 @@ public interface Listener<T> {
 
     void accept(final List<T> events) throws IOException, EventAlreadyProcessedException;
 
-    default void onMappingException(final JsonMappingException e) throws JsonMappingException {
-        throw e;
-    }
 }
