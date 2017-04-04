@@ -21,6 +21,7 @@ class DefaultObjectMapper {
 
     @SuppressWarnings("deprecation")
     private static PropertyNamingStrategy snake_case() {
+        // Use the deprecated constant instead of SNAKE_CASE to remain compatible with jackson versions < 2.7
         return PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES;
     }
 
