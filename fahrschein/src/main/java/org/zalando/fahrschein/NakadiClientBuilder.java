@@ -2,7 +2,7 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.zalando.fahrschein.http.simple.SimpleClientHttpRequestFactory;
 
 import javax.annotation.Nullable;
 import java.net.URI;
