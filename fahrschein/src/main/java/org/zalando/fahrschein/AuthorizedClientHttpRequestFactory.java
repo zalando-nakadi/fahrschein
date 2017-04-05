@@ -9,7 +9,7 @@ import java.net.URI;
 
 import static java.util.Collections.singletonList;
 
-public class AuthorizedClientHttpRequestFactory implements ClientHttpRequestFactory {
+class AuthorizedClientHttpRequestFactory implements ClientHttpRequestFactory {
     private final ClientHttpRequestFactory delegate;
     private final AccessTokenProvider accessTokenProvider;
 

@@ -3,10 +3,8 @@ package org.zalando.fahrschein;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
 
@@ -21,48 +19,41 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withNoContent;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 public class ManagedCursorManagerTest {
-    private MockRestServiceServer server;
+    private MockServer server;
     private ManagedCursorManager cursorManager;
 
     @Before
     public void foo() {
-        final RestTemplate restTemplate = new RestTemplate();
-        this.server = MockRestServiceServer.createServer(restTemplate);
-        final ClientHttpRequestFactory requestFactory = restTemplate.getRequestFactory();
-        this.cursorManager = new ManagedCursorManager(URI.create("http://example.com/"), requestFactory);
+        this.server = new MockServer();
+        this.cursorManager = new ManagedCursorManager(URI.create("http://example.com/"), this.server);
     }
-
 
     @Test
     public void shouldCommitCursor() throws IOException {
-        server.expect(requestTo("http://example.com/subscriptions/1234/cursors"))
-                .andExpect(method(HttpMethod.POST))
-                .andExpect(header("X-Nakadi-StreamId", "stream-id"))
-                .andExpect(jsonPath("$.items[0].partition", equalTo("0")))
-                .andExpect(jsonPath("$.items[0].offset", equalTo("10")))
-                .andExpect(jsonPath("$.items[0].cursor_token", equalTo("token")))
-                .andRespond(withNoContent());
+        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", HttpMethod.POST)
+                .andExpectHeader("X-Nakadi-StreamId", "stream-id")
+                .andExpectJsonPath("$.items[0].partition", equalTo("0"))
+                .andExpectJsonPath("$.items[0].offset", equalTo("10"))
+                .andExpectJsonPath("$.items[0].cursor_token", equalTo("token"))
+                .andRespondWith(HttpStatus.NO_CONTENT)
+                .setup();
 
         final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());
         cursorManager.addSubscription(subscription);
         cursorManager.addStreamId(subscription, "stream-id");
 
         cursorManager.onSuccess("foo", new Cursor("0", "10", "foo", "token"));
+
+        server.verify();
     }
 
     @Test
     public void shouldGetCursors() throws IOException {
-        server.expect(requestTo("http://example.com/subscriptions/1234/cursors"))
-                .andExpect(method(HttpMethod.GET))
-                .andRespond(withSuccess("{\"items\":[{\"partition\":\"0\",\"offset\":\"10\"},{\"partition\":\"1\",\"offset\":\"20\"}]}", MediaType.APPLICATION_JSON));
+        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", HttpMethod.GET)
+                .andRespondWith(HttpStatus.OK, MediaType.APPLICATION_JSON, "{\"items\":[{\"partition\":\"0\",\"offset\":\"10\"},{\"partition\":\"1\",\"offset\":\"20\"}]}")
+                .setup();
 
         final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());
         cursorManager.addSubscription(subscription);
@@ -81,6 +72,7 @@ public class ManagedCursorManagerTest {
             assertEquals("20", cursor2.getOffset());
         }
 
+        server.verify();
     }
 
 }

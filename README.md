@@ -151,11 +151,52 @@ Exception handling while streaming events follows some simple rules
 
 You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing. To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
 
-## Using another ClientHttpRequestFactory
+## Using another `ClientHttpRequestFactory` implementation
 
 This library is currently tested and used in production with `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
 
-Please note that `HttpComponentsClientHttpRequestFactory` and also `SimpleClientHttpRequestFactory` since spring 4.3.x try to consume the remaining stream on closing and so might block during reconnection.
+The `HttpComponentsClientHttpRequestFactory` and `SimpleClientHttpRequestFactory` of spring try to consume
+the remaining stream on closing and so might block during reconnection. To avoid this there are two alternative
+implementations included in the artifacts `fahrschein-http-simple` and `fahrschein-http-apache`.
+
+```java
+
+final RequestConfig config = RequestConfig.custom().setSocketTimeout(readTimeout)
+                                                   .setConnectTimeout(connectTimeout)
+                                                   .setConnectionRequestTimeout(connectTimeout)
+                                                   .build();
+
+final CloseableHttpClient httpClient = HttpClients.custom()
+                                                  .setConnectionTimeToLive(readTimeout, TimeUnit.MILLISECONDS)
+                                                  .disableAutomaticRetries()
+                                                  .setDefaultRequestConfig(config)
+                                                  .disableRedirectHandling()
+                                                  .setMaxConnTotal(8)
+                                                  .setMaxConnPerRoute(2)
+                                                  .build();
+
+final ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        .withClientHttpRequestFactory(clientHttpRequestFactory)
+        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .build();
+```
+
+## Using fahrschein without spring (at your own risk)
+
+The spring dependency of the core library is only needed for the `ClientHttpRequest` api.
+If you want to use fahrschein without including the spring framework as a dependency you can instead depend on
+
+```xml
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</dependency>
+```
+
+Note that this is not currently tested or used in production.
 
 ## Getting help
 

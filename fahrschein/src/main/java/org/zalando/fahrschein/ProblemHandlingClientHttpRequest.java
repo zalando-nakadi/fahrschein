@@ -39,7 +39,7 @@ class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
                 final String statusText = response.getStatusText();
 
                 final MediaType contentType = response.getHeaders().getContentType();
-                if (APPLICATION_JSON.isCompatibleWith(contentType) || APPLICATION_PROBLEM_JSON.isCompatibleWith(contentType)) {
+                if (isProblem(contentType)) {
                     try (final InputStream is = response.getBody()) {
                         final IOProblem problem = deserializeProblem(is, statusCode);
                         if (problem != null) {
@@ -62,6 +62,11 @@ class ProblemHandlingClientHttpRequest implements ClientHttpRequest {
         }
 
         return response;
+    }
+
+    private static boolean isProblem(MediaType contentType) {
+        return APPLICATION_JSON.getType().equals(contentType.getType()) && APPLICATION_JSON.getSubtype().equals(contentType.getSubtype())
+                || APPLICATION_PROBLEM_JSON.getType().equals(contentType.getType()) && APPLICATION_PROBLEM_JSON.getSubtype().equals(contentType.getSubtype());
     }
 
     private @Nullable IOProblem deserializeProblem(final InputStream is, final int statusCode) throws IOException {
