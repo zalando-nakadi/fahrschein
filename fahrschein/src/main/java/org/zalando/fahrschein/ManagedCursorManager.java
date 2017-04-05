@@ -18,9 +18,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Collections.singletonList;
 
@@ -77,7 +77,7 @@ public class ManagedCursorManager implements CursorManager {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.objectMapper = DefaultObjectMapper.INSTANCE;
-        this.streams = new HashMap<>();
+        this.streams = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -124,6 +124,13 @@ public class ManagedCursorManager implements CursorManager {
             } else {
                 throw new IOException(String.format("Unexpected status code [%s] for subscription [%s] to event [%s]", status, subscriptionId, eventName));
             }
+        }
+    }
+
+    @Override
+    public void onSuccess(String eventName, List<Cursor> cursors) throws IOException {
+        for (Cursor cursor : cursors) {
+            onSuccess(eventName, cursor);
         }
     }
 

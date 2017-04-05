@@ -21,6 +21,7 @@ import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 
+import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
 class NakadiReader<T> implements IORunnable {
@@ -133,22 +135,10 @@ class NakadiReader<T> implements IORunnable {
     }
 
     private JsonInput openJsonInput() throws IOException {
+        final String cursorsHeader = getCursorsHeader();
         final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
-        if (!subscription.isPresent()) {
-            final Collection<Cursor> cursors = cursorManager.getCursors(eventNames.iterator().next());
-            final Collection<Cursor> lockedCursors;
-            if (lock.isPresent()) {
-                final Map<String, String> offsets = cursors.stream().collect(Collectors.toMap(Cursor::getPartition, Cursor::getOffset));
-                final List<Partition> partitions = lock.get().getPartitions();
-                lockedCursors = partitions.stream().map(partition -> new Cursor(partition.getPartition(), offsets.getOrDefault(partition.getPartition(), "BEGIN"))).collect(toList());
-            } else {
-                lockedCursors = cursors;
-            }
-
-            if (!lockedCursors.isEmpty()) {
-                final String value = cursorHeaderWriter.writeValueAsString(lockedCursors);
-                request.getHeaders().put("X-Nakadi-Cursors", singletonList(value));
-            }
+        if (cursorsHeader != null) {
+            request.getHeaders().put("X-Nakadi-Cursors", singletonList(cursorsHeader));
         }
         final ClientHttpResponse response = request.execute();
         try {
@@ -166,6 +156,29 @@ class NakadiReader<T> implements IORunnable {
                 throwable.addSuppressed(suppressed);
             }
             throw throwable;
+        }
+    }
+
+    @Nullable
+    private String getCursorsHeader() throws IOException {
+        if (!subscription.isPresent()) {
+            final Collection<Cursor> lockedCursors = getLockedCursors();
+
+            if (!lockedCursors.isEmpty()) {
+                return cursorHeaderWriter.writeValueAsString(lockedCursors);
+            }
+        }
+        return null;
+    }
+
+    private Collection<Cursor> getLockedCursors() throws IOException {
+        final Collection<Cursor> cursors = cursorManager.getCursors(eventNames.iterator().next());
+        if (lock.isPresent()) {
+            final Map<String, String> offsets = cursors.stream().collect(toMap(Cursor::getPartition, Cursor::getOffset));
+            final List<Partition> partitions = lock.get().getPartitions();
+            return partitions.stream().map(partition -> new Cursor(partition.getPartition(), offsets.getOrDefault(partition.getPartition(), "BEGIN"))).collect(toList());
+        } else {
+            return cursors;
         }
     }
 

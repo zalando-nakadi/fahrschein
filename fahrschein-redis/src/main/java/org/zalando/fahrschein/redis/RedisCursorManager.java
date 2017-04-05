@@ -29,6 +29,13 @@ public class RedisCursorManager implements CursorManager {
     }
 
     @Override
+    public void onSuccess(final String eventName, final List<Cursor> cursors) throws IOException {
+        for (Cursor cursor : cursors) {
+            onSuccess(eventName, cursor);
+        }
+    }
+
+    @Override
     public Collection<Cursor> getCursors(final String eventName) throws IOException {
         final RedisCursorKey pattern = new RedisCursorKey(consumerName, eventName, "*");
 

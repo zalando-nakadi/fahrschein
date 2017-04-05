@@ -168,9 +168,9 @@ public class Main {
                 .build();
 
         final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
-        cursorManager.fromOldestAvailableOffset(SALES_ORDER_SERVICE_ORDER_PLACED, partitions);
 
         nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+                .readFromBegin(partitions)
                 .withObjectMapper(objectMapper)
                 .withBackoffStrategy(new ExponentialBackoffStrategy().withMaxRetries(10))
                 .listen(SalesOrderPlaced.class, listener);
@@ -192,9 +192,9 @@ public class Main {
                 .build();
 
         final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
-        cursorManager.fromOldestAvailableOffset(SALES_ORDER_SERVICE_ORDER_PLACED, partitions);
 
         nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+                .readFromBegin(partitions)
                 .withObjectMapper(objectMapper)
                 .listen(SalesOrderPlaced.class, listener);
     }
@@ -223,8 +223,6 @@ public class Main {
                     .build();
 
             final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
-
-            cursorManager.fromOldestAvailableOffset(SALES_ORDER_SERVICE_ORDER_PLACED, partitions);
 
             final IORunnable instance = () -> {
 
