@@ -1,6 +1,9 @@
 package org.zalando.fahrschein;
 
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import org.hamcrest.Matcher;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +30,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class MockServer implements ClientHttpRequestFactory {
+
+    private static final Configuration JSON_CONFIGURATION = Configuration.builder()
+            .mappingProvider(new JacksonMappingProvider())
+            .jsonProvider(new JacksonJsonProvider())
+            .build();
+
     private URI expectedUri;
     private HttpMethod expectedMethod;
     private MediaType expectedContentType;
@@ -139,7 +148,7 @@ class MockServer implements ClientHttpRequestFactory {
             for (Map.Entry<String, Matcher<Object>> entry : expectedJsonPaths.entrySet()) {
                 final String path = entry.getKey();
                 final JsonPath jsonPath = JsonPath.compile(path);
-                final Object value = jsonPath.read(body);
+                final Object value = jsonPath.read(body, JSON_CONFIGURATION);
                 final Matcher<Object> matcher = entry.getValue();
                 assertThat(path, value, matcher);
             }
