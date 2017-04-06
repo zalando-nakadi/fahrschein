@@ -43,6 +43,11 @@
         </dependency>
         <dependency>
             <groupId>org.zalando</groupId>
+            <artifactId>fahrschein-typeresolver</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.zalando</groupId>
             <artifactId>jackson-datatype-money</artifactId>
             <version>0.6.0</version>
         </dependency>
