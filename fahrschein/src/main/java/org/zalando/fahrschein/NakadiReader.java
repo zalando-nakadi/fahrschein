@@ -292,9 +292,13 @@ class NakadiReader<T> implements IORunnable {
 
         int errorCount = 0;
 
-        while (readerManager.continueReading(eventNames, subscription)) {
+        while (true) {
             try {
                 final JsonParser jsonParser = jsonInput.getJsonParser();
+
+                if (readerManager.continueReading(eventNames, subscription)) {
+                   throw new ReadingDiscontinuedException();
+                }
 
                 if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedIOException("Interrupted");
