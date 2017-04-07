@@ -157,6 +157,80 @@ This library is currently tested and used in production with `SimpleClientHttpRe
 
 Please note that `HttpComponentsClientHttpRequestFactory` and also `SimpleClientHttpRequestFactory` since spring 4.3.x try to consume the remaining stream on closing and so might block during reconnection.
 
+## Stopping listening on subscriptions
+
+In order to be able to stop listening on a subscription you need to implement the `ReaderManager` interface.
+
+The interface provides one method `boolean continueReading(Set<String> eventNames, Optional<Subscription> subscription)` which is used by Fahrschein to check if the listening should be stopped.
+
+**Please note** : Resetting the `ReaderManager` is responsibility of the application.
+ 
+```java
+
+public class DemoReaderManager implements ReaderManager {
+  
+  private boolean discontinueReading = false;
+  
+  boolean continueReading(Set<String> eventNames, Optional<Subscription> subscription) {
+    return discontinueReading;
+  }
+  
+  void discontinueReading() {
+    discontinueReading = true;
+  }
+  
+  void continueReading() {
+    discontinueReading = false;
+  }
+}
+
+final String eventName = "sales-order-placed";
+
+// Create a Listener for our event
+final Listener<SalesOrderPlaced> listener = events -> {
+    for (SalesOrderPlaced salesOrderPlaced : events) {
+        LOG.info("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
+    }
+};
+
+// Create ReaderManager
+DemoReaderManager readerManager = new DemoReaderManager();
+
+// Configure client, defaults to using the high level api with ManagedCursorManger and SimpleClientHttpRequestFactory
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .build();
+
+// Create subscription using the high level api
+Subscription subscriptions = nakadiClient.subscription(applicationName, eventName).subscribe();
+
+// Start streaming, the listen call will block and automatically reconnect on IOException
+new Thread(() -> {
+nakadiClient.stream(subscription)
+        .withReaderManager(readerManager)
+        .listen(SalesOrderPlaced.class, listener);  
+}).run();
+
+// let it run for 1 minute
+Thread.sleep(60*1000);
+
+// and stop the reading
+readerManager.discontinueReading();
+
+// let's wait a minute
+Thread.sleep(60*1000);
+
+// And another round
+readerManager.continueReading();
+
+new Thread(() -> {
+nakadiClient.stream(subscription)
+        .withReaderManager(readerManager)
+        .listen(SalesOrderPlaced.class, listener);  
+}).run();
+
+```
+
 ## Getting help
 
 If you have questions, concerns, bug reports, etc, please file an issue in this repository's issue tracker.
