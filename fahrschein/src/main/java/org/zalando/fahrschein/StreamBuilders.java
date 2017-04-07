@@ -110,7 +110,7 @@ class StreamBuilders {
         }
 
         @Override
-        public SubscriptionStreamBuilder withStopSomething(ReaderManager readerManager) {
+        public SubscriptionStreamBuilder withReaderManager(ReaderManager readerManager) {
             return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription, readerManager);
         }
 
@@ -200,7 +200,7 @@ class StreamBuilders {
         }
 
         @Override
-        public LowLevelStreamBuilder withStopSomething(ReaderManager readerManager) {
+        public LowLevelStreamBuilder withReaderManager(ReaderManager readerManager) {
             return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
         }
 
