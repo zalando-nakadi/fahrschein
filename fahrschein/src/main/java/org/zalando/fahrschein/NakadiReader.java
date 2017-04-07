@@ -291,7 +291,7 @@ class NakadiReader<T> implements IORunnable {
 
         int errorCount = 0;
 
-        while (true) {
+        while (listener.isActive()) {
             try {
                 final JsonParser jsonParser = jsonInput.getJsonParser();
 
@@ -341,6 +341,7 @@ class NakadiReader<T> implements IORunnable {
                 throw e;
             }
         }
+        jsonInput.close();
     }
 
     /*

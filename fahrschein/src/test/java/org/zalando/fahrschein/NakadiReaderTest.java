@@ -606,4 +606,39 @@ public class NakadiReaderTest {
         }
     }
 
+    @Test
+    public void shouldCloseOnInactiveListener() throws IOException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"foo\":\"bar\",\"events\":[{\"id\":\"789\"}],\"metadata\":{\"foo\":\"bar\"}}".getBytes("utf-8"));
+        when(response.getBody()).thenReturn(inputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+        final HttpHeaders headers = new HttpHeaders();
+        when(request.getHeaders()).thenReturn(headers);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+
+        final Listener<SomeEvent> listener = new Listener<SomeEvent>() {
+            @Override
+            public void accept(List<SomeEvent> events) throws IOException, EventAlreadyProcessedException {
+
+            }
+
+            @Override
+            public boolean isActive() {
+                return false;
+            }
+        };
+
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, errorHandler, NO_METRICS_COLLECTOR);
+
+        nakadiReader.run();
+
+        verify(request).execute();
+        verify(response).close();
+    }
+
 }
