@@ -10,8 +10,20 @@
         <version>0.10.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
     <artifactId>fahrschein-http-apache</artifactId>
     <name>Fahrschein HTTP Client using Apache HttpComponents</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <failIfNoTests>false</failIfNoTests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>

@@ -14,6 +14,16 @@
     <artifactId>fahrschein-http-simple</artifactId>
     <name>Fahrschein HTTP Client HttpURLConnection</name>
 
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <failIfNoTests>false</failIfNoTests>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>
