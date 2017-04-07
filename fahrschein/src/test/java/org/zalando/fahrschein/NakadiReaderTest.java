@@ -625,6 +625,8 @@ public class NakadiReaderTest {
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), subscription, Optional.empty(), SomeEvent.class, listener, errorHandler, readerManager, NO_METRICS_COLLECTOR);
 
+        expectedException.expect(ReadingDiscontinuedException.class);
+
         nakadiReader.run();
 
         verify(listener).accept(any(List.class));
@@ -653,6 +655,8 @@ public class NakadiReaderTest {
         when(readerManager.continueReading(Collections.singleton(EVENT_NAME), subscription)).thenReturn(false);
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), subscription, Optional.empty(), SomeEvent.class, listener, errorHandler, readerManager, NO_METRICS_COLLECTOR);
+
+        expectedException.expect(ReadingDiscontinuedException.class);
 
         nakadiReader.run();
 
