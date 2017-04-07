@@ -47,6 +47,8 @@ public interface StreamBuilder {
 
     StreamBuilder withBackoffStrategy(BackoffStrategy backoffStrategy);
 
+    StreamBuilder withStopSomething(ReaderManager readerManager);
+
     <T> void listen(Class<T> eventClass, Listener<T> listener) throws IOException;
 
 }

@@ -11,8 +11,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
@@ -33,8 +31,10 @@ class StreamBuilders {
         protected final MetricsCollector metricsCollector;
         @Nullable
         protected final ErrorHandler errorHandler;
+        @Nullable
+        protected final ReaderManager readerManager;
 
-        protected AbstractStreamBuilder(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector) {
+        protected AbstractStreamBuilder(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector, @Nullable ReaderManager readerManager) {
             this.baseUri = baseUri;
             this.clientHttpRequestFactory = clientHttpRequestFactory;
             this.cursorManager = cursorManager;
@@ -43,6 +43,7 @@ class StreamBuilders {
             this.streamParameters = streamParameters;
             this.errorHandler = errorHandler;
             this.metricsCollector = metricsCollector;
+            this.readerManager = readerManager;
         }
 
         protected abstract URI getURI(String queryString);
@@ -64,7 +65,7 @@ class StreamBuilders {
             final MetricsCollector metricsCollector = this.metricsCollector != null ? this.metricsCollector : NoMetricsCollector.NO_METRICS_COLLECTOR;
             final ErrorHandler errorHandler = this.errorHandler != null ? this.errorHandler : DefaultErrorHandler.INSTANCE;
 
-            final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, errorHandler, metricsCollector);
+            final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, errorHandler, readerManager, metricsCollector);
 
             nakadiReader.run();
         }
@@ -75,11 +76,11 @@ class StreamBuilders {
         private final Subscription subscription;
 
         SubscriptionStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, Subscription subscription) {
-            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, subscription);
+            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, subscription, () -> true);
         }
 
-        private SubscriptionStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector, Subscription subscription) {
-            super(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector);
+        private SubscriptionStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector, Subscription subscription, ReaderManager readerManager) {
+            super(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, readerManager);
             this.subscription = subscription;
         }
 
@@ -105,27 +106,32 @@ class StreamBuilders {
 
         @Override
         public SubscriptionStreamBuilder withBackoffStrategy(BackoffStrategy backoffStrategy) {
-            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription);
+            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription, readerManager);
+        }
+
+        @Override
+        public SubscriptionStreamBuilder withStopSomething(ReaderManager readerManager) {
+            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription, readerManager);
         }
 
         @Override
         public SubscriptionStreamBuilder withErrorHandler(ErrorHandler errorHandler) {
-            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription);
+            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription, readerManager);
         }
 
         @Override
         public SubscriptionStreamBuilder withMetricsCollector(MetricsCollector metricsCollector) {
-            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription);
+            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription, readerManager);
         }
 
         @Override
         public SubscriptionStreamBuilder withStreamParameters(StreamParameters streamParameters) {
-            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription);
+            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription, readerManager);
         }
 
         @Override
         public SubscriptionStreamBuilder withObjectMapper(ObjectMapper objectMapper) {
-            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription);
+            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, subscription, readerManager);
         }
     }
 
@@ -134,11 +140,11 @@ class StreamBuilders {
         private final Lock lock;
 
         LowLevelStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, String eventName) {
-            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, eventName, null);
+            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, eventName, null, () -> true);
         }
 
-        private LowLevelStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector, String eventName, @Nullable Lock lock) {
-            super(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector);
+        private LowLevelStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector, String eventName, @Nullable Lock lock, @Nullable ReaderManager readerManager) {
+            super(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, readerManager);
             this.eventName = eventName;
             this.lock = lock;
         }
@@ -165,32 +171,37 @@ class StreamBuilders {
 
         @Override
         public LowLevelStreamBuilder withBackoffStrategy(BackoffStrategy backoffStrategy) {
-            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock);
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
         }
 
         @Override
         public LowLevelStreamBuilder withMetricsCollector(MetricsCollector metricsCollector) {
-            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock);
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
         }
 
         @Override
         public LowLevelStreamBuilder withErrorHandler(ErrorHandler errorHandler) {
-            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock);
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
         }
 
         @Override
         public LowLevelStreamBuilder withStreamParameters(StreamParameters streamParameters) {
-            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock);
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
         }
 
         @Override
         public LowLevelStreamBuilder withObjectMapper(ObjectMapper objectMapper) {
-            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock);
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
         }
 
         @Override
         public LowLevelStreamBuilder withLock(Lock lock) {
-            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock);
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
+        }
+
+        @Override
+        public LowLevelStreamBuilder withStopSomething(ReaderManager readerManager) {
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, metricsCollector, eventName, lock, readerManager);
         }
 
         /**
