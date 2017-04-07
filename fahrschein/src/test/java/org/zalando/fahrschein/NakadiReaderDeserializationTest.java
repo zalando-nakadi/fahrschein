@@ -13,11 +13,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
-import org.zalando.fahrschein.domain.AbstractDataChangeEvent;
-import org.zalando.fahrschein.domain.DataChangeEvent;
-import org.zalando.fahrschein.domain.DataOperation;
-import org.zalando.fahrschein.domain.Event;
-import org.zalando.fahrschein.domain.Metadata;
+import org.zalando.fahrschein.domain.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -150,7 +146,7 @@ public class NakadiReaderDeserializationTest {
     private <T> List<T> readSingleBatch(String eventName, Class<T> eventClass) throws IOException {
         final List<T> result = new ArrayList<>();
         final NakadiReader<T> nakadiReader = new NakadiReader<T>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
-                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll, DefaultErrorHandler.INSTANCE, () -> true, NoMetricsCollector.NO_METRICS_COLLECTOR);
+                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll, DefaultErrorHandler.INSTANCE, (Optional<Subscription> subscription) -> true, NoMetricsCollector.NO_METRICS_COLLECTOR);
         nakadiReader.readSingleBatch();
 
         return result;

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.hobsoft.hamcrest.compose.ComposeMatchers;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -19,6 +18,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
+import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -63,7 +63,7 @@ public class NakadiReaderTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final CursorManager cursorManager = mock(CursorManager.class);
     private final ErrorHandler errorHandler = DefaultErrorHandler.INSTANCE;
-    private final ReaderManager readerManager = () -> true;
+    private final ReaderManager readerManager = (Optional<Subscription> subscription) -> true;
     private final ClientHttpRequestFactory clientHttpRequestFactory = mock(ClientHttpRequestFactory.class);
 
     @SuppressWarnings("unchecked")
@@ -623,7 +623,7 @@ public class NakadiReaderTest {
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
 
-        ReaderManager readerManager = () -> false;
+        ReaderManager readerManager = (Optional<Subscription> subscription) -> false;
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, errorHandler, readerManager, NO_METRICS_COLLECTOR);
 
