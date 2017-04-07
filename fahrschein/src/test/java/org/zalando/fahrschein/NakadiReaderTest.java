@@ -32,10 +32,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,7 +60,7 @@ public class NakadiReaderTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final CursorManager cursorManager = mock(CursorManager.class);
     private final ErrorHandler errorHandler = DefaultErrorHandler.INSTANCE;
-    private final ReaderManager readerManager = (Optional<Subscription> subscription) -> true;
+    private final ReaderManager readerManager = new DefaultReaderManager();
     private final ClientHttpRequestFactory clientHttpRequestFactory = mock(ClientHttpRequestFactory.class);
 
     @SuppressWarnings("unchecked")
@@ -623,7 +620,7 @@ public class NakadiReaderTest {
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
 
-        ReaderManager readerManager = (Optional<Subscription> subscription) -> false;
+        ReaderManager readerManager = (Set<String> eventNames, Optional<Subscription> subscription) -> false;
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, errorHandler, readerManager, NO_METRICS_COLLECTOR);
 

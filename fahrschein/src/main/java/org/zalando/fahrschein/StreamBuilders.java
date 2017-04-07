@@ -76,7 +76,7 @@ class StreamBuilders {
         private final Subscription subscription;
 
         SubscriptionStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, Subscription subscription) {
-            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, subscription, subscription1 -> true);
+            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, subscription, new DefaultReaderManager());
         }
 
         private SubscriptionStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector, Subscription subscription, ReaderManager readerManager) {
@@ -140,7 +140,7 @@ class StreamBuilders {
         private final Lock lock;
 
         LowLevelStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, String eventName) {
-            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, eventName, null, (Optional<Subscription> subscription) -> true);
+            this(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, null, null, null, null, eventName, null, (Set<String> eventNames, Optional<Subscription> subscription) -> true);
         }
 
         private LowLevelStreamBuilderImpl(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, CursorManager cursorManager, ObjectMapper objectMapper, @Nullable BackoffStrategy backoffStrategy, @Nullable StreamParameters streamParameters, @Nullable ErrorHandler errorHandler, @Nullable MetricsCollector metricsCollector, String eventName, @Nullable Lock lock, @Nullable ReaderManager readerManager) {

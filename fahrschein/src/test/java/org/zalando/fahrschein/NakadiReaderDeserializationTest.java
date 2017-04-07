@@ -20,10 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -146,7 +143,7 @@ public class NakadiReaderDeserializationTest {
     private <T> List<T> readSingleBatch(String eventName, Class<T> eventClass) throws IOException {
         final List<T> result = new ArrayList<>();
         final NakadiReader<T> nakadiReader = new NakadiReader<T>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
-                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll, DefaultErrorHandler.INSTANCE, (Optional<Subscription> subscription) -> true, NoMetricsCollector.NO_METRICS_COLLECTOR);
+                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll, DefaultErrorHandler.INSTANCE, (Set<String> eventNames, Optional<Subscription> subscription) -> true, NoMetricsCollector.NO_METRICS_COLLECTOR);
         nakadiReader.readSingleBatch();
 
         return result;
