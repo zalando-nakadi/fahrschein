@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.hobsoft.hamcrest.compose.ComposeMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -69,6 +70,11 @@ public class NakadiReaderTest {
 
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
+
+    @Before
+    public void setup() {
+        when(listener.isActive()).thenReturn(true);
+    }
 
     public static class SomeEvent {
         private String id;
