@@ -10,4 +10,11 @@ public interface Listener<T> {
 
     void accept(final List<T> events) throws IOException, EventAlreadyProcessedException;
 
+  /**
+   * A callback for the NakadiReader to check if the listener is still active and ready for consumption of events
+   * @return
+   */
+  default boolean isActive() {
+    return true;
+  }
 }
