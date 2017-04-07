@@ -67,7 +67,6 @@ class NakadiReader<T> implements IORunnable {
     private final MetricsCollector metricsCollector;
 
     NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, ReaderManager readerManager, final MetricsCollector metricsCollector) {
-        this.readerManager = readerManager;
 
         checkState(subscription.isPresent() || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
@@ -81,6 +80,7 @@ class NakadiReader<T> implements IORunnable {
         this.eventClass = eventClass;
         this.listener = listener;
         this.errorHandler = errorHandler;
+        this.readerManager = readerManager;
         this.metricsCollector = metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
