@@ -161,7 +161,12 @@ Please note that `HttpComponentsClientHttpRequestFactory` and also `SimpleClient
 
 In order to be able to stop listening on a subscription you need to implement the `ReaderManager` interface.
 
-The interface provides one method `boolean continueReading(Set<String> eventNames, Optional<Subscription> subscription)` which is used by Fahrschein to check if the listening should be stopped.
+The interface provides two methods 
+ 
+ - `boolean discontinueReading(Set<String> eventNames, Optional<Subscription> subscription)` which is used by Fahrschein to check if the listening should be suspended
+ - `boolean terminateReading(Set<String> eventNames, Optional<Subscription> subscription)` which is used by Fahrschein to check if the listening should be terminated
+ 
+The difference between both methods is, that `discontinueReading` is revertible without the need to restart the listener. In contrast the `terminateReading` will kill the thread the listener runs in and you need to build a new stream and listen on it.
 
 **Please note** : Resetting the `ReaderManager` is responsibility of the application.
  
@@ -170,17 +175,28 @@ The interface provides one method `boolean continueReading(Set<String> eventName
 public class DemoReaderManager implements ReaderManager {
   
   private boolean discontinueReading = false;
-  
-  boolean continueReading(Set<String> eventNames, Optional<Subscription> subscription) {
+  private boolean terminateReader = false;
+
+  @Override
+  public boolean discontinueReading(Set<String> eventNames, Optional<Subscription> subscription) {
     return discontinueReading;
   }
-  
+
+  @Override
+  public boolean terminateReader(Set<String> eventNames, Optional<Subscription> subscription) {
+    return terminateReader;
+  }
+
   void discontinueReading() {
     discontinueReading = true;
   }
   
   void continueReading() {
     discontinueReading = false;
+  }
+
+  void terminateReader() {
+    terminateReader = true;
   }
 }
 
