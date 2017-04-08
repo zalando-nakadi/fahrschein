@@ -143,7 +143,7 @@ public class NakadiReaderDeserializationTest {
     private <T> List<T> readSingleBatch(String eventName, Class<T> eventClass) throws IOException {
         final List<T> result = new ArrayList<>();
         final NakadiReader<T> nakadiReader = new NakadiReader<T>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
-                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll, DefaultErrorHandler.INSTANCE, (Set<String> eventNames, Optional<Subscription> subscription) -> true, NoMetricsCollector.NO_METRICS_COLLECTOR);
+                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll, DefaultErrorHandler.INSTANCE, new DefaultReaderManager(), NoMetricsCollector.NO_METRICS_COLLECTOR);
         nakadiReader.readSingleBatch();
 
         return result;

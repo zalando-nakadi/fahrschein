@@ -5,7 +5,8 @@ import org.zalando.fahrschein.domain.Subscription;
 import java.util.Optional;
 import java.util.Set;
 
-@FunctionalInterface
 public interface ReaderManager {
-  boolean continueReading(Set<String> eventNames, Optional<Subscription> subscription);
+  boolean discontinueReading(Set<String> eventNames, Optional<Subscription> subscription);
+
+  boolean terminateReader(Set<String> eventNames, Optional<Subscription> subscription);
 }

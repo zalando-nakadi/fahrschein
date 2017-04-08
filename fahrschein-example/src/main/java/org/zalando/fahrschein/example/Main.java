@@ -194,27 +194,22 @@ public class Main {
             }
         }).run();
 
+        // let it run for 1 minute
         Thread.sleep(60*1000);
 
+        // and stop the reading
         readerManager.discontinueReading();
 
-        Thread.sleep(60*1000);
+        // let's wait a moment
+        Thread.sleep(1000);
 
+        // And another round
         readerManager.continueReading();
 
-        new Thread(() -> {
-            try {
-                nakadiClient.stream(subscription)
-                            .withReaderManager(readerManager)
-                            .listen(SalesOrderPlaced.class, listener);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).run();
-
+        // let it run for 1 minute
         Thread.sleep(60*1000);
 
-        readerManager.discontinueReading();
+        readerManager.terminateReader();
     }
 
     private static void simpleListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {

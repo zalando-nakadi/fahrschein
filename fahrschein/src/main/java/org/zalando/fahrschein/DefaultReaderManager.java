@@ -7,7 +7,12 @@ import java.util.Set;
 
 public class DefaultReaderManager implements ReaderManager {
   @Override
-  public boolean continueReading(Set<String> eventNames, Optional<Subscription> subscription) {
-    return true;
+  public boolean discontinueReading(Set<String> eventNames, Optional<Subscription> subscription) {
+    return false;
+  }
+
+  @Override
+  public boolean terminateReader(Set<String> eventNames, Optional<Subscription> subscription) {
+    return false;
   }
 }
