@@ -164,9 +164,9 @@ In order to be able to stop listening on a subscription you need to implement th
 The interface provides two methods 
  
  - `boolean discontinueReading(Set<String> eventNames, Optional<Subscription> subscription)` which is used by Fahrschein to check if the listening should be suspended
- - `boolean terminateReading(Set<String> eventNames, Optional<Subscription> subscription)` which is used by Fahrschein to check if the listening should be terminated
+ - `boolean terminateReader(Set<String> eventNames, Optional<Subscription> subscription)` which is used by Fahrschein to check if the listening should be terminated
  
-The difference between both methods is, that `discontinueReading` is revertible without the need to restart the listener. In contrast the `terminateReading` will kill the thread the listener runs in and you need to build a new stream and listen on it.
+The difference between both methods is, that `discontinueReading` is revertible without the need to restart the listener. In contrast the `terminateReader` will kill the thread the listener runs in and you need to build a new stream and listen on it.
 
 **Please note** : Resetting the `ReaderManager` is responsibility of the application.
  
