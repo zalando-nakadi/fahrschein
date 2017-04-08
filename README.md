@@ -206,9 +206,13 @@ Subscription subscriptions = nakadiClient.subscription(applicationName, eventNam
 
 // Start streaming, the listen call will block and automatically reconnect on IOException
 new Thread(() -> {
-nakadiClient.stream(subscription)
-        .withReaderManager(readerManager)
-        .listen(SalesOrderPlaced.class, listener);  
+  try {
+    nakadiClient.stream(subscription)
+                .withReaderManager(readerManager)
+                .listen(SalesOrderPlaced.class, listener);
+  } catch (IOException e) {
+    e.printStackTrace();
+  }
 }).run();
 
 // let it run for 1 minute
@@ -217,17 +221,17 @@ Thread.sleep(60*1000);
 // and stop the reading
 readerManager.discontinueReading();
 
-// let's wait a minute
-Thread.sleep(60*1000);
+// let's wait a moment
+Thread.sleep(1000);
 
 // And another round
 readerManager.continueReading();
 
-new Thread(() -> {
-nakadiClient.stream(subscription)
-        .withReaderManager(readerManager)
-        .listen(SalesOrderPlaced.class, listener);  
-}).run();
+// let it run for 1 minute
+Thread.sleep(60*1000);
+
+//And termination
+readerManager.terminateReader();
 
 ```
 
