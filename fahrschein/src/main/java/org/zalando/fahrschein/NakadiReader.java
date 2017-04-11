@@ -15,11 +15,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
-import org.zalando.fahrschein.domain.Batch;
-import org.zalando.fahrschein.domain.Cursor;
-import org.zalando.fahrschein.domain.Lock;
-import org.zalando.fahrschein.domain.Partition;
-import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.domain.*;
 
 import javax.annotation.Nullable;
 import java.io.Closeable;
@@ -27,15 +23,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -63,10 +51,11 @@ class NakadiReader<T> implements IORunnable {
     private final JsonFactory jsonFactory;
     private final ObjectReader eventReader;
     private final ObjectWriter cursorHeaderWriter;
+    private final ReaderManager readerManager;
 
     private final MetricsCollector metricsCollector;
 
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, final MetricsCollector metricsCollector) {
+    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, ReaderManager readerManager, final MetricsCollector metricsCollector) {
 
         checkState(subscription.isPresent() || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
@@ -80,6 +69,7 @@ class NakadiReader<T> implements IORunnable {
         this.eventClass = eventClass;
         this.listener = listener;
         this.errorHandler = errorHandler;
+        this.readerManager = readerManager;
         this.metricsCollector = metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
@@ -288,58 +278,93 @@ class NakadiReader<T> implements IORunnable {
         LOG.info("Starting to listen for events for {}", eventNames);
 
         JsonInput jsonInput = openJsonInput();
+        boolean jsonInputIsClosed = false;
 
         int errorCount = 0;
 
-        while (true) {
-            try {
-                final JsonParser jsonParser = jsonInput.getJsonParser();
+    while (true) {
+      try {
 
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new InterruptedIOException("Interrupted");
-                }
+        verifyTerminationIsNotRequested();
 
-                readBatch(jsonParser);
+        if (readerManager.discontinueReading(eventNames, subscription)) {
+          stopReadingAndSleep(jsonInput);
+          jsonInputIsClosed = true;
+        } else {
 
-                errorCount = 0;
-            } catch (IOException e) {
+          if (jsonInputIsClosed) {
+            jsonInput = openJsonInput();
+          }
 
-                metricsCollector.markErrorWhileConsuming();
+          final JsonParser jsonParser = jsonInput.getJsonParser();
 
-                if (errorCount > 0) {
-                    LOG.warn("Got [{}] [{}] while reading events for {} after [{}] retries", e.getClass().getSimpleName(), e.getMessage(), eventNames, errorCount, e);
-                } else {
-                    LOG.info("Got [{}] [{}] while reading events for {}", e.getClass().getSimpleName(), e.getMessage(), eventNames, e);
-                }
+          readBatch(jsonParser);
 
-                jsonInput.close();
+          errorCount = 0;
+        }
+      } catch (IOException e) {
 
-                if (Thread.currentThread().isInterrupted()) {
-                    LOG.warn("Thread was interrupted");
-                    break;
-                }
+        metricsCollector.markErrorWhileConsuming();
 
-                try {
-                    LOG.debug("Reconnecting after [{}] errors", errorCount);
-                    jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
-                    LOG.info("Reconnected after [{}] errors", errorCount);
-                    metricsCollector.markReconnection();
-                } catch (InterruptedException interruptedException) {
-                    LOG.warn("Interrupted during reconnection", interruptedException);
+        if (errorCount > 0) {
+          LOG.warn("Got [{}] [{}] while reading events for {} after [{}] retries", e.getClass()
+                                                                                    .getSimpleName(), e.getMessage(), eventNames, errorCount, e);
+        } else {
+          LOG.info("Got [{}] [{}] while reading events for {}", e.getClass()
+                                                                 .getSimpleName(), e.getMessage(), eventNames, e);
+        }
 
-                    Thread.currentThread().interrupt();
-                    return;
-                }
+        jsonInput.close();
 
-                errorCount++;
-            } catch (Throwable e) {
-                try {
-                    jsonInput.close();
-                } catch (Throwable suppressed) {
-                    e.addSuppressed(e);
-                }
-                throw e;
-            }
+        if (Thread.currentThread()
+                  .isInterrupted()) {
+          LOG.warn("Thread was interrupted");
+          break;
+        }
+
+        try {
+          LOG.debug("Reconnecting after [{}] errors", errorCount);
+          jsonInput = backoffStrategy.call(errorCount, e, this::openJsonInput);
+          LOG.info("Reconnected after [{}] errors", errorCount);
+          metricsCollector.markReconnection();
+        } catch (InterruptedException interruptedException) {
+          LOG.warn("Interrupted during reconnection", interruptedException);
+
+          Thread.currentThread()
+                .interrupt();
+          return;
+        }
+
+        errorCount++;
+      } catch (Throwable e) {
+        try {
+          jsonInput.close();
+        } catch (Throwable suppressed) {
+          e.addSuppressed(suppressed);
+        }
+        throw e;
+      }
+    }
+    jsonInput.close();
+  }
+
+    private void stopReadingAndSleep(JsonInput jsonInput) {
+        jsonInput.close();
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          LOG.debug("Sleeping during discontinued reading interrupted", e);
+        }
+    }
+
+    private void verifyTerminationIsNotRequested() throws InterruptedIOException {
+        if (readerManager.terminateReader(eventNames, subscription)) {
+            throw new ReadingTerminatedException();
+        }
+
+        if (Thread.currentThread()
+                  .isInterrupted()) {
+            throw new InterruptedIOException("Interrupted");
         }
     }
 
@@ -413,12 +438,9 @@ class NakadiReader<T> implements IORunnable {
 
     private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
         final JsonToken token = jsonParser.nextToken();
+        verifyTerminationIsNotRequested();
         if (token == null) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedIOException("Thread was interrupted");
-            } else {
-                throw new EOFException("Stream was closed");
-            }
+            throw new EOFException("Stream was closed");
         }
         if (token != expectedToken) {
             throw new IOException(String.format("Expected [%s] but got [%s]", expectedToken, token));

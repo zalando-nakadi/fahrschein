@@ -54,7 +54,7 @@ public class Main {
     public static final String ORDER_CREATED = "eventlog.e96001_order_created";
     public static final String ORDER_PAYMENT_STATUS_ACCEPTED = "eventlog.e62001_order_payment_status_accepted";
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws Exception {
 
         final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -82,11 +82,13 @@ public class Main {
             }
         };
 
+        subscriptionListenWithReaderManager(objectMapper, listener);
+
         //subscriptionListen(objectMapper, listener);
 
         //subscriptionListenWithPositionCursors(objectMapper, listener);
 
-        subscriptionMultipleEvents(objectMapper);
+        //subscriptionMultipleEvents(objectMapper);
 
         //simpleListen(objectMapper, listener);
 
@@ -167,6 +169,47 @@ public class Main {
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
                 .listen(SalesOrderPlaced.class, listener);
+    }
+
+    private static void subscriptionListenWithReaderManager(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws Exception {
+
+        final DemoReaderManager readerManager = new DemoReaderManager();
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                                                      .withAccessTokenProvider(new ZignAccessTokenProvider())
+                                                      .build();
+
+        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+                                                      .withConsumerGroup("fahrschein-demo")
+                                                      .readFromEnd()
+                                                      .subscribe();
+
+        new Thread(() -> {
+            try {
+                nakadiClient.stream(subscription)
+                            .withReaderManager(readerManager)
+                            .listen(SalesOrderPlaced.class, listener);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).run();
+
+        // let it run for 1 minute
+        Thread.sleep(60*1000);
+
+        // and stop the reading
+        readerManager.discontinueReading();
+
+        // let's wait a moment
+        Thread.sleep(1000);
+
+        // And another round
+        readerManager.continueReading();
+
+        // let it run for 1 minute
+        Thread.sleep(60*1000);
+
+        readerManager.terminateReader();
     }
 
     private static void simpleListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
