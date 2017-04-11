@@ -684,7 +684,7 @@ public class NakadiReaderTest {
         Optional<Subscription> subscription = Optional.empty();
 
         when(readerManager.discontinueReading(Collections.singleton(EVENT_NAME), subscription)).thenReturn(false).thenReturn(true);
-        when(readerManager.terminateReader(Collections.singleton(EVENT_NAME), subscription)).thenReturn(false).thenReturn(false).thenReturn(true);
+        when(readerManager.terminateReader(Collections.singleton(EVENT_NAME), subscription)).thenReturn(false, false, false, false, false, true);
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), subscription, Optional.empty(), SomeEvent.class, listener, errorHandler, readerManager, NO_METRICS_COLLECTOR);
 
@@ -701,10 +701,11 @@ public class NakadiReaderTest {
     public void shouldReadAgainReaderManagerDecidesToContinueReading() throws Exception {
         final ClientHttpResponse response = mock(ClientHttpResponse.class);
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"foo\":\"bar\",\"events\":[{\"id\":\"789\"}],\"metadata\":{\"foo\":\"bar\"}}".getBytes("utf-8"));
-        when(response.getBody()).thenReturn(inputStream, inputStream, inputStream, inputStream);
+        final ByteArrayInputStream secondInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"123\",\"offset\":\"456\"},\"foo\":\"bar\",\"events\":[{\"id\":\"789\"}],\"metadata\":{\"foo\":\"bar\"}}".getBytes("utf-8"));
+        when(response.getBody()).thenReturn(inputStream, secondInputStream );
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
-        when(request.execute()).thenReturn(response);
+        when(request.execute()).thenReturn(response, response);
         final HttpHeaders headers = new HttpHeaders();
         when(request.getHeaders()).thenReturn(headers);
 
@@ -712,21 +713,39 @@ public class NakadiReaderTest {
 
         final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
 
-        ReaderManager readerManager = mock(ReaderManager.class);
         Optional<Subscription> subscription = Optional.empty();
 
-        when(readerManager.discontinueReading(Collections.singleton(EVENT_NAME), subscription)).thenReturn(false, true);
-        when(readerManager.terminateReader(Collections.singleton(EVENT_NAME), subscription)).thenReturn(false, false, false, true);
+        ReaderManager readerManager = new ReaderManager() {
+
+            int discountinueRequests = 0;
+            int terminateRequests = 0;
+            @Override
+            public boolean discontinueReading(Set<String> eventNames, Optional<Subscription> subscription) {
+                discountinueRequests++;
+                return discountinueRequests == 2;
+            }
+
+            @Override
+            public boolean terminateReader(Set<String> eventNames, Optional<Subscription> subscription) {
+                terminateRequests++;
+                return terminateRequests >= 10;
+            }
+        };
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), subscription, Optional.empty(), SomeEvent.class, listener, errorHandler, readerManager, NO_METRICS_COLLECTOR);
 
         expectedException.expect(ReadingTerminatedException.class);
 
-        nakadiReader.run();
+        try {
 
-        verify(listener, times(2)).accept(any(List.class));
-        verify(request).execute();
-        verify(response).close();
+            nakadiReader.run();
+        } finally {
+
+            verify(listener, times(2)).accept(any(List.class));
+            verify(request, times(2)).execute();
+            verify(response, times(2)).close();
+        }
+
     }
 
 }
