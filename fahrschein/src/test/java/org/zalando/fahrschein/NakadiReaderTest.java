@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
@@ -604,6 +605,79 @@ public class NakadiReaderTest {
             verify(request).execute();
             verify(response).close();
         }
+    }
+
+    @Test
+    public void shouldStopAndResumeReading() throws IOException, InterruptedException, BackoffException, ExecutionException, TimeoutException {
+        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+        final ServerSocket serverSocket = new ServerSocket(0, 0, loopbackAddress);
+        final ExecutorService executorService = Executors.newCachedThreadPool();
+        executorService.submit(() -> {
+            try {
+                try (final Socket socket = serverSocket.accept()) {
+                    System.out.println("Accepted connection");
+                    try (OutputStream out = socket.getOutputStream()) {
+                        while (true) {
+                            out.write("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"},\"events\":[{\"id\":\"foobar\"}]}\n".getBytes("utf-8"));
+                            try {
+                                Thread.sleep(10);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+        final int localPort = serverSocket.getLocalPort();
+        final Socket socket = new Socket(loopbackAddress, localPort);
+        socket.setSoTimeout(5000);
+        final InputStream inputStream = socket.getInputStream();
+        when(response.getBody()).thenReturn(inputStream);
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenReturn(response);
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final Listener<SomeEvent> listener = (events) -> {
+            for (SomeEvent event : events) {
+                System.out.println("Received event " + event.getId());
+            }
+        };
+
+        final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, errorHandler, NO_METRICS_COLLECTOR);
+
+        final Runnable runnable = nakadiReader.unchecked();
+
+        System.out.println("Starting reader");
+        final Future<?> future = executorService.submit(runnable::run);
+
+        System.out.println("Sleeping");
+        Thread.sleep(2000);
+
+        System.out.println("Stopping reader");
+        future.cancel(true);
+        Assert.assertTrue("Future should be canceled", future.isCancelled());
+        Assert.assertTrue("Future should be done", future.isDone());
+
+        System.out.println("Sleeping");
+        Thread.sleep(2000);
+
+        System.out.println("Resuming reader");
+        final Future<?> future2 = executorService.submit(runnable);
+
+        System.out.println("Sleeping");
+        Thread.sleep(2000);
+
+        System.out.println("Stopping resumed reader");
+        future2.cancel(true);
+        Assert.assertTrue("Future should be canceled", future2.isCancelled());
+        Assert.assertTrue("Future should be done", future2.isDone());
     }
 
 }
