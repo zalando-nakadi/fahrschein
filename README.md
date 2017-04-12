@@ -149,7 +149,15 @@ Exception handling while streaming events follows some simple rules
 
 ### Handling data binding problems
 
-You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing. To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
+You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing.
+To achieve this you can implement the `onMappingException` method of the `ErrorHandler` interface handle the `JsonMappingException` yourself.
+
+```java
+nakadiClient.stream(eventName)
+        .withErrorHandler(e -> {...})
+        .listen(SalesOrderPlaced.class, listener);
+
+```
 
 ## Using another ClientHttpRequestFactory
 
