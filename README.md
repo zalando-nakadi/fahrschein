@@ -64,15 +64,6 @@ nakadiClient.stream(subscription)
 
 See [`Main.java`](src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
 
-## Fahrschein compared to other nakadi client libraries
-
-|                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
-| -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
-| Dependencies         | Spring (http client and jdbc), Jackson                            | Scala, Akka, Jackson  | Scala, Akka             | None                |
-| Cursor Management    | In-Memory / Persistent (Postgres or Redis)                        | In-Memory             | Persistent (Dynamo)     |                     |
-| Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
-| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
-
 ## Initializing partition offsets
 
 By default nakadi will start streaming from the most recent offset. The initial offsets can be changed by requesting data about partitions from Nakadi and using this data to configure `CursorManager`.
@@ -164,6 +155,15 @@ nakadiClient.stream(eventName)
 This library is currently tested and used in production with `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
 
 Please note that `HttpComponentsClientHttpRequestFactory` and also `SimpleClientHttpRequestFactory` since spring 4.3.x try to consume the remaining stream on closing and so might block during reconnection.
+
+## Fahrschein compared to other nakadi client libraries
+
+|                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
+| -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
+| Dependencies         | Spring (http client and jdbc), Jackson                            | Scala, Akka, Jackson  | Scala, Akka             | None                |
+| Cursor Management    | In-Memory / Persistent (Postgres or Redis)                        | In-Memory             | Persistent (Dynamo)     |                     |
+| Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
+| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
 
 ## Getting help
 
