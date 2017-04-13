@@ -138,6 +138,27 @@ Exception handling while streaming events follows some simple rules
  - If an `IOException` happens when opening the initial connection, this is not retried as it probably indicates a configuration problem (wrong host name or missing scopes)
  - Exceptions in other client methods are not automatically retried
 
+## Stopping and resuming streams
+
+The stream implementation gracefully handles thread interruption, so it is possible to stop a running thread and resume consuming events by re-submitting the `Runnable`:
+
+```java
+final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+final Runnable runnable = nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+        .runnable(SalesOrderPlaced.class, listener)
+        .unchecked();
+
+// start consuming events
+final Future<?> future = executorService.submit(runnable);
+
+// stop consuming events
+future.cancel(true);
+
+// resume consuming events
+final Future<?> future2 = executorService.submit(runnable);
+```
+
 ### Handling data binding problems
 
 You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing.
