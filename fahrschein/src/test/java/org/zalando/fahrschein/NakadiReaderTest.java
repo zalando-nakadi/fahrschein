@@ -1,6 +1,5 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
@@ -41,6 +40,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -50,6 +51,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -607,77 +610,82 @@ public class NakadiReaderTest {
         }
     }
 
-    @Test
-    public void shouldStopAndResumeReading() throws IOException, InterruptedException, BackoffException, ExecutionException, TimeoutException {
-        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+    @Test()
+    public void shouldStopAndResumeReading() throws IOException, InterruptedException, BackoffException, ExecutionException, TimeoutException, EventAlreadyProcessedException {
         final InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
         final ServerSocket serverSocket = new ServerSocket(0, 0, loopbackAddress);
-        final ExecutorService executorService = Executors.newCachedThreadPool();
-        executorService.submit(() -> {
-            try {
-                try (final Socket socket = serverSocket.accept()) {
-                    System.out.println("Accepted connection");
-                    try (OutputStream out = socket.getOutputStream()) {
-                        while (true) {
+        final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 8, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+
+        executor.execute(() -> {
+            while (true) {
+                try {
+                    final Socket socket = serverSocket.accept();
+
+                    executor.execute(() -> {
+                        try (OutputStream out = socket.getOutputStream()) {
                             out.write("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"},\"events\":[{\"id\":\"foobar\"}]}\n".getBytes("utf-8"));
-                            try {
-                                Thread.sleep(10);
-                            } catch (InterruptedException e) {
-                                break;
+                            out.flush();
+                            while (true) {
+                                try {
+                                    Thread.sleep(20);
+                                } catch (InterruptedException e) {
+                                    break;
+                                }
+                                out.write("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}\n".getBytes("utf-8"));
+                                out.flush();
                             }
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
                         }
-                    }
+                    });
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
             }
         });
         final int localPort = serverSocket.getLocalPort();
-        final Socket socket = new Socket(loopbackAddress, localPort);
-        socket.setSoTimeout(5000);
-        final InputStream inputStream = socket.getInputStream();
-        when(response.getBody()).thenReturn(inputStream);
 
         final ClientHttpRequest request = mock(ClientHttpRequest.class);
-        when(request.execute()).thenReturn(response);
+        when(request.execute()).thenAnswer(invocation -> {
+            final Socket socket = new Socket(loopbackAddress, localPort);
+            final InputStream inputStream = socket.getInputStream();
+            final ClientHttpResponse response = mock(ClientHttpResponse.class);
+            when(response.getRawStatusCode()).thenReturn(200);
+            when(response.getBody()).thenReturn(inputStream);
+            doAnswer($ -> {
+                inputStream.close();
+                return null;
+            }).when(response).close();
+            return response;
+        });
 
         when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
-
-        final Listener<SomeEvent> listener = (events) -> {
-            for (SomeEvent event : events) {
-                System.out.println("Received event " + event.getId());
-            }
-        };
 
         final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, errorHandler, NO_METRICS_COLLECTOR);
 
         final Runnable runnable = nakadiReader.unchecked();
 
-        System.out.println("Starting reader");
-        final Future<?> future = executorService.submit(runnable::run);
-
-        System.out.println("Sleeping");
-        Thread.sleep(2000);
-
-        System.out.println("Stopping reader");
+        final Future<?> future = executor.submit(runnable::run);
+        Thread.sleep(200);
+        Assert.assertEquals(3, executor.getActiveCount());
         future.cancel(true);
         Assert.assertTrue("Future should be canceled", future.isCancelled());
         Assert.assertTrue("Future should be done", future.isDone());
 
-        System.out.println("Sleeping");
-        Thread.sleep(2000);
+        Thread.sleep(200);
+        Assert.assertEquals(1, executor.getActiveCount());
 
-        System.out.println("Resuming reader");
-        final Future<?> future2 = executorService.submit(runnable);
-
-        System.out.println("Sleeping");
-        Thread.sleep(2000);
-
-        System.out.println("Stopping resumed reader");
+        final Future<?> future2 = executor.submit(runnable);
+        Thread.sleep(200);
+        Assert.assertEquals(3, executor.getActiveCount());
         future2.cancel(true);
         Assert.assertTrue("Future should be canceled", future2.isCancelled());
         Assert.assertTrue("Future should be done", future2.isDone());
+
+        Thread.sleep(200);
+        Assert.assertEquals(1, executor.getActiveCount());
+        verify(listener, times(2)).accept(anyList());
     }
 
 }
