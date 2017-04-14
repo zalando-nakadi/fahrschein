@@ -610,7 +610,7 @@ public class NakadiReaderTest {
         }
     }
 
-    @Test()
+    @Test(timeout = 2000)
     public void shouldStopAndResumeReading() throws IOException, InterruptedException, BackoffException, ExecutionException, TimeoutException, EventAlreadyProcessedException {
         final InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
         final ServerSocket serverSocket = new ServerSocket(0, 0, loopbackAddress);
@@ -627,7 +627,7 @@ public class NakadiReaderTest {
                             out.flush();
                             while (true) {
                                 try {
-                                    Thread.sleep(20);
+                                    Thread.sleep(10);
                                 } catch (InterruptedException e) {
                                     break;
                                 }
