@@ -64,15 +64,6 @@ nakadiClient.stream(subscription)
 
 See [`Main.java`](src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
 
-## Fahrschein compared to other nakadi client libraries
-
-|                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
-| -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
-| Dependencies         | Spring (http client and jdbc), Jackson                            | Scala, Akka, Jackson  | Scala, Akka             | None                |
-| Cursor Management    | In-Memory / Persistent (Postgres or Redis)                        | In-Memory             | Persistent (Dynamo)     |                     |
-| Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
-| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
-
 ## Initializing partition offsets
 
 By default nakadi will start streaming from the most recent offset. The initial offsets can be changed by requesting data about partitions from Nakadi and using this data to configure `CursorManager`.
@@ -147,15 +138,53 @@ Exception handling while streaming events follows some simple rules
  - If an `IOException` happens when opening the initial connection, this is not retried as it probably indicates a configuration problem (wrong host name or missing scopes)
  - Exceptions in other client methods are not automatically retried
 
+## Stopping and resuming streams
+
+The stream implementation gracefully handles thread interruption, so it is possible to stop a running thread and resume consuming events by re-submitting the `Runnable`:
+
+```java
+final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
+final Runnable runnable = nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+        .runnable(SalesOrderPlaced.class, listener)
+        .unchecked();
+
+// start consuming events
+final Future<?> future = executorService.submit(runnable);
+
+// stop consuming events
+future.cancel(true);
+
+// resume consuming events
+final Future<?> future2 = executorService.submit(runnable);
+```
+
 ### Handling data binding problems
 
-You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing. To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
+You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing.
+To achieve this you can implement the `onMappingException` method of the `ErrorHandler` interface handle the `JsonMappingException` yourself.
+
+```java
+nakadiClient.stream(eventName)
+        .withErrorHandler(e -> {...})
+        .listen(SalesOrderPlaced.class, listener);
+
+```
 
 ## Using another ClientHttpRequestFactory
 
 This library is currently tested and used in production with `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
 
 Please note that `HttpComponentsClientHttpRequestFactory` and also `SimpleClientHttpRequestFactory` since spring 4.3.x try to consume the remaining stream on closing and so might block during reconnection.
+
+## Fahrschein compared to other nakadi client libraries
+
+|                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
+| -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
+| Dependencies         | Spring (http client and jdbc), Jackson                            | Scala, Akka, Jackson  | Scala, Akka             | None                |
+| Cursor Management    | In-Memory / Persistent (Postgres or Redis)                        | In-Memory             | Persistent (Dynamo)     |                     |
+| Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
+| Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
 
 ## Getting help
 

@@ -40,6 +40,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -49,6 +51,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -604,6 +608,84 @@ public class NakadiReaderTest {
             verify(request).execute();
             verify(response).close();
         }
+    }
+
+    @Test(timeout = 2000)
+    public void shouldStopAndResumeReading() throws IOException, InterruptedException, BackoffException, ExecutionException, TimeoutException, EventAlreadyProcessedException {
+        final InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+        final ServerSocket serverSocket = new ServerSocket(0, 0, loopbackAddress);
+        final ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 8, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+
+        executor.execute(() -> {
+            while (true) {
+                try {
+                    final Socket socket = serverSocket.accept();
+
+                    executor.execute(() -> {
+                        try (OutputStream out = socket.getOutputStream()) {
+                            out.write("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"},\"events\":[{\"id\":\"foobar\"}]}\n".getBytes("utf-8"));
+                            out.flush();
+                            while (true) {
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException e) {
+                                    break;
+                                }
+                                out.write("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"}}\n".getBytes("utf-8"));
+                                out.flush();
+                            }
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        });
+        final int localPort = serverSocket.getLocalPort();
+
+        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        when(request.execute()).thenAnswer(invocation -> {
+            final Socket socket = new Socket(loopbackAddress, localPort);
+            final InputStream inputStream = socket.getInputStream();
+            final ClientHttpResponse response = mock(ClientHttpResponse.class);
+            when(response.getRawStatusCode()).thenReturn(200);
+            when(response.getBody()).thenReturn(inputStream);
+            doAnswer($ -> {
+                inputStream.close();
+                return null;
+            }).when(response).close();
+            return response;
+        });
+
+        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+
+        final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener, errorHandler, NO_METRICS_COLLECTOR);
+
+        final Runnable runnable = nakadiReader.unchecked();
+
+        final Future<?> future = executor.submit(runnable::run);
+        Thread.sleep(200);
+        Assert.assertEquals(3, executor.getActiveCount());
+        future.cancel(true);
+        Assert.assertTrue("Future should be canceled", future.isCancelled());
+        Assert.assertTrue("Future should be done", future.isDone());
+
+        Thread.sleep(200);
+        Assert.assertEquals(1, executor.getActiveCount());
+
+        final Future<?> future2 = executor.submit(runnable);
+        Thread.sleep(200);
+        Assert.assertEquals(3, executor.getActiveCount());
+        future2.cancel(true);
+        Assert.assertTrue("Future should be canceled", future2.isCancelled());
+        Assert.assertTrue("Future should be done", future2.isDone());
+
+        Thread.sleep(200);
+        Assert.assertEquals(1, executor.getActiveCount());
+        verify(listener, times(2)).accept(anyList());
     }
 
 }
