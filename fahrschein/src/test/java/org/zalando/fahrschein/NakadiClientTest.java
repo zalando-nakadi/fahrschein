@@ -23,14 +23,9 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
@@ -152,6 +147,15 @@ public class NakadiClientTest {
         assertEquals(Collections.singleton("foo"), subscription.getEventTypes());
         assertEquals("bar", subscription.getConsumerGroup());
         assertNotNull(subscription.getCreatedAt());
+    }
+
+    @Test
+    public void shouldDeleteSubscription() throws IOException {
+        server.expect(requestTo("http://example.com/subscriptions/123"))
+                .andExpect(method(HttpMethod.DELETE))
+                .andRespond(withStatus(HttpStatus.OK));
+
+        client.deleteSubscription("123");
     }
 
     @Test
