@@ -155,7 +155,8 @@ public class NakadiClientTest {
                 .andExpect(method(HttpMethod.DELETE))
                 .andRespond(withStatus(HttpStatus.OK));
 
-        client.deleteSubscription("123");
+        boolean response = client.deleteSubscription("123");
+        assertTrue(response);
     }
 
     @Test
