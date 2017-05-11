@@ -41,54 +41,54 @@ import java.io.InputStream;
  */
 final class HttpComponentsClientHttpResponse implements ClientHttpResponse {
 
-	private final HttpResponse httpResponse;
-	private HttpHeaders headers;
+    private final HttpResponse httpResponse;
+    private HttpHeaders headers;
 
-	HttpComponentsClientHttpResponse(HttpResponse httpResponse) {
-		this.httpResponse = httpResponse;
-	}
+    HttpComponentsClientHttpResponse(HttpResponse httpResponse) {
+        this.httpResponse = httpResponse;
+    }
 
-	@Override
-	public int getRawStatusCode() throws IOException {
-		return this.httpResponse.getStatusLine().getStatusCode();
-	}
+    @Override
+    public int getRawStatusCode() throws IOException {
+        return this.httpResponse.getStatusLine().getStatusCode();
+    }
 
-	@Override
-	public String getStatusText() throws IOException {
-		return this.httpResponse.getStatusLine().getReasonPhrase();
-	}
+    @Override
+    public String getStatusText() throws IOException {
+        return this.httpResponse.getStatusLine().getReasonPhrase();
+    }
 
-	@Override
-	public HttpHeaders getHeaders() {
-		if (this.headers == null) {
-			this.headers = new HttpHeaders();
-			for (Header header : this.httpResponse.getAllHeaders()) {
-				this.headers.add(header.getName(), header.getValue());
-			}
-		}
-		return this.headers;
-	}
+    @Override
+    public HttpHeaders getHeaders() {
+        if (this.headers == null) {
+            this.headers = new HttpHeaders();
+            for (Header header : this.httpResponse.getAllHeaders()) {
+                this.headers.add(header.getName(), header.getValue());
+            }
+        }
+        return this.headers;
+    }
 
-	@Override
-	public InputStream getBody() throws IOException {
-		HttpEntity entity = this.httpResponse.getEntity();
-		return (entity != null ? entity.getContent() : new ByteArrayInputStream(new byte[0]));
-	}
+    @Override
+    public InputStream getBody() throws IOException {
+        HttpEntity entity = this.httpResponse.getEntity();
+        return (entity != null ? entity.getContent() : new ByteArrayInputStream(new byte[0]));
+    }
 
-	@Override
-	public void close() {
+    @Override
+    public void close() {
         // Release underlying connection back to the connection manager
-		if (this.httpResponse instanceof Closeable) {
-			try {
-				((Closeable) this.httpResponse).close();
-			} catch (IOException e) {
-				// ignore exception on close
-			}
-		}
-	}
+        if (this.httpResponse instanceof Closeable) {
+            try {
+                ((Closeable) this.httpResponse).close();
+            } catch (IOException e) {
+                // ignore exception on close
+            }
+        }
+    }
 
-	@Override
-	public HttpStatus getStatusCode() throws IOException {
-		return HttpStatus.valueOf(getRawStatusCode());
-	}
+    @Override
+    public HttpStatus getStatusCode() throws IOException {
+        return HttpStatus.valueOf(getRawStatusCode());
+    }
 }
