@@ -149,18 +149,17 @@ Exception handling while streaming events follows some simple rules
 
 ### Handling data binding problems
 
-You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing. To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
+You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing.
+To achieve this you can override the `onMappingException` method of `Listener` and handle the `JsonMappingException` yourself.
 
 ## Using another `ClientHttpRequestFactory` implementation
 
-This library is currently tested and used in production with `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
+This library is currently tested and used in production with spring frameworks' `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
+Both implementations have an issue that makes them not fully suitable for consuming streaming data. In order to reuse keepalive connections, they are trying to consume remaining data from the stream, which can block for a long time.
 
-The `HttpComponentsClientHttpRequestFactory` and `SimpleClientHttpRequestFactory` of spring try to consume
-the remaining stream on closing and so might block during reconnection. To avoid this there are two alternative
-implementations included in the artifacts `fahrschein-http-simple` and `fahrschein-http-apache`.
+To avoid this there are two alternative implementations included in the artifacts `fahrschein-http-simple` and `fahrschein-http-apache`. Fahrschein now defaults to using the modfied simple implementation. The apache version comes in useful when you want more control about the number of parallel connections in total or per host. The following example shows how to use a customized `HttpClient`.
 
 ```java
-
 final RequestConfig config = RequestConfig.custom().setSocketTimeout(readTimeout)
                                                    .setConnectTimeout(connectTimeout)
                                                    .setConnectionRequestTimeout(connectTimeout)
@@ -175,7 +174,7 @@ final CloseableHttpClient httpClient = HttpClients.custom()
                                                   .setMaxConnPerRoute(2)
                                                   .build();
 
-final ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+final ClientHttpRequestFactory clientHttpRequestFactory = new org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory(httpClient);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .withClientHttpRequestFactory(clientHttpRequestFactory)
