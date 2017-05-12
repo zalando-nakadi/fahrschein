@@ -10,9 +10,11 @@ import org.zalando.fahrschein.domain.Subscription;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
@@ -52,6 +54,11 @@ class StreamBuilders {
 
         @Override
         public final <T> void listen(Class<T> eventClass, Listener<T> listener) throws IOException {
+            runnable(eventClass, listener).run();
+        }
+
+        @Override
+        public final <T> IORunnable runnable(Class<T> eventClass, Listener<T> listener) {
             final StreamParameters streamParameters = this.streamParameters != null ? this.streamParameters : new StreamParameters();
             final String queryString = streamParameters.toQueryString();
 
@@ -64,9 +71,8 @@ class StreamBuilders {
             final MetricsCollector metricsCollector = this.metricsCollector != null ? this.metricsCollector : NoMetricsCollector.NO_METRICS_COLLECTOR;
             final ErrorHandler errorHandler = this.errorHandler != null ? this.errorHandler : DefaultErrorHandler.INSTANCE;
 
-            final NakadiReader<T> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, errorHandler, metricsCollector);
-
-            nakadiReader.run();
+            return new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
+                    eventNames, subscription, lock, eventClass, listener, errorHandler, metricsCollector);
         }
 
     }
