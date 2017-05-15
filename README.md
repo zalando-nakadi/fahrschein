@@ -170,12 +170,21 @@ nakadiClient.stream(eventName)
         .listen(SalesOrderPlaced.class, listener);
 ```
 
-## Using another `ClientHttpRequestFactory` implementation
+## `ClientHttpRequestFactory` implementations
 
-This library is currently tested and used in production with spring frameworks' `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory`.
-Both implementations have an issue that makes them not fully suitable for consuming streaming data. In order to reuse keepalive connections, they are trying to consume remaining data from the stream, which can block for a long time.
+Fahrschein by default uses a forked version of Spring's `SimpleClientHttpRequestFactory` to avoid an issue with spring trying to consume remaining data when closing connections. The spring implementation does this in order to reuse keep-alive connections, but for streaming connections this can lead to long blocking of the `close` method.
 
-To avoid this there are two alternative implementations included in the artifacts `fahrschein-http-simple` and `fahrschein-http-apache`. Fahrschein now defaults to using the modfied simple implementation. The apache version comes in useful when you want more control about the number of parallel connections in total or per host. The following example shows how to use a customized `HttpClient`.
+There is also a forked version of the `HttpComponentsClientHttpRequestFactory` implementation in the `fahrschein-http-apache` artifact with a similar workaround.
+
+```xml
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http-apache</artifactId>
+    <version>${fahrschein.version}</version>
+</dependency>
+```
+
+The apache version is useful when you want more control about the number of parallel connections in total or per host. The following example shows how to use a customized `HttpClient`:
 
 ```java
 final RequestConfig config = RequestConfig.custom().setSocketTimeout(readTimeout)
@@ -199,6 +208,8 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
 ```
+
+Fahrschein is also tested and used in production with the original `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory` from spring framework.
 
 ## Using fahrschein without spring (at your own risk)
 
