@@ -153,10 +153,18 @@ public class NakadiClientTest {
     public void shouldDeleteSubscription() throws IOException {
         server.expect(requestTo("http://example.com/subscriptions/123"))
                 .andExpect(method(HttpMethod.DELETE))
-                .andRespond(withStatus(HttpStatus.OK));
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
 
-        boolean response = client.deleteSubscription("123");
-        assertTrue(response);
+        client.deleteSubscription("123");
+    }
+
+    @Test(expected = IOException.class)
+    public void shouldNotDeleteSubscription() throws IOException {
+        server.expect(requestTo("http://example.com/subscriptions/123"))
+                .andExpect(method(HttpMethod.DELETE))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        client.deleteSubscription("123");
     }
 
     @Test
