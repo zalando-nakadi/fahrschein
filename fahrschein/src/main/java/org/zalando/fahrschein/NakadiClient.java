@@ -9,7 +9,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpResponse;
-import org.zalando.fahrschein.domain.*;
+import org.zalando.fahrschein.domain.BatchItemResponse;
+import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Partition;
+import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.domain.SubscriptionRequest;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -67,7 +71,7 @@ public class NakadiClient {
 
         try (final ClientHttpResponse response = request.execute()) {
             final MediaType contentType = response.getHeaders().getContentType();
-            if (MediaType.APPLICATION_JSON.isCompatibleWith(contentType)) {
+            if (contentType != null && MediaType.APPLICATION_JSON.getType().equals(contentType.getType()) && MediaType.APPLICATION_JSON.getSubtype().equals(contentType.getSubtype())) {
                 try (final InputStream is = response.getBody()) {
                     final BatchItemResponse[] responses = internalObjectMapper.readValue(is, BatchItemResponse[].class);
                     final List<BatchItemResponse> failed = new ArrayList<>(responses.length);

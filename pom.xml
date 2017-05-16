@@ -51,7 +51,6 @@
 
         <version.jackson>2.8.7</version.jackson>
         <version.spring>4.1.9.RELEASE</version.spring>
-        <version.jsonpath>2.2.0</version.jsonpath>
         <version.slf4j>1.7.13</version.slf4j>
         <version.log4j>2.4.1</version.log4j>
     </properties>
@@ -65,6 +64,8 @@
         <module>fahrschein-example</module>
         <module>fahrschein-test-support</module>
         <module>fahrschein-typeresolver</module>
+        <module>fahrschein-http-simple</module>
+        <module>fahrschein-http-apache</module>
     </modules>
 
     <build>
