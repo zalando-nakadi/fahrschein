@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.zalando.fahrschein.Preconditions.checkArgument;
 import static org.zalando.fahrschein.Preconditions.checkState;
@@ -111,6 +114,31 @@ public class NakadiClient {
      */
     public SubscriptionBuilder subscription(String applicationName, Set<String> eventNames) throws IOException {
         return new SubscriptionBuilder(this, applicationName, eventNames);
+    }
+
+    /**
+     * Delete subscription based on subscription ID.
+     *
+     * @param subscriptionId
+     * @return
+     * @throws IOException
+     */
+    public void deleteSubscription(String subscriptionId) throws IOException {
+        checkArgument(!subscriptionId.isEmpty(), "Subscription ID cannot be empty.");
+
+        final URI uri = baseUri.resolve(String.format("/subscriptions/%s", subscriptionId));
+        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.DELETE);
+
+        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+
+        try (final ClientHttpResponse response = request.execute()) {
+
+            final int status = response.getStatusCode().value();
+            if (status == 204) {
+                LOG.debug("Successfully deleted subscription [{}]", subscriptionId);
+            }
+        }
+
     }
 
     Subscription subscribe(String applicationName, Set<String> eventNames, String consumerGroup, SubscriptionRequest.Position readFrom, @Nullable List<Cursor> initialCursors) throws IOException {

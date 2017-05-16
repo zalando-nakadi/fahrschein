@@ -20,10 +20,7 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 public class NakadiClientTest {
@@ -151,6 +148,35 @@ public class NakadiClientTest {
         assertEquals(Collections.singleton("foo"), subscription.getEventTypes());
         assertEquals("bar", subscription.getConsumerGroup());
         assertNotNull(subscription.getCreatedAt());
+    }
+
+    @Test
+    public void shouldDeleteSubscription() throws IOException {
+        server.expectRequestTo("http://example.com/subscriptions/123", HttpMethod.DELETE)
+                .andRespondWith(HttpStatus.NO_CONTENT).setup();
+
+        client.deleteSubscription("123");
+
+        server.verify();
+    }
+
+    @Test
+    public void shouldThrowExceptionOnSubscriptionDeleteFailure() throws IOException {
+        server.expectRequestTo("http://example.com/subscriptions/123", HttpMethod.DELETE)
+                .andRespondWith(HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON, "{\n" +
+                        "  \"type\": \"http://httpstatus.es/404\",\n" +
+                        "  \"title\": \"Not Found\",\n" +
+                        "  \"status\": 404,\n" +
+                        "  \"detail\": \"Subscription not found.\",\n" +
+                        "  \"instance\": \"string\"\n" +
+                        "}").setup();
+
+        expectedException.expect(IOProblem.class);
+        expectedException.expectMessage("Problem [http://httpstatus.es/404] with status [404]: [Not Found] [Subscription not found.]");
+
+        client.deleteSubscription("123");
+
+        server.verify();
     }
 
     @Test
