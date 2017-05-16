@@ -2,7 +2,7 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.zalando.fahrschein.http.simple.SimpleClientHttpRequestFactory;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -53,11 +53,14 @@ public final class NakadiClientBuilder {
     }
 
     private ClientHttpRequestFactory defaultClientHttpRequestFactory() {
-        final SimpleClientHttpRequestFactory requestFactoryDelegate = new SimpleClientHttpRequestFactory();
-        requestFactoryDelegate.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
-        requestFactoryDelegate.setReadTimeout(DEFAULT_READ_TIMEOUT);
+        final SimpleClientHttpRequestFactory clientHttpRequestFactory = new SimpleClientHttpRequestFactory();
+        clientHttpRequestFactory.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
+        clientHttpRequestFactory.setReadTimeout(DEFAULT_READ_TIMEOUT);
+        return clientHttpRequestFactory;
+    }
 
-        ClientHttpRequestFactory requestFactory = new ProblemHandlingClientHttpRequestFactory(requestFactoryDelegate);
+    private ClientHttpRequestFactory wrapClientHttpRequestFactory(ClientHttpRequestFactory delegate) {
+        ClientHttpRequestFactory requestFactory = new ProblemHandlingClientHttpRequestFactory(delegate);
         if (accessTokenProvider != null) {
             requestFactory = new AuthorizedClientHttpRequestFactory(requestFactory, accessTokenProvider);
         }
@@ -66,7 +69,7 @@ public final class NakadiClientBuilder {
     }
 
     public NakadiClient build() {
-        final ClientHttpRequestFactory clientHttpRequestFactory = ofNullable(this.clientHttpRequestFactory).orElseGet(this::defaultClientHttpRequestFactory);
+        final ClientHttpRequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(ofNullable(this.clientHttpRequestFactory).orElseGet(this::defaultClientHttpRequestFactory));
         final CursorManager cursorManager = ofNullable(this.cursorManager).orElseGet(() -> new ManagedCursorManager(baseUri, clientHttpRequestFactory));
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
 

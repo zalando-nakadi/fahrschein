@@ -1,14 +1,23 @@
 package org.zalando.fahrschein.example;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
 import org.zalando.fahrschein.IORunnable;
@@ -21,11 +30,12 @@ import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
-import org.zalando.fahrschein.example.domain.OrderEvent;
 import org.zalando.fahrschein.example.domain.OrderCreatedEvent;
+import org.zalando.fahrschein.example.domain.OrderEvent;
 import org.zalando.fahrschein.example.domain.OrderPaymentAcceptedEvent;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
+import org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
@@ -35,7 +45,10 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -84,9 +97,11 @@ public class Main {
 
         //subscriptionListen(objectMapper, listener);
 
+        subscriptionListenHttpComponents(objectMapper, listener);
+
         //subscriptionListenWithPositionCursors(objectMapper, listener);
 
-        subscriptionMultipleEvents(objectMapper);
+        //subscriptionMultipleEvents(objectMapper);
 
         //simpleListen(objectMapper, listener);
 
@@ -156,6 +171,45 @@ public class Main {
     private static void subscriptionListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
 
         final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .build();
+
+        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+                .withConsumerGroup("fahrschein-demo")
+                .readFromEnd()
+                .subscribe();
+
+        nakadiClient.stream(subscription)
+                .withObjectMapper(objectMapper)
+                .listen(SalesOrderPlaced.class, listener);
+    }
+
+    private static void subscriptionListenHttpComponents(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+        final RequestConfig requestConfig = RequestConfig.custom()
+                .setSocketTimeout(60000)
+                .setConnectTimeout(2000)
+                .setConnectionRequestTimeout(8000)
+                .setContentCompressionEnabled(false)
+                .build();
+
+        final ConnectionConfig connectionConfig = ConnectionConfig.custom()
+                .setBufferSize(512)
+                .build();
+
+        final CloseableHttpClient httpClient = HttpClients.custom()
+                .setDefaultRequestConfig(requestConfig)
+                .setDefaultConnectionConfig(connectionConfig)
+                .setConnectionTimeToLive(30, TimeUnit.SECONDS)
+                .disableAutomaticRetries()
+                .disableRedirectHandling()
+                .setMaxConnTotal(8)
+                .setMaxConnPerRoute(2)
+                .build();
+
+        final ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withClientHttpRequestFactory(clientHttpRequestFactory)
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
