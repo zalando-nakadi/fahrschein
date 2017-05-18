@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Collections.singletonList;
+import static org.zalando.fahrschein.NakadiClientBuilder.wrapClientHttpRequestFactory;
 
 public class ManagedCursorManager implements CursorManager {
 
@@ -73,7 +74,15 @@ public class ManagedCursorManager implements CursorManager {
     private final ObjectMapper objectMapper;
     private final Map<String, SubscriptionStream> streams;
 
+    public ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, AccessTokenProvider accessTokenProvider) {
+        this(baseUri, wrapClientHttpRequestFactory(clientHttpRequestFactory, accessTokenProvider), true);
+    }
+
     public ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory) {
+        this(baseUri, wrapClientHttpRequestFactory(clientHttpRequestFactory, null), true);
+    }
+
+    ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, boolean clientHttpRequestFactoryIsAlreadyWrapped) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.objectMapper = DefaultObjectMapper.INSTANCE;
