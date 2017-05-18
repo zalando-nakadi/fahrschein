@@ -9,7 +9,7 @@ import static org.junit.Assert.assertThat;
 public class StreamParametersTest {
 
     @Test
-    public void createsAValidQueryParamString() {
+    public void createsAValidQueryParamString() throws StreamParametersException {
         final StreamParameters streamParameters = new StreamParameters()
                 .withBatchLimit(102)
                 .withStreamLimit(103)
@@ -31,6 +31,20 @@ public class StreamParametersTest {
                 "stream_keep_alive_limit=106",
                 "max_uncommitted_events=107"
         ));
+    }
+
+    @Test(expected = StreamParametersException.class)
+    public void streamParametersWithStreamTimeoutFailure() throws StreamParametersException {
+        final StreamParameters streamParameters = new StreamParameters()
+                .withBatchFlushTimeout(100)
+                .withStreamTimeout(50);
+    }
+
+    @Test(expected = StreamParametersException.class)
+    public void streamParametersWithStreamLimitFailure() throws StreamParametersException {
+        final StreamParameters streamParameters = new StreamParameters()
+                .withBatchLimit(20)
+                .withStreamLimit(10);
     }
 
 }
