@@ -1,12 +1,17 @@
 package org.zalando.fahrschein;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.collection.IsArrayWithSize.arrayWithSize;
 import static org.junit.Assert.assertThat;
 
 public class StreamParametersTest {
+
+    @Rule
+    public ExpectedException expectedEx = ExpectedException.none();
 
     @Test
     public void createsAValidQueryParamString() throws StreamParametersException {
@@ -33,22 +38,34 @@ public class StreamParametersTest {
         ));
     }
 
-    @Test(expected = StreamParametersException.class)
+    @Test
     public void streamParametersWithStreamTimeoutFailure() throws StreamParametersException {
+
+        expectedEx.expect(StreamParametersException.class);
+        expectedEx.expectMessage("stream_timeout is lower than batch_flush_timeout.");
+
         final StreamParameters streamParameters = new StreamParameters()
                 .withBatchFlushTimeout(100)
                 .withStreamTimeout(50);
     }
 
-    @Test(expected = StreamParametersException.class)
+    @Test
     public void streamParametersWithStreamLimitFailure() throws StreamParametersException {
+
+        expectedEx.expect(StreamParametersException.class);
+        expectedEx.expectMessage("streamLimit is lower than batch_limit.");
+
         final StreamParameters streamParameters = new StreamParameters()
                 .withBatchLimit(20)
                 .withStreamLimit(10);
     }
 
-    @Test(expected = StreamParametersException.class)
+    @Test
     public void streamParametersWithBatchLimitZero() throws StreamParametersException {
+
+        expectedEx.expect(StreamParametersException.class);
+        expectedEx.expectMessage("batch_limit can't be lower than 1.");
+
         final StreamParameters streamParameters = new StreamParameters()
                 .withBatchLimit(0)
                 .withStreamLimit(10);
