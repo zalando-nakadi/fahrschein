@@ -47,4 +47,11 @@ public class StreamParametersTest {
                 .withStreamLimit(10);
     }
 
+    @Test(expected = StreamParametersException.class)
+    public void streamParametersWithBatchLimitZero() throws StreamParametersException {
+        final StreamParameters streamParameters = new StreamParameters()
+                .withBatchLimit(0)
+                .withStreamLimit(10);
+    }
+
 }

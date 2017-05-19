@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 public class StreamParameters {
 
+    private static final int DEFAULT_BATCH_LIMIT = 1;
+
     @Nullable
     private final Integer batchLimit;
     @Nullable
@@ -64,6 +66,15 @@ public class StreamParameters {
      *
      * Maximum number of Events in each chunk (and therefore per partition) of the stream.
      *
+     *
+     * <p>
+     *  Note 2017/05/19: the API definition says if the value is  0 or unspecified the server will
+     *  buffer events indefinitely and flush on reaching of {@link StreamParameters#batchFlushTimeout}.
+     *  This is incorrect - if the server receives a value of '0' it will not send events at
+     *  all (effectively it's a silent bug). Because of this if value is set to 0 (or less than 1)
+     *  client raise an exception.
+     * </p>
+     *
      * @param batchLimit
      *          batch_limit must be lower or equal to stream_limit
      * @return
@@ -72,6 +83,9 @@ public class StreamParameters {
     public StreamParameters withBatchLimit(int batchLimit) throws StreamParametersException {
         if(streamLimit != null && streamLimit < batchLimit){
             throw new StreamParametersException("streamLimit is lower than batch_limit.");
+        }
+        if(batchLimit < DEFAULT_BATCH_LIMIT){
+            throw new StreamParametersException("batch_limit can't be lower than 1.");
         }
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
