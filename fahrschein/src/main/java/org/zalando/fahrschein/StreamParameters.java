@@ -78,14 +78,14 @@ public class StreamParameters {
      * @param batchLimit
      *          batch_limit must be lower or equal to stream_limit
      * @return
-     * @throws StreamParametersException
+     * @throws IllegalArgumentException
      */
-    public StreamParameters withBatchLimit(int batchLimit) throws StreamParametersException {
+    public StreamParameters withBatchLimit(int batchLimit) throws IllegalArgumentException {
         if(streamLimit != null && streamLimit < batchLimit){
-            throw new StreamParametersException("streamLimit is lower than batch_limit.");
+            throw new IllegalArgumentException("streamLimit is lower than batch_limit.");
         }
         if(batchLimit < DEFAULT_BATCH_LIMIT){
-            throw new StreamParametersException("batch_limit can't be lower than 1.");
+            throw new IllegalArgumentException("batch_limit can't be lower than 1.");
         }
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
@@ -99,11 +99,11 @@ public class StreamParameters {
      *          Stream initialization will fail if stream_limit is lower than batch_limit.
      *
      * @return
-     * @throws StreamParametersException
+     * @throws IllegalArgumentException
      */
-    public StreamParameters withStreamLimit(int streamLimit) throws StreamParametersException {
+    public StreamParameters withStreamLimit(int streamLimit) throws IllegalArgumentException {
         if(batchLimit != null && batchLimit > streamLimit){
-            throw new StreamParametersException("streamLimit is lower than batch_limit.");
+            throw new IllegalArgumentException("streamLimit is lower than batch_limit.");
         }
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
@@ -117,11 +117,11 @@ public class StreamParameters {
      *          If 0 or undefined, will assume 30 seconds.
      *
      * @return
-     * @throws StreamParametersException
+     * @throws IllegalArgumentException
      */
-    public StreamParameters withBatchFlushTimeout(int batchFlushTimeout) throws StreamParametersException {
+    public StreamParameters withBatchFlushTimeout(int batchFlushTimeout) throws IllegalArgumentException {
         if (streamTimeout != null && streamTimeout < batchFlushTimeout){
-            throw new StreamParametersException("stream_timeout is lower than batch_flush_timeout.");
+            throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
         }
 
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
@@ -134,11 +134,11 @@ public class StreamParameters {
      * @param streamTimeout
      *          Stream initialization will fail if stream_timeout is lower than batch_flush_timeout
      * @return
-     * @throws StreamParametersException
+     * @throws IllegalArgumentException
      */
-    public StreamParameters withStreamTimeout(int streamTimeout) throws StreamParametersException {
+    public StreamParameters withStreamTimeout(int streamTimeout) throws IllegalArgumentException {
         if(batchFlushTimeout != null && batchFlushTimeout > streamTimeout){
-            throw new StreamParametersException("stream_timeout is lower than batch_flush_timeout.");
+            throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
         }
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }

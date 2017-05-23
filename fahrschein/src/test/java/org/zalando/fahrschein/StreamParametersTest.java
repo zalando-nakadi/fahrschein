@@ -14,7 +14,7 @@ public class StreamParametersTest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     @Test
-    public void createsAValidQueryParamString() throws StreamParametersException {
+    public void createsAValidQueryParamString() throws IllegalArgumentException {
         final StreamParameters streamParameters = new StreamParameters()
                 .withBatchLimit(102)
                 .withStreamLimit(103)
@@ -39,9 +39,9 @@ public class StreamParametersTest {
     }
 
     @Test
-    public void streamParametersWithStreamTimeoutFailure() throws StreamParametersException {
+    public void streamParametersWithStreamTimeoutFailure() throws IllegalArgumentException {
 
-        expectedEx.expect(StreamParametersException.class);
+        expectedEx.expect(IllegalArgumentException.class);
         expectedEx.expectMessage("stream_timeout is lower than batch_flush_timeout.");
 
         final StreamParameters streamParameters = new StreamParameters()
@@ -50,9 +50,9 @@ public class StreamParametersTest {
     }
 
     @Test
-    public void streamParametersWithStreamLimitFailure() throws StreamParametersException {
+    public void streamParametersWithStreamLimitFailure() throws IllegalArgumentException {
 
-        expectedEx.expect(StreamParametersException.class);
+        expectedEx.expect(IllegalArgumentException.class);
         expectedEx.expectMessage("streamLimit is lower than batch_limit.");
 
         final StreamParameters streamParameters = new StreamParameters()
@@ -61,9 +61,9 @@ public class StreamParametersTest {
     }
 
     @Test
-    public void streamParametersWithBatchLimitZero() throws StreamParametersException {
+    public void streamParametersWithBatchLimitZero() throws IllegalArgumentException {
 
-        expectedEx.expect(StreamParametersException.class);
+        expectedEx.expect(IllegalArgumentException.class);
         expectedEx.expectMessage("batch_limit can't be lower than 1.");
 
         final StreamParameters streamParameters = new StreamParameters()
