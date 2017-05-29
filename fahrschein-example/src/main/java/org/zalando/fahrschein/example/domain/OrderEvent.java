@@ -11,5 +11,5 @@ import org.zalando.fahrschein.typeresolver.MetadataTypeResolver;
 @JsonSubTypes({@JsonSubTypes.Type(OrderCreatedEvent.class), @JsonSubTypes.Type(OrderPaymentAcceptedEvent.class)})
 public abstract class OrderEvent implements Event {
     public abstract String getOrderNumber();
-    public abstract void process();
+    public abstract void process(OrderEventProcessor processor);
 }

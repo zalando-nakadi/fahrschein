@@ -36,8 +36,8 @@ public class OrderPaymentAcceptedEvent extends OrderEvent {
     }
 
     @Override
-    public void process() {
-        LOG.info("[{}] OrderPaymentAcceptedEvent [{}] [{}]", metadata.getOccurredAt(), orderNumber, paymentMethod);
+    public void process(final OrderEventProcessor processor) {
+        processor.processPaymentAccepted(this);
     }
 
     public String getPaymentMethod() {
