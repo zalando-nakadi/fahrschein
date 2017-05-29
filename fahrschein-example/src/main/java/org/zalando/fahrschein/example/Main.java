@@ -1,11 +1,7 @@
 package org.zalando.fahrschein.example;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
@@ -18,21 +14,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.zalando.fahrschein.EventProcessingException;
-import org.zalando.fahrschein.ExponentialBackoffStrategy;
-import org.zalando.fahrschein.IORunnable;
-import org.zalando.fahrschein.Listener;
-import org.zalando.fahrschein.NakadiClient;
-import org.zalando.fahrschein.NoBackoffStrategy;
-import org.zalando.fahrschein.StreamParameters;
-import org.zalando.fahrschein.ZignAccessTokenProvider;
+import org.zalando.fahrschein.*;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
-import org.zalando.fahrschein.example.domain.OrderCreatedEvent;
 import org.zalando.fahrschein.example.domain.OrderEvent;
-import org.zalando.fahrschein.example.domain.OrderPaymentAcceptedEvent;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
 import org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory;
@@ -44,7 +31,6 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
-import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -97,11 +83,11 @@ public class Main {
 
         //subscriptionListen(objectMapper, listener);
 
-        subscriptionListenHttpComponents(objectMapper, listener);
+        //subscriptionListenHttpComponents(objectMapper, listener);
 
         //subscriptionListenWithPositionCursors(objectMapper, listener);
 
-        //subscriptionMultipleEvents(objectMapper);
+        subscriptionMultipleEvents(objectMapper);
 
         //simpleListen(objectMapper, listener);
 
@@ -114,15 +100,7 @@ public class Main {
 
         final Listener<OrderEvent> listener = events -> {
             for (OrderEvent event: events) {
-                final String orderNumber = event.getOrderNumber();
-                final OffsetDateTime occurredAt = event.getMetadata().getOccurredAt();
-                if (event instanceof OrderPaymentAcceptedEvent) {
-                    final OrderPaymentAcceptedEvent paymentAccepted = (OrderPaymentAcceptedEvent)event;
-                    LOG.info("[{}] ]OrderPaymentAcceptedEvent [{}] [{}]", occurredAt, orderNumber, paymentAccepted.getPaymentMethod());
-                } else if (event instanceof OrderCreatedEvent) {
-                    final OrderCreatedEvent orderCreated = (OrderCreatedEvent) event;
-                    LOG.info("[{}] OrderCreatedEvent [{}] [{}]", occurredAt, orderNumber, orderCreated.getCustomerNumber());
-                }
+                event.process();
             }
         };
 
