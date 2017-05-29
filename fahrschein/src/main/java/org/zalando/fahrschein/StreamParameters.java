@@ -77,7 +77,6 @@ public class StreamParameters {
      *
      * @param batchLimit
      *          batch_limit must be lower or equal to stream_limit
-     * @return
      * @throws IllegalArgumentException
      */
     public StreamParameters withBatchLimit(int batchLimit) throws IllegalArgumentException {
@@ -98,7 +97,6 @@ public class StreamParameters {
      *          If 0 or undefined, will stream batches indefinitely.
      *          Stream initialization will fail if stream_limit is lower than batch_limit.
      *
-     * @return
      * @throws IllegalArgumentException
      */
     public StreamParameters withStreamLimit(int streamLimit) throws IllegalArgumentException {
@@ -116,7 +114,6 @@ public class StreamParameters {
      *          the messages are immediately flushed to the client and batch flush timer is reset.
      *          If 0 or undefined, will assume 30 seconds.
      *
-     * @return
      * @throws IllegalArgumentException
      */
     public StreamParameters withBatchFlushTimeout(int batchFlushTimeout) throws IllegalArgumentException {
@@ -133,7 +130,6 @@ public class StreamParameters {
      *
      * @param streamTimeout
      *          Stream initialization will fail if stream_timeout is lower than batch_flush_timeout
-     * @return
      * @throws IllegalArgumentException
      */
     public StreamParameters withStreamTimeout(int streamTimeout) throws IllegalArgumentException {
@@ -149,7 +145,6 @@ public class StreamParameters {
      *
      * @param streamKeepAliveLimit
      *          If 0 or undefined will send keep alive messages indefinitely.
-     * @return
      */
     public StreamParameters withStreamKeepAliveLimit(int streamKeepAliveLimit) {
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);

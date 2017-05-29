@@ -118,10 +118,6 @@ public class NakadiClient {
 
     /**
      * Delete subscription based on subscription ID.
-     *
-     * @param subscriptionId
-     * @return
-     * @throws IOException
      */
     public void deleteSubscription(String subscriptionId) throws IOException {
         checkArgument(!subscriptionId.isEmpty(), "Subscription ID cannot be empty.");
