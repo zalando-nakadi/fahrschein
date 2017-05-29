@@ -7,7 +7,6 @@ import org.zalando.fahrschein.http.simple.SimpleClientHttpRequestFactory;
 import javax.annotation.Nullable;
 import java.net.URI;
 
-import static java.util.Optional.ofNullable;
 import static org.zalando.fahrschein.Preconditions.checkNotNull;
 
 public final class NakadiClientBuilder {
@@ -59,7 +58,7 @@ public final class NakadiClientBuilder {
         return clientHttpRequestFactory;
     }
 
-    private ClientHttpRequestFactory wrapClientHttpRequestFactory(ClientHttpRequestFactory delegate) {
+    static ClientHttpRequestFactory wrapClientHttpRequestFactory(ClientHttpRequestFactory delegate, @Nullable AccessTokenProvider accessTokenProvider) {
         ClientHttpRequestFactory requestFactory = new ProblemHandlingClientHttpRequestFactory(delegate);
         if (accessTokenProvider != null) {
             requestFactory = new AuthorizedClientHttpRequestFactory(requestFactory, accessTokenProvider);
@@ -69,8 +68,8 @@ public final class NakadiClientBuilder {
     }
 
     public NakadiClient build() {
-        final ClientHttpRequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(ofNullable(this.clientHttpRequestFactory).orElseGet(this::defaultClientHttpRequestFactory));
-        final CursorManager cursorManager = ofNullable(this.cursorManager).orElseGet(() -> new ManagedCursorManager(baseUri, clientHttpRequestFactory));
+        final ClientHttpRequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory != null ? this.clientHttpRequestFactory : defaultClientHttpRequestFactory(), accessTokenProvider);
+        final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
 
         return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager);
