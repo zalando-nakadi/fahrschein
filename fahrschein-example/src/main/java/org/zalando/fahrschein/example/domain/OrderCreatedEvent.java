@@ -42,8 +42,8 @@ public class OrderCreatedEvent extends OrderEvent {
     }
 
     @Override
-    public void process() {
-        LOG.info("[{}] OrderCreatedEvent [{}] [{}]", metadata.getOccurredAt(), orderNumber, customerNumber);
+    public void process(final OrderEventProcessor processor) {
+        processor.processOrderCreated(this);
     }
 
     public Integer getGrandTotal() {

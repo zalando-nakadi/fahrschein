@@ -20,6 +20,7 @@ import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.example.domain.OrderEvent;
+import org.zalando.fahrschein.example.domain.OrderEventProcessor;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
 import org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory;
@@ -97,10 +98,11 @@ public class Main {
     }
 
     private static void subscriptionMultipleEvents(ObjectMapper objectMapper) throws IOException {
+        final OrderEventProcessor processor = new OrderEventProcessor();
 
         final Listener<OrderEvent> listener = events -> {
             for (OrderEvent event: events) {
-                event.process();
+                event.process(processor);
             }
         };
 
