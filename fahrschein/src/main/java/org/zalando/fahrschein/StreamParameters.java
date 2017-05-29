@@ -7,6 +7,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class StreamParameters {
+
+    private static final int DEFAULT_BATCH_LIMIT = 1;
+
     @Nullable
     private final Integer batchLimit;
     @Nullable
@@ -59,22 +62,95 @@ public class StreamParameters {
         return params.stream().collect(Collectors.joining("&"));
     }
 
-    public StreamParameters withBatchLimit(int batchLimit) {
+    /**
+     *
+     * Maximum number of Events in each chunk (and therefore per partition) of the stream.
+     *
+     *
+     * <p>
+     *  Note 2017/05/19: the API definition says if the value is  0 or unspecified the server will
+     *  buffer events indefinitely and flush on reaching of {@link StreamParameters#batchFlushTimeout}.
+     *  This is incorrect - if the server receives a value of '0' it will not send events at
+     *  all (effectively it's a silent bug). Because of this if value is set to 0 (or less than 1)
+     *  client raise an exception.
+     * </p>
+     *
+     * @param batchLimit
+     *          batch_limit must be lower or equal to stream_limit
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public StreamParameters withBatchLimit(int batchLimit) throws IllegalArgumentException {
+        if(streamLimit != null && streamLimit < batchLimit){
+            throw new IllegalArgumentException("streamLimit is lower than batch_limit.");
+        }
+        if(batchLimit < DEFAULT_BATCH_LIMIT){
+            throw new IllegalArgumentException("batch_limit can't be lower than 1.");
+        }
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
 
-    public StreamParameters withStreamLimit(int streamLimit) {
+    /**
+     *
+     * Maximum number of Events in this stream (over all partitions being streamed in this connection).
+     *
+     * @param streamLimit
+     *          If 0 or undefined, will stream batches indefinitely.
+     *          Stream initialization will fail if stream_limit is lower than batch_limit.
+     *
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public StreamParameters withStreamLimit(int streamLimit) throws IllegalArgumentException {
+        if(batchLimit != null && batchLimit > streamLimit){
+            throw new IllegalArgumentException("streamLimit is lower than batch_limit.");
+        }
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
 
-    public StreamParameters withBatchFlushTimeout(int batchFlushTimeout) {
+    /**
+     * Maximum time in seconds to wait for the flushing of each chunk (per partition).
+     *
+     * @param batchFlushTimeout
+     *          If the amount of buffered Events reaches batch_limit before this batch_flush_timeout is reached,
+     *          the messages are immediately flushed to the client and batch flush timer is reset.
+     *          If 0 or undefined, will assume 30 seconds.
+     *
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public StreamParameters withBatchFlushTimeout(int batchFlushTimeout) throws IllegalArgumentException {
+        if (streamTimeout != null && streamTimeout < batchFlushTimeout){
+            throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
+        }
+
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
 
-    public StreamParameters withStreamTimeout(int streamTimeout) {
+    /**
+     * Maximum time in seconds a stream will live before connection is closed by the server. If 0 or unspecified will stream indefinitely.
+     * If this timeout is reached, any pending messages (in the sense of stream_limit) will be flushed to the client.
+     *
+     * @param streamTimeout
+     *          Stream initialization will fail if stream_timeout is lower than batch_flush_timeout
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public StreamParameters withStreamTimeout(int streamTimeout) throws IllegalArgumentException {
+        if(batchFlushTimeout != null && batchFlushTimeout > streamTimeout){
+            throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
+        }
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
 
+    /**
+     *
+     * Maximum number of empty keep alive batches to get in a row before closing the connection.
+     *
+     * @param streamKeepAliveLimit
+     *          If 0 or undefined will send keep alive messages indefinitely.
+     * @return
+     */
     public StreamParameters withStreamKeepAliveLimit(int streamKeepAliveLimit) {
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
