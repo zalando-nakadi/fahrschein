@@ -7,7 +7,7 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import java.io.IOException;
 import java.net.URI;
 
-class ProblemHandlingClientHttpRequestFactory implements ClientHttpRequestFactory {
+public class ProblemHandlingClientHttpRequestFactory implements ClientHttpRequestFactory {
     private final ClientHttpRequestFactory delegate;
 
     public ProblemHandlingClientHttpRequestFactory(ClientHttpRequestFactory delegate) {
