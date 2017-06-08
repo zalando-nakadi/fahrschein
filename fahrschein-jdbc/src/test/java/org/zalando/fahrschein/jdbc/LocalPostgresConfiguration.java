@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.zalando.fahrschein.BatchHandler;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -47,5 +48,10 @@ public class LocalPostgresConfiguration {
     @Bean
     public JdbcCursorManager cursorManager(DataSource dataSource) {
         return new JdbcCursorManager(dataSource, "test");
+    }
+
+    @Bean
+    public BatchHandler transactionHandler() {
+        return new TransactionalBatchHandler();
     }
 }
