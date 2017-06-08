@@ -18,7 +18,6 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.zalando.fahrschein.EventAlreadyProcessedException;
 import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
-import org.zalando.fahrschein.IORunnable;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.NoBackoffStrategy;
@@ -276,13 +275,13 @@ public class Main {
 
             final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
 
-            final IORunnable instance = new IORunnable() {
+            final Runnable instance = new Runnable() {
                 @Override
-                public void run() throws IOException {
+                public void run() {
 
-                    final IORunnable runnable = new IORunnable() {
+                    final Runnable runnable = new Runnable() {
                         @Override
-                        public void run() throws IOException {
+                        public void run() {
                             final Lock lock = partitionManager.lockPartitions(SALES_ORDER_SERVICE_ORDER_PLACED, partitions, instanceName);
 
                             if (lock != null) {
@@ -292,7 +291,8 @@ public class Main {
                                             .withObjectMapper(objectMapper)
                                             .withStreamParameters(new StreamParameters().withStreamLimit(10))
                                             .withBackoffStrategy(new NoBackoffStrategy())
-                                            .listen(SalesOrderPlaced.class, listener);
+                                            .uncheckedRunnable(SalesOrderPlaced.class, listener)
+                                            .run();
                                 } finally {
                                     partitionManager.unlockPartitions(lock);
                                 }
@@ -300,10 +300,10 @@ public class Main {
                         }
                     };
 
-                    scheduledExecutorService.scheduleWithFixedDelay(new IORunnable.Wrapper(runnable), 0, 1, TimeUnit.SECONDS);
+                    scheduledExecutorService.scheduleWithFixedDelay(runnable, 0, 1, TimeUnit.SECONDS);
                 }
             };
-            scheduledExecutorService.submit(new IORunnable.Wrapper(instance));
+            scheduledExecutorService.submit(instance);
         }
 
         try {

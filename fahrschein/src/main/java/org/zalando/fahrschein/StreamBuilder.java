@@ -48,6 +48,7 @@ public interface StreamBuilder {
     StreamBuilder withBackoffStrategy(BackoffStrategy backoffStrategy);
 
     <T> IORunnable runnable(Class<T> eventClass, Listener<T> listener);
+    <T> Runnable uncheckedRunnable(Class<T> eventClass, Listener<T> listener);
     <T> void listen(Class<T> eventClass, Listener<T> listener) throws IOException;
 
 }

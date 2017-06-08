@@ -733,7 +733,7 @@ public class NakadiReaderTest {
         final BackoffStrategy backoffStrategy = new NoBackoffStrategy();
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), null, null, SomeEvent.class, listener, errorHandler, NO_METRICS_COLLECTOR);
 
-        final Runnable runnable = new IORunnable.Wrapper(nakadiReader);
+        final Runnable runnable = new IORunnableAdapter(nakadiReader);
 
         final Future<?> future = executor.submit(runnable);
         Thread.sleep(200);

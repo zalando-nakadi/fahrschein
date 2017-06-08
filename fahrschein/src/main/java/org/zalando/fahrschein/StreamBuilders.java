@@ -75,6 +75,10 @@ class StreamBuilders {
                     eventNames, subscription, lock, eventClass, listener, errorHandler, metricsCollector);
         }
 
+        @Override
+        public <T> Runnable uncheckedRunnable(Class<T> eventClass, Listener<T> listener) {
+            return new IORunnableAdapter(runnable(eventClass, listener));
+        }
     }
 
     static class SubscriptionStreamBuilderImpl extends AbstractStreamBuilder implements StreamBuilder.SubscriptionStreamBuilder {
