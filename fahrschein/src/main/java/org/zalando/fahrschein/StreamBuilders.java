@@ -124,6 +124,11 @@ class StreamBuilders {
         }
 
         @Override
+        public SubscriptionStreamBuilder withBatchHandler(BatchHandler batchHandler) {
+            return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, batchHandler, metricsCollector, subscription);
+        }
+
+        @Override
         public SubscriptionStreamBuilder withMetricsCollector(MetricsCollector metricsCollector) {
             return new SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, batchHandler, metricsCollector, subscription);
         }
@@ -185,6 +190,11 @@ class StreamBuilders {
 
         @Override
         public LowLevelStreamBuilder withErrorHandler(ErrorHandler errorHandler) {
+            return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, batchHandler, metricsCollector, eventName, lock);
+        }
+
+        @Override
+        public LowLevelStreamBuilder withBatchHandler(BatchHandler batchHandler) {
             return new LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, backoffStrategy, streamParameters, errorHandler, batchHandler, metricsCollector, eventName, lock);
         }
 
