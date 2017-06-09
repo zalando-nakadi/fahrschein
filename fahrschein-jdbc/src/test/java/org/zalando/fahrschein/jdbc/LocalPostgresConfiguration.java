@@ -51,7 +51,7 @@ public class LocalPostgresConfiguration {
     }
 
     @Bean
-    public BatchHandler transactionHandler() {
+    public BatchHandler batchHandler() {
         return new TransactionalBatchHandler();
     }
 }
