@@ -62,7 +62,7 @@ nakadiClient.stream(subscription)
 
 ```
 
-See [`Main.java`](src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
+See [`Main.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/Main.java) for an executable version of the above code.
 
 ## Initializing partition offsets
 
