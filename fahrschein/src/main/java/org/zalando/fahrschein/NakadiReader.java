@@ -58,6 +58,7 @@ class NakadiReader<T> implements IORunnable {
     private final Class<T> eventClass;
     private final Listener<T> listener;
     private final ErrorHandler errorHandler;
+    private final BatchHandler batchHandler;
 
     private final JsonFactory jsonFactory;
     private final ObjectReader eventReader;
@@ -65,8 +66,14 @@ class NakadiReader<T> implements IORunnable {
 
     private final MetricsCollector metricsCollector;
 
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, final MetricsCollector metricsCollector) {
+    /*
+     * @VisibleForTesting
+     */
+    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener) {
+        this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, DefaultErrorHandler.INSTANCE, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
+    }
 
+    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, BatchHandler batchHandler, MetricsCollector metricsCollector) {
         checkState(subscription != null || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
         this.uri = uri;
@@ -79,6 +86,7 @@ class NakadiReader<T> implements IORunnable {
         this.eventClass = eventClass;
         this.listener = listener;
         this.errorHandler = errorHandler;
+        this.batchHandler = batchHandler;
         this.metricsCollector = metricsCollector;
 
         this.jsonFactory = objectMapper.getFactory();
@@ -194,24 +202,29 @@ class NakadiReader<T> implements IORunnable {
         }
     }
 
-    private String getCurrentEventName(Cursor cursor) {
+    private String getCurrentEventName(final Cursor cursor) {
         final String eventName = cursor.getEventType();
         return eventName != null ? eventName : eventNames.iterator().next();
     }
 
-    private void processBatch(Batch<T> batch) throws IOException {
+    private void processBatch(final Batch<T> batch) throws IOException {
         final Cursor cursor = batch.getCursor();
         final String eventName = getCurrentEventName(cursor);
-        try {
-            listener.accept(batch.getEvents());
-            cursorManager.onSuccess(eventName, cursor);
-        } catch (EventAlreadyProcessedException e) {
-            LOG.info("Events for [{}] partition [{}] at offset [{}] were already processed", eventName, cursor.getPartition(), cursor.getOffset());
-        } catch (Throwable throwable) {
-            LOG.warn("Exception while processing events for [{}] on partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset(), throwable);
+        batchHandler.processBatch(new IORunnable() {
+            @Override
+            public void run() throws IOException {
+                try {
+                    listener.accept(batch.getEvents());
+                    cursorManager.onSuccess(eventName, cursor);
+                } catch (EventAlreadyProcessedException e) {
+                    LOG.info("Events for [{}] partition [{}] at offset [{}] were already processed", eventName, cursor.getPartition(), cursor.getOffset());
+                } catch (Throwable throwable) {
+                    LOG.warn("Exception while processing events for [{}] on partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset(), throwable);
 
-            throw throwable;
-        }
+                    throw throwable;
+                }
+            }
+        });
     }
 
     private Cursor readCursor(JsonParser jsonParser) throws IOException {

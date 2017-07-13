@@ -17,6 +17,8 @@ public interface StreamBuilder {
         @Override
         SubscriptionStreamBuilder withErrorHandler(ErrorHandler errorHandler);
         @Override
+        SubscriptionStreamBuilder withBatchHandler(BatchHandler batchHandler);
+        @Override
         SubscriptionStreamBuilder withStreamParameters(StreamParameters streamParameters);
     }
 
@@ -28,6 +30,8 @@ public interface StreamBuilder {
         @Override
         LowLevelStreamBuilder withErrorHandler(ErrorHandler errorHandler);
         @Override
+        LowLevelStreamBuilder withBatchHandler(BatchHandler batchHandler);
+        @Override
         LowLevelStreamBuilder withStreamParameters(StreamParameters streamParameters);
 
         LowLevelStreamBuilder withLock(Lock lock);
@@ -38,6 +42,8 @@ public interface StreamBuilder {
     }
 
     StreamBuilder withErrorHandler(ErrorHandler errorHandler);
+
+    StreamBuilder withBatchHandler(BatchHandler batchHandler);
 
     StreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
 

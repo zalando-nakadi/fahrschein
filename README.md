@@ -6,8 +6,8 @@
 
 *Image Source: Deutsches Bundesarchiv, Photographer: Ralph Hirschberger, Image License: [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en)*
 
-[![Build Status](https://travis-ci.org/zalando-incubator/fahrschein.svg?branch=master)](https://travis-ci.org/zalando-incubator/fahrschein)
-[![Release](https://img.shields.io/github/release/zalando-incubator/fahrschein.svg)](https://github.com/zalando-incubator/fahrschein/releases)
+[![Build Status](https://travis-ci.org/zalando-nakadi/fahrschein.svg?branch=master)](https://travis-ci.org/zalando-nakadi/fahrschein)
+[![Release](https://img.shields.io/github/release/zalando-nakadi/fahrschein.svg)](https://github.com/zalando-nakadi/fahrschein/releases)
 [![Maven Central](https://img.shields.io/maven-central/v/org.zalando/fahrschein.svg)](https://maven-badges.herokuapp.com/maven-central/org.zalando/fahrschein)
 
 ## Features
@@ -62,7 +62,7 @@ nakadiClient.stream(subscription)
 
 ```
 
-See [`Main.java`](src/test/java/org/zalando/fahrschein/salesorder/Main.java) for an executable version of the above code.
+See [`Main.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/Main.java) for an executable version of the above code.
 
 ## Initializing partition offsets
 

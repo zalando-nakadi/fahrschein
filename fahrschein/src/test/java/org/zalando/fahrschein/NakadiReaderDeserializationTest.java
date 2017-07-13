@@ -145,8 +145,7 @@ public class NakadiReaderDeserializationTest {
             public void accept(List<T> c) throws IOException, EventAlreadyProcessedException {
                 result.addAll(c);
             }
-        }, DefaultErrorHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
-
+        });
         nakadiReader.readSingleBatch();
 
         return result;
