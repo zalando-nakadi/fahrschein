@@ -22,7 +22,7 @@
     - Less garbage and higher performance
     - No required base classes for events
  - Support for both high-level (subscription) and low-level apis
- - Pluggable HTTP client implementations using [`ClientHttpRequestFactory`](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/client/ClientHttpRequestFactory.html) interface
+ - Pluggable HTTP client implementations
 
 ## Installation
 
@@ -114,7 +114,7 @@ Partitions are locked by one node for a certain time. This requires that every n
 public void readSalesOrderPlacedEvents() throws IOException {
     final String lockedBy = ... // host name or another unique identifier for this node
     final List<Partition> partitions = nakadiClient.getPartitions(eventName);
-    final Optional<Lock> lock = partitionManager.lockPartitions(eventName, partitions, lockedBy);
+    final Optional<Lock> optionalLock = partitionManager.lockPartitions(eventName, partitions, lockedBy);
 
     if (optionalLock.isPresent()) {
         final Lock lock = optionalLock.get();
@@ -170,11 +170,11 @@ nakadiClient.stream(eventName)
         .listen(SalesOrderPlaced.class, listener);
 ```
 
-## `ClientHttpRequestFactory` implementations
+## `RequestFactory` implementations
 
-Fahrschein by default uses a forked version of Spring's `SimpleClientHttpRequestFactory` to avoid an issue with spring trying to consume remaining data when closing connections. The spring implementation does this in order to reuse keep-alive connections, but for streaming connections this can lead to long blocking of the `close` method.
+Fahrschein uses it's own http abstraction which is very similar to spring framework's [`ClientHttpRequestFactory`](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/client/ClientHttpRequestFactory.html) interface. By default it uses the `SimpleRequestFactory` which uses a `HttpURLConnection` internally and has no further dependencies.
 
-There is also a forked version of the `HttpComponentsClientHttpRequestFactory` implementation in the `fahrschein-http-apache` artifact with a similar workaround.
+There is also a version using apache http components named `HttpComponentsRequestFactory` in the `fahrschein-http-apache` artifact.
 
 ```xml
 <dependency>
@@ -201,27 +201,12 @@ final CloseableHttpClient httpClient = HttpClients.custom()
                                                   .setMaxConnPerRoute(2)
                                                   .build();
 
-final ClientHttpRequestFactory requestFactory = new org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory(httpClient);
+final ClientHttpRequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .withClientHttpRequestFactory(requestFactory)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
-```
-
-Fahrschein is also tested and used in production with the original `SimpleClientHttpRequestFactory` and `HttpComponentsClientHttpRequestFactory` from spring framework.
-
-## Using fahrschein without spring (at your own risk)
-
-The spring dependency of the core library is only needed for the `ClientHttpRequest` api.
-If you want to use fahrschein without including the spring framework as a dependency you can instead depend on
-
-```xml
-<dependency>
-    <groupId>org.zalando</groupId>
-    <artifactId>fahrschein-http</artifactId>
-    <version>1.0-SNAPSHOT</version>
-</dependency>
 ```
 
 Note that this is not currently tested or used in production.
@@ -230,7 +215,7 @@ Note that this is not currently tested or used in production.
 
 |                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
 | -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
-| Dependencies         | Spring (http client and jdbc), Jackson                            | Scala, Akka, Jackson  | Scala, Akka             | None                |
+| Dependencies         | Jackson                                                           | Scala, Akka, Jackson  | Scala, Akka             | None                |
 | Cursor Management    | In-Memory / Persistent (Postgres or Redis)                        | In-Memory             | Persistent (Dynamo)     |                     |
 | Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
 | Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
