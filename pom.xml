@@ -65,6 +65,7 @@
         <module>fahrschein-example</module>
         <module>fahrschein-test-support</module>
         <module>fahrschein-typeresolver</module>
+        <module>fahrschein-http-api</module>
         <module>fahrschein-http-simple</module>
         <module>fahrschein-http-apache</module>
     </modules>

@@ -1,7 +1,11 @@
 package org.zalando.fahrschein.example;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
@@ -13,8 +17,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.zalando.fahrschein.*;
+import org.zalando.fahrschein.EventProcessingException;
+import org.zalando.fahrschein.ExponentialBackoffStrategy;
+import org.zalando.fahrschein.IORunnable;
+import org.zalando.fahrschein.Listener;
+import org.zalando.fahrschein.NakadiClient;
+import org.zalando.fahrschein.NoBackoffStrategy;
+import org.zalando.fahrschein.StreamParameters;
+import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
@@ -23,7 +33,8 @@ import org.zalando.fahrschein.example.domain.OrderEvent;
 import org.zalando.fahrschein.example.domain.OrderEventProcessor;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
-import org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory;
+import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
+import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
@@ -186,10 +197,10 @@ public class Main {
                 .setMaxConnPerRoute(2)
                 .build();
 
-        final ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
 
         final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-                .withClientHttpRequestFactory(clientHttpRequestFactory)
+                .withRequestFactory(requestFactory)
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 

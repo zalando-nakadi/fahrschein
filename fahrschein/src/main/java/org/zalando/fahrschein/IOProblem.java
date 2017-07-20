@@ -1,8 +1,5 @@
 package org.zalando.fahrschein;
 
-
-import org.springframework.http.HttpStatus;
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;

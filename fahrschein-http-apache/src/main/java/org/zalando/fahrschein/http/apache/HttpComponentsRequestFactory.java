@@ -1,19 +1,3 @@
-/*
- * Copyright 2002-2016 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.zalando.fahrschein.http.apache;
 
 import org.apache.http.client.HttpClient;
@@ -31,16 +15,15 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.protocol.HttpContext;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpRequestFactory;
+import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.RequestFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 
 /**
- * {@link org.springframework.http.client.ClientHttpRequestFactory} implementation that
+ * {@link RequestFactory} implementation that
  * uses <a href="http://hc.apache.org/httpcomponents-client-ga/">Apache HttpComponents
  * HttpClient</a> to create requests.
  *
@@ -55,25 +38,25 @@ import java.net.URI;
  * @author Juergen Hoeller
  * @author Joern Horstmann
  */
-public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequestFactory {
+public class HttpComponentsRequestFactory implements RequestFactory {
 
 	private final HttpClient httpClient;
 	private RequestConfig requestConfig;
 
 	/**
-	 * Create a new instance of the {@code HttpComponentsClientHttpRequestFactory}
+	 * Create a new instance of the {@code HttpComponentsRequestFactory}
 	 * with a default {@link HttpClient}.
 	 */
-	public HttpComponentsClientHttpRequestFactory() {
+	public HttpComponentsRequestFactory() {
 		this(HttpClients.createSystem());
 	}
 
 	/**
-	 * Create a new instance of the {@code HttpComponentsClientHttpRequestFactory}
+	 * Create a new instance of the {@code HttpComponentsRequestFactory}
 	 * with the given {@link HttpClient} instance.
 	 * @param httpClient the HttpClient instance to use for this request factory
 	 */
-	public HttpComponentsClientHttpRequestFactory(HttpClient httpClient) {
+	public HttpComponentsRequestFactory(HttpClient httpClient) {
 		if (httpClient == null) {
 			throw new IllegalArgumentException("HttpClient must not be null");
 		}
@@ -125,7 +108,7 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 	}
 
 	@Override
-	public ClientHttpRequest createRequest(URI uri, HttpMethod httpMethod) throws IOException {
+	public Request createRequest(URI uri, String httpMethod) throws IOException {
 
 		HttpUriRequest httpRequest = createHttpUriRequest(httpMethod, uri);
 		HttpContext context = HttpClientContext.create();
@@ -145,7 +128,7 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 			}
 		}
 
-		return new HttpComponentsClientHttpRequest(httpClient, httpRequest, context);
+		return new HttpComponentsRequest(httpClient, httpRequest, context);
 	}
 
 
@@ -207,30 +190,30 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 
 	/**
 	 * Create a Commons HttpMethodBase object for the given HTTP method and URI specification.
-	 * @param httpMethod the HTTP method
+	 * @param method the HTTP method
 	 * @param uri the URI
 	 * @return the Commons HttpMethodBase object
 	 */
-	private static HttpUriRequest createHttpUriRequest(HttpMethod httpMethod, URI uri) {
-		switch (httpMethod) {
-			case GET:
+	private static HttpUriRequest createHttpUriRequest(String method, URI uri) {
+		switch (method) {
+			case "GET":
 				return new HttpGet(uri);
-			case HEAD:
+			case "HEAD":
 				return new HttpHead(uri);
-			case POST:
+			case "POST":
 				return new HttpPost(uri);
-			case PUT:
+			case "PUT":
 				return new HttpPut(uri);
-			case PATCH:
+			case "PATCH":
 				return new HttpPatch(uri);
-			case DELETE:
+			case "DELETE":
 				return new HttpDelete(uri);
-			case OPTIONS:
+			case "OPTIONS":
 				return new HttpOptions(uri);
-			case TRACE:
+			case "TRACE":
 				return new HttpTrace(uri);
 			default:
-				throw new IllegalArgumentException("Invalid HTTP method: " + httpMethod);
+				throw new IllegalArgumentException("Invalid HTTP method: " + method);
 		}
 	}
 

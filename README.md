@@ -201,10 +201,10 @@ final CloseableHttpClient httpClient = HttpClients.custom()
                                                   .setMaxConnPerRoute(2)
                                                   .build();
 
-final ClientHttpRequestFactory clientHttpRequestFactory = new org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory(httpClient);
+final ClientHttpRequestFactory requestFactory = new org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory(httpClient);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-        .withClientHttpRequestFactory(clientHttpRequestFactory)
+        .withClientHttpRequestFactory(requestFactory)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
 ```

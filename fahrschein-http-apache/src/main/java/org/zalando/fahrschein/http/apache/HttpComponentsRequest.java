@@ -1,19 +1,3 @@
-/*
- * Copyright 2002-2016 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.zalando.fahrschein.http.apache;
 
 import org.apache.http.HttpEntity;
@@ -24,10 +8,10 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpResponse;
+import org.zalando.fahrschein.http.api.Headers;
+import org.zalando.fahrschein.http.api.HeadersImpl;
+import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.Response;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,42 +20,40 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
- * {@link ClientHttpRequest} implementation based on
- * Apache HttpComponents HttpClient.
+ * {@link Request} implementation based on Apache HttpComponents HttpClient.
  *
- * <p>Created via the {@link HttpComponentsClientHttpRequestFactory}.
+ * <p>Created via the {@link HttpComponentsRequestFactory}.
  *
  * @author Oleg Kalnichevski
  * @author Arjen Poutsma
  * @author Juergen Hoeller
  * @author Joern Horstmann
- * @see HttpComponentsClientHttpRequestFactory#createRequest(URI, HttpMethod)
+ * @see HttpComponentsRequestFactory#createRequest(URI, String)
  */
-final class HttpComponentsClientHttpRequest implements ClientHttpRequest {
+final class HttpComponentsRequest implements Request {
 
 	private final HttpClient httpClient;
 	private final HttpUriRequest httpRequest;
 
 	private final HttpContext httpContext;
-	private final HttpHeaders headers;
+	private final Headers headers;
 	private ByteArrayOutputStream bufferedOutput;
 	private boolean executed;
 
 
-	HttpComponentsClientHttpRequest(HttpClient client, HttpUriRequest request, HttpContext context) {
+	HttpComponentsRequest(HttpClient client, HttpUriRequest request, HttpContext context) {
 		this.httpClient = client;
 		this.httpRequest = request;
 		this.httpContext = context;
-		this.headers = new HttpHeaders();
+		this.headers = new HeadersImpl();
 	}
 
 
 	@Override
-	public HttpMethod getMethod() {
-		return Enum.valueOf(HttpMethod.class, this.httpRequest.getMethod());
+	public String getMethod() {
+		return this.httpRequest.getMethod();
 	}
 
 	@Override
@@ -94,22 +76,21 @@ final class HttpComponentsClientHttpRequest implements ClientHttpRequest {
 		return sb.toString();
 	}
 
-	private ClientHttpResponse executeInternal(HttpHeaders headers) throws IOException {
+	private Response executeInternal(Headers headers) throws IOException {
 		final byte[] bytes = this.bufferedOutput != null ? this.bufferedOutput.toByteArray() : new byte[0];
 
 		if (headers.getContentLength() < 0) {
 			headers.setContentLength(bytes.length);
 		}
 
-		for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-			String headerName = entry.getKey();
-			if (HttpHeaders.COOKIE.equalsIgnoreCase(headerName)) {  // RFC 6265
-				String headerValue = collectionToDelimitedString(entry.getValue(), "; ");
+		for (String headerName : headers.headerNames()) {
+			final List<String> value = headers.get(headerName);
+			if (Headers.COOKIE.equalsIgnoreCase(headerName)) {  // RFC 6265
+				String headerValue = collectionToDelimitedString(value, "; ");
 				this.httpRequest.addHeader(headerName, headerValue);
-			}
-			else if (!HTTP.CONTENT_LEN.equalsIgnoreCase(headerName) &&
+			} else if (!HTTP.CONTENT_LEN.equalsIgnoreCase(headerName) &&
 					!HTTP.TRANSFER_ENCODING.equalsIgnoreCase(headerName)) {
-				for (String headerValue : entry.getValue()) {
+				for (String headerValue : value) {
 					this.httpRequest.addHeader(headerName, headerValue);
 				}
 			}
@@ -122,14 +103,14 @@ final class HttpComponentsClientHttpRequest implements ClientHttpRequest {
 		}
 
 		final HttpResponse httpResponse = this.httpClient.execute(this.httpRequest, this.httpContext);
-		final ClientHttpResponse result = new HttpComponentsClientHttpResponse(httpResponse);
+		final Response result = new HttpComponentsResponse(httpResponse);
 		this.bufferedOutput = null;
 		return result;
 	}
 
 	@Override
-	public final HttpHeaders getHeaders() {
-		return (this.executed ? HttpHeaders.readOnlyHttpHeaders(this.headers) : this.headers);
+	public final Headers getHeaders() {
+		return (this.executed ? new HeadersImpl(this.headers, true) : this.headers);
 	}
 
 	@Override
@@ -142,9 +123,9 @@ final class HttpComponentsClientHttpRequest implements ClientHttpRequest {
 	}
 
 	@Override
-	public final ClientHttpResponse execute() throws IOException {
+	public final Response execute() throws IOException {
 		assertNotExecuted();
-		final ClientHttpResponse result = executeInternal(this.headers);
+		final Response result = executeInternal(this.headers);
 		this.executed = true;
 		return result;
 	}

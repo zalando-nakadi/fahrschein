@@ -2,11 +2,9 @@ package org.zalando.fahrschein;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.http.api.ContentType;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,12 +30,12 @@ public class ManagedCursorManagerTest {
 
     @Test
     public void shouldCommitCursor() throws IOException {
-        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", HttpMethod.POST)
+        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", "POST")
                 .andExpectHeader("X-Nakadi-StreamId", "stream-id")
                 .andExpectJsonPath("$.items[0].partition", equalTo("0"))
                 .andExpectJsonPath("$.items[0].offset", equalTo("10"))
                 .andExpectJsonPath("$.items[0].cursor_token", equalTo("token"))
-                .andRespondWith(HttpStatus.NO_CONTENT)
+                .andRespondWith(204)
                 .setup();
 
         final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());
@@ -51,8 +49,8 @@ public class ManagedCursorManagerTest {
 
     @Test
     public void shouldGetCursors() throws IOException {
-        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", HttpMethod.GET)
-                .andRespondWith(HttpStatus.OK, MediaType.APPLICATION_JSON, "{\"items\":[{\"partition\":\"0\",\"offset\":\"10\"},{\"partition\":\"1\",\"offset\":\"20\"}]}")
+        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", "GET")
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"items\":[{\"partition\":\"0\",\"offset\":\"10\"},{\"partition\":\"1\",\"offset\":\"20\"}]}")
                 .setup();
 
         final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());

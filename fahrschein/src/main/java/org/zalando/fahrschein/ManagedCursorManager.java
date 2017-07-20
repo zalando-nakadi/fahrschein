@@ -5,13 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.http.api.ContentType;
+import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.api.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,19 +69,19 @@ public class ManagedCursorManager implements CursorManager {
     }
 
     private final URI baseUri;
-    private final ClientHttpRequestFactory clientHttpRequestFactory;
+    private final RequestFactory clientHttpRequestFactory;
     private final ObjectMapper objectMapper;
     private final Map<String, SubscriptionStream> streams;
 
-    public ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, AccessTokenProvider accessTokenProvider) {
+    public ManagedCursorManager(URI baseUri, RequestFactory clientHttpRequestFactory, AccessTokenProvider accessTokenProvider) {
         this(baseUri, wrapClientHttpRequestFactory(clientHttpRequestFactory, accessTokenProvider), true);
     }
 
-    public ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory) {
+    public ManagedCursorManager(URI baseUri, RequestFactory clientHttpRequestFactory) {
         this(baseUri, wrapClientHttpRequestFactory(clientHttpRequestFactory, null), true);
     }
 
-    ManagedCursorManager(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, boolean clientHttpRequestFactoryIsAlreadyWrapped) {
+    ManagedCursorManager(URI baseUri, RequestFactory clientHttpRequestFactory, boolean clientHttpRequestFactoryIsAlreadyWrapped) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.objectMapper = DefaultObjectMapper.INSTANCE;
@@ -114,18 +113,18 @@ public class ManagedCursorManager implements CursorManager {
 
         LOG.debug("Committing cursors for subscription [{}] to event [{}] in partition [{}] with offset [{}]", subscriptionId, stream.getEventName(), cursor.getPartition(), cursor.getOffset());
 
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.POST);
+        final Request request = clientHttpRequestFactory.createRequest(subscriptionUrl, "POST");
 
-        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        request.getHeaders().put("X-Nakadi-StreamId", singletonList(stream.getStreamId()));
+        request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
+        request.getHeaders().put("X-Nakadi-StreamId", stream.getStreamId());
 
         try (OutputStream os = request.getBody()) {
             objectMapper.writeValue(os, new CursorWrapper(singletonList(cursor)));
         }
 
-        try (final ClientHttpResponse response = request.execute()) {
+        try (final Response response = request.execute()) {
 
-            final int status = response.getStatusCode().value();
+            final int status = response.getStatusCode();
             if (status == 204) {
                 LOG.debug("Successfully committed cursor for subscription [{}] to event [{}] in partition [{}] with offset [{}]", subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
             } else if (status == 200) {
@@ -148,9 +147,9 @@ public class ManagedCursorManager implements CursorManager {
         final SubscriptionStream stream = streams.get(eventName);
         final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", stream.getSubscriptionId()));
 
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(subscriptionUrl, HttpMethod.GET);
+        final Request request = clientHttpRequestFactory.createRequest(subscriptionUrl, "GET");
 
-        try (final ClientHttpResponse response = request.execute()) {
+        try (final Response response = request.execute()) {
             try (InputStream is = response.getBody()) {
                 final CursorWrapper cursorWrapper = objectMapper.readValue(is, CursorWrapper.class);
                 return cursorWrapper.getItems();
