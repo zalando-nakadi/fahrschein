@@ -201,7 +201,7 @@ final CloseableHttpClient httpClient = HttpClients.custom()
                                                   .setMaxConnPerRoute(2)
                                                   .build();
 
-final ClientHttpRequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
+final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .withClientHttpRequestFactory(requestFactory)
@@ -209,7 +209,32 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .build();
 ```
 
-Note that this is not currently tested or used in production.
+It is also possible to adapt other implementations from spring framework by wrapping them into `SpringRequestFactory`, contained in the `fahrschein-http-spring` artifact.
+
+```xml
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http-spring</artifactId>
+    <version>${fahrschein.version}</version>
+</dependency>
+```
+
+Example using OkHttp 3.x:
+
+```java
+
+final ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory();
+final RequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory);
+
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        .withClientHttpRequestFactory(requestFactory)
+        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .build();
+
+```
+
+**Note:** The implementations from spring framework don't handle closing of streams as expected. They will try to consume remaining data, which will usually time out when nakadi does not receive a commit.
+
 
 ## Fahrschein compared to other nakadi client libraries
 
