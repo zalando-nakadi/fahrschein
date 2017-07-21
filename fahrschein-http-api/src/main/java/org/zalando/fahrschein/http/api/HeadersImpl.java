@@ -16,23 +16,11 @@ public final class HeadersImpl implements Headers {
     private HeadersImpl(boolean readOnly) {
         this.caseMapping = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.headers = new LinkedHashMap<>();
-        this.readOnly = false;
+        this.readOnly = readOnly;
     }
 
     public HeadersImpl() {
         this(false);
-    }
-
-    public HeadersImpl(Map<String, List<String>> headers) {
-        this(true);
-        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-            final String headerName = entry.getKey();
-            final List<String> value = entry.getValue();
-            if (value.size() > 0) {
-                caseMapping.put(headerName, headerName);
-                this.headers.put(headerName, value);
-            }
-        }
     }
 
     public HeadersImpl(Headers headers, boolean readOnly) {
@@ -103,7 +91,6 @@ public final class HeadersImpl implements Headers {
     @Override
     public void setContentLength(long contentLength) {
         put(CONTENT_LENGTH, String.valueOf(contentLength));
-
     }
 
     @Override

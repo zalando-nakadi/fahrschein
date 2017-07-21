@@ -24,7 +24,7 @@ public final class ContentType {
     @Nullable
     private final String parameters;
 
-    public ContentType(String value, String type, String subtype, String parameters) {
+    private ContentType(String value, String type, String subtype, String parameters) {
         this.value = value;
         this.type = type;
         this.subtype = subtype;
@@ -50,5 +50,15 @@ public final class ContentType {
 
     public String getSubtype() {
         return subtype;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof ContentType && value.equals(((ContentType)o).value);
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
     }
 }
