@@ -97,7 +97,7 @@ public final class HeadersImpl implements Headers {
     @Override
     public long getContentLength() {
         final String value = getFirst(CONTENT_LENGTH);
-        return value == null ? 0 : Long.parseLong(value);
+        return value == null ? -1 : Long.parseLong(value);
     }
 
     @Override
