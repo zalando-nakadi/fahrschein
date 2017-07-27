@@ -7,7 +7,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.protocol.HTTP;
-import org.apache.http.protocol.HttpContext;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Request;
@@ -17,8 +16,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -37,19 +34,15 @@ final class HttpComponentsRequest implements Request {
 	private final HttpClient httpClient;
 	private final HttpUriRequest httpRequest;
 
-	private final HttpContext httpContext;
 	private final Headers headers;
 	private ByteArrayOutputStream bufferedOutput;
 	private boolean executed;
 
-
-	HttpComponentsRequest(HttpClient client, HttpUriRequest request, HttpContext context) {
+	HttpComponentsRequest(HttpClient client, HttpUriRequest request) {
 		this.httpClient = client;
 		this.httpRequest = request;
-		this.httpContext = context;
 		this.headers = new HeadersImpl();
 	}
-
 
 	@Override
 	public String getMethod() {
@@ -61,21 +54,6 @@ final class HttpComponentsRequest implements Request {
 		return this.httpRequest.getURI();
 	}
 
-	private static String collectionToDelimitedString(Collection<?> coll, String delim) {
-		if (coll == null || coll.isEmpty()) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder();
-		Iterator<?> it = coll.iterator();
-		while (it.hasNext()) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(delim);
-			}
-		}
-		return sb.toString();
-	}
-
 	private Response executeInternal(Headers headers) throws IOException {
 		final byte[] bytes = this.bufferedOutput != null ? this.bufferedOutput.toByteArray() : new byte[0];
 
@@ -85,11 +63,7 @@ final class HttpComponentsRequest implements Request {
 
 		for (String headerName : headers.headerNames()) {
 			final List<String> value = headers.get(headerName);
-			if (Headers.COOKIE.equalsIgnoreCase(headerName)) {  // RFC 6265
-				String headerValue = collectionToDelimitedString(value, "; ");
-				this.httpRequest.addHeader(headerName, headerValue);
-			} else if (!HTTP.CONTENT_LEN.equalsIgnoreCase(headerName) &&
-					!HTTP.TRANSFER_ENCODING.equalsIgnoreCase(headerName)) {
+			if (!HTTP.CONTENT_LEN.equalsIgnoreCase(headerName) && !HTTP.TRANSFER_ENCODING.equalsIgnoreCase(headerName)) {
 				for (String headerValue : value) {
 					this.httpRequest.addHeader(headerName, headerValue);
 				}
@@ -102,9 +76,10 @@ final class HttpComponentsRequest implements Request {
 			entityEnclosingRequest.setEntity(requestEntity);
 		}
 
-		final HttpResponse httpResponse = this.httpClient.execute(this.httpRequest, this.httpContext);
+		final HttpResponse httpResponse = this.httpClient.execute(this.httpRequest);
 		final Response result = new HttpComponentsResponse(httpResponse);
 		this.bufferedOutput = null;
+
 		return result;
 	}
 
@@ -117,7 +92,7 @@ final class HttpComponentsRequest implements Request {
 	public final OutputStream getBody() throws IOException {
 		assertNotExecuted();
 		if (this.bufferedOutput == null) {
-			this.bufferedOutput =  new ByteArrayOutputStream(1024);
+			this.bufferedOutput = new ByteArrayOutputStream(1024);
 		}
 		return this.bufferedOutput;
 	}

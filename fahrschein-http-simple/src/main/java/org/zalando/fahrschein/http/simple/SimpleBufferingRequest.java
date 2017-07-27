@@ -11,8 +11,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -50,21 +48,6 @@ final class SimpleBufferingRequest implements Request {
 		}
 	}
 
-	private static String collectionToDelimitedString(Collection<?> coll, String delim) {
-		if (coll == null || coll.isEmpty()) {
-			return "";
-		}
-		StringBuilder sb = new StringBuilder();
-		Iterator<?> it = coll.iterator();
-		while (it.hasNext()) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(delim);
-			}
-		}
-		return sb.toString();
-	}
-
 	private Response executeInternal() throws IOException {
 		final int size = this.bufferedOutput != null ? this.bufferedOutput.size() : 0;
 		if (this.headers.getContentLength() < 0) {
@@ -73,14 +56,9 @@ final class SimpleBufferingRequest implements Request {
 
 		for (String headerName : headers.headerNames()) {
 			final List<String> value = headers.get(headerName);
-			if (Headers.COOKIE.equalsIgnoreCase(headerName)) {  // RFC 6265
-				final String headerValue = collectionToDelimitedString(value, "; ");
-				connection.setRequestProperty(headerName, headerValue);
-			} else {
-				for (String headerValue : value) {
-					final String actualHeaderValue = headerValue != null ? headerValue : "";
-					connection.addRequestProperty(headerName, actualHeaderValue);
-				}
+			for (String headerValue : value) {
+				final String actualHeaderValue = headerValue != null ? headerValue : "";
+				connection.addRequestProperty(headerName, actualHeaderValue);
 			}
 		}
 
