@@ -10,7 +10,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpTrace;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.HttpClients;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
@@ -36,14 +35,6 @@ import java.net.URI;
 public class HttpComponentsRequestFactory implements RequestFactory {
 
 	private final HttpClient httpClient;
-
-	/**
-	 * Create a new instance of the {@code HttpComponentsRequestFactory}
-	 * with a default {@link HttpClient}.
-	 */
-	public HttpComponentsRequestFactory() {
-		this(HttpClients.createSystem());
-	}
 
 	/**
 	 * Create a new instance of the {@code HttpComponentsRequestFactory}

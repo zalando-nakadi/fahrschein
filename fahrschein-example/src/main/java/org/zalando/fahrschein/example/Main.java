@@ -100,9 +100,9 @@ public class Main {
 
         //subscriptionListen(objectMapper, listener);
 
-        //subscriptionListenHttpComponents(objectMapper, listener);
+        subscriptionListenHttpComponents(objectMapper, listener);
 
-        subscriptionListenSpringAdapter(objectMapper, listener);
+        //subscriptionListenSpringAdapter(objectMapper, listener);
 
         //subscriptionListenWithPositionCursors(objectMapper, listener);
 
