@@ -5,6 +5,6 @@ import java.net.URI;
 
 public interface RequestFactory {
 
-	Request createRequest(URI uri, String method) throws IOException;
+    Request createRequest(URI uri, String method) throws IOException;
 
 }

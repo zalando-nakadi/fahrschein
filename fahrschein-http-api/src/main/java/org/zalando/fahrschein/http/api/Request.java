@@ -5,14 +5,14 @@ import java.io.OutputStream;
 import java.net.URI;
 
 public interface Request {
-	String getMethod();
+    String getMethod();
 
-	URI getURI();
+    URI getURI();
 
-	Headers getHeaders();
+    Headers getHeaders();
 
-	OutputStream getBody() throws IOException;
+    OutputStream getBody() throws IOException;
 
-	Response execute() throws IOException;
+    Response execute() throws IOException;
 
 }

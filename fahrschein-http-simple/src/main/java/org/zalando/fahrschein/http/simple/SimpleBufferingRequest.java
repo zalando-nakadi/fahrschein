@@ -24,95 +24,95 @@ import java.util.List;
  */
 final class SimpleBufferingRequest implements Request {
 
-	private final HttpURLConnection connection;
-	private final Headers headers;
-	private ByteArrayOutputStream bufferedOutput;
-	private boolean executed;
+    private final HttpURLConnection connection;
+    private final Headers headers;
+    private ByteArrayOutputStream bufferedOutput;
+    private boolean executed;
 
-	SimpleBufferingRequest(HttpURLConnection connection) {
-		this.connection = connection;
-		this.headers = new HeadersImpl();
-	}
+    SimpleBufferingRequest(HttpURLConnection connection) {
+        this.connection = connection;
+        this.headers = new HeadersImpl();
+    }
 
-	@Override
-	public String getMethod() {
-		return this.connection.getRequestMethod();
-	}
+    @Override
+    public String getMethod() {
+        return this.connection.getRequestMethod();
+    }
 
-	@Override
-	public URI getURI() {
-		try {
-			return this.connection.getURL().toURI();
-		} catch (URISyntaxException ex) {
-			throw new IllegalStateException("Could not get HttpURLConnection URI: " + ex.getMessage(), ex);
-		}
-	}
+    @Override
+    public URI getURI() {
+        try {
+            return this.connection.getURL().toURI();
+        } catch (URISyntaxException ex) {
+            throw new IllegalStateException("Could not get HttpURLConnection URI: " + ex.getMessage(), ex);
+        }
+    }
 
-	private Response executeInternal() throws IOException {
-		final int size = this.bufferedOutput != null ? this.bufferedOutput.size() : 0;
-		if (this.headers.getContentLength() < 0) {
-			this.headers.setContentLength(size);
-		}
+    private Response executeInternal() throws IOException {
+        final int size = this.bufferedOutput != null ? this.bufferedOutput.size() : 0;
+        if (this.headers.getContentLength() < 0) {
+            this.headers.setContentLength(size);
+        }
 
-		for (String headerName : headers.headerNames()) {
-			final List<String> value = headers.get(headerName);
-			for (String headerValue : value) {
-				final String actualHeaderValue = headerValue != null ? headerValue : "";
-				connection.addRequestProperty(headerName, actualHeaderValue);
-			}
-		}
+        for (String headerName : headers.headerNames()) {
+            final List<String> value = headers.get(headerName);
+            for (String headerValue : value) {
+                final String actualHeaderValue = headerValue != null ? headerValue : "";
+                connection.addRequestProperty(headerName, actualHeaderValue);
+            }
+        }
 
-		// JDK <1.8 doesn't support getOutputStream with HTTP DELETE
-		if ("DELETE".equals(getMethod()) && size > 0) {
-			this.connection.setDoOutput(false);
-		}
-		if (this.connection.getDoOutput()) {
-			this.connection.setFixedLengthStreamingMode(size);
-		}
+        // JDK <1.8 doesn't support getOutputStream with HTTP DELETE
+        if ("DELETE".equals(getMethod()) && size > 0) {
+            this.connection.setDoOutput(false);
+        }
+        if (this.connection.getDoOutput()) {
+            this.connection.setFixedLengthStreamingMode(size);
+        }
 
-		this.connection.connect();
+        this.connection.connect();
 
-		if (this.connection.getDoOutput() && this.bufferedOutput != null) {
-			this.bufferedOutput.writeTo(this.connection.getOutputStream());
-		} else {
-			// Immediately trigger the request in a no-output scenario as well
-			this.connection.getResponseCode();
-		}
+        if (this.connection.getDoOutput() && this.bufferedOutput != null) {
+            this.bufferedOutput.writeTo(this.connection.getOutputStream());
+        } else {
+            // Immediately trigger the request in a no-output scenario as well
+            this.connection.getResponseCode();
+        }
 
-		final Response result = new SimpleResponse(this.connection);
-		this.bufferedOutput = null;
-		return result;
-	}
+        final Response result = new SimpleResponse(this.connection);
+        this.bufferedOutput = null;
+        return result;
+    }
 
-	@Override
-	public final Headers getHeaders() {
-		return (this.executed ? new HeadersImpl(this.headers, true) : this.headers);
-	}
+    @Override
+    public final Headers getHeaders() {
+        return (this.executed ? new HeadersImpl(this.headers, true) : this.headers);
+    }
 
-	@Override
-	public final OutputStream getBody() throws IOException {
-		assertNotExecuted();
-		if (this.bufferedOutput == null) {
-			this.bufferedOutput = new ByteArrayOutputStream(1024);
-		}
-		return this.bufferedOutput;
-	}
+    @Override
+    public final OutputStream getBody() throws IOException {
+        assertNotExecuted();
+        if (this.bufferedOutput == null) {
+            this.bufferedOutput = new ByteArrayOutputStream(1024);
+        }
+        return this.bufferedOutput;
+    }
 
-	@Override
-	public final Response execute() throws IOException {
-		assertNotExecuted();
-		final Response result = executeInternal();
-		this.executed = true;
-		return result;
-	}
+    @Override
+    public final Response execute() throws IOException {
+        assertNotExecuted();
+        final Response result = executeInternal();
+        this.executed = true;
+        return result;
+    }
 
-	/**
-	 * Assert that this request has not been {@linkplain #execute() executed} yet.
-	 * @throws IllegalStateException if this request has been executed
-	 */
-	protected void assertNotExecuted() {
-		if (this.executed) {
-			throw new IllegalStateException("ClientHttpRequest already executed");
-		}
-	}
+    /**
+     * Assert that this request has not been {@linkplain #execute() executed} yet.
+     * @throws IllegalStateException if this request has been executed
+     */
+    protected void assertNotExecuted() {
+        if (this.executed) {
+            throw new IllegalStateException("ClientHttpRequest already executed");
+        }
+    }
 }

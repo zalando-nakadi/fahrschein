@@ -34,75 +34,75 @@ import java.net.URI;
  */
 public class HttpComponentsRequestFactory implements RequestFactory {
 
-	private final HttpClient httpClient;
+    private final HttpClient httpClient;
 
-	/**
-	 * Create a new instance of the {@code HttpComponentsRequestFactory}
-	 * with the given {@link HttpClient} instance.
-	 * @param httpClient the HttpClient instance to use for this request factory
-	 */
-	public HttpComponentsRequestFactory(HttpClient httpClient) {
-		if (httpClient == null) {
-			throw new IllegalArgumentException("HttpClient must not be null");
-		}
-		this.httpClient = httpClient;
-	}
+    /**
+     * Create a new instance of the {@code HttpComponentsRequestFactory}
+     * with the given {@link HttpClient} instance.
+     * @param httpClient the HttpClient instance to use for this request factory
+     */
+    public HttpComponentsRequestFactory(HttpClient httpClient) {
+        if (httpClient == null) {
+            throw new IllegalArgumentException("HttpClient must not be null");
+        }
+        this.httpClient = httpClient;
+    }
 
-	@Override
-	public Request createRequest(URI uri, String httpMethod) throws IOException {
-		final HttpUriRequest httpRequest = createHttpUriRequest(httpMethod, uri);
+    @Override
+    public Request createRequest(URI uri, String httpMethod) throws IOException {
+        final HttpUriRequest httpRequest = createHttpUriRequest(httpMethod, uri);
 
-		return new HttpComponentsRequest(httpClient, httpRequest);
-	}
+        return new HttpComponentsRequest(httpClient, httpRequest);
+    }
 
-	/**
-	 * Create a Commons HttpMethodBase object for the given HTTP method and URI specification.
-	 * @param method the HTTP method
-	 * @param uri the URI
-	 * @return the Commons HttpMethodBase object
-	 */
-	private static HttpUriRequest createHttpUriRequest(String method, URI uri) {
-		switch (method) {
-			case "GET":
-				return new HttpGet(uri);
-			case "HEAD":
-				return new HttpHead(uri);
-			case "POST":
-				return new HttpPost(uri);
-			case "PUT":
-				return new HttpPut(uri);
-			case "PATCH":
-				return new HttpPatch(uri);
-			case "DELETE":
-				return new HttpDelete(uri);
-			case "OPTIONS":
-				return new HttpOptions(uri);
-			case "TRACE":
-				return new HttpTrace(uri);
-			default:
-				throw new IllegalArgumentException("Invalid HTTP method: " + method);
-		}
-	}
+    /**
+     * Create a Commons HttpMethodBase object for the given HTTP method and URI specification.
+     * @param method the HTTP method
+     * @param uri the URI
+     * @return the Commons HttpMethodBase object
+     */
+    private static HttpUriRequest createHttpUriRequest(String method, URI uri) {
+        switch (method) {
+            case "GET":
+                return new HttpGet(uri);
+            case "HEAD":
+                return new HttpHead(uri);
+            case "POST":
+                return new HttpPost(uri);
+            case "PUT":
+                return new HttpPut(uri);
+            case "PATCH":
+                return new HttpPatch(uri);
+            case "DELETE":
+                return new HttpDelete(uri);
+            case "OPTIONS":
+                return new HttpOptions(uri);
+            case "TRACE":
+                return new HttpTrace(uri);
+            default:
+                throw new IllegalArgumentException("Invalid HTTP method: " + method);
+        }
+    }
 
-	/**
-	 * An alternative to {@link org.apache.http.client.methods.HttpDelete} that
-	 * extends {@link org.apache.http.client.methods.HttpEntityEnclosingRequestBase}
-	 * rather than {@link org.apache.http.client.methods.HttpRequestBase} and
-	 * hence allows HTTP delete with a request body. For use with the RestTemplate
-	 * exchange methods which allow the combination of HTTP DELETE with entity.
-	 * @since 4.1.2
-	 */
-	static class HttpDelete extends HttpEntityEnclosingRequestBase {
+    /**
+     * An alternative to {@link org.apache.http.client.methods.HttpDelete} that
+     * extends {@link org.apache.http.client.methods.HttpEntityEnclosingRequestBase}
+     * rather than {@link org.apache.http.client.methods.HttpRequestBase} and
+     * hence allows HTTP delete with a request body. For use with the RestTemplate
+     * exchange methods which allow the combination of HTTP DELETE with entity.
+     * @since 4.1.2
+     */
+    static class HttpDelete extends HttpEntityEnclosingRequestBase {
 
-		HttpDelete(URI uri) {
-			super();
-			setURI(uri);
-		}
+        HttpDelete(URI uri) {
+            super();
+            setURI(uri);
+        }
 
-		@Override
-		public String getMethod() {
-			return "DELETE";
-		}
-	}
+        @Override
+        public String getMethod() {
+            return "DELETE";
+        }
+    }
 
 }

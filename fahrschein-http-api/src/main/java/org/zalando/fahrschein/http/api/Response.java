@@ -6,15 +6,15 @@ import java.io.InputStream;
 
 public interface Response extends Closeable {
 
-	int getStatusCode() throws IOException;
+    int getStatusCode() throws IOException;
 
-	String getStatusText() throws IOException;
+    String getStatusText() throws IOException;
 
-	Headers getHeaders();
+    Headers getHeaders();
 
-	InputStream getBody() throws IOException;
+    InputStream getBody() throws IOException;
 
-	@Override
-	void close();
+    @Override
+    void close();
 
 }
