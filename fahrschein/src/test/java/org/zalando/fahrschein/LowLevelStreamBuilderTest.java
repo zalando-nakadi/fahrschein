@@ -1,13 +1,11 @@
 package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.springframework.http.client.ClientHttpRequestFactory;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
+import org.zalando.fahrschein.http.api.RequestFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -16,7 +14,10 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.when;
 public class LowLevelStreamBuilderTest {
 
     private final CursorManager cursorManager = mock(CursorManager.class);
-    private final StreamBuilder.LowLevelStreamBuilder lowLevelStreamBuilder = new StreamBuilders.LowLevelStreamBuilderImpl(URI.create("http://example.com"), mock(ClientHttpRequestFactory.class), cursorManager, new ObjectMapper(), "test");
+    private final StreamBuilder.LowLevelStreamBuilder lowLevelStreamBuilder = new StreamBuilders.LowLevelStreamBuilderImpl(URI.create("http://example.com"), mock(RequestFactory.class), cursorManager, new ObjectMapper(), "test");
 
     private void run(@Nullable String initialOffset, String oldestAvailableOffset, String newestAvailableOffset, @Nullable String expectedOffset) throws IOException {
         when(cursorManager.getCursors("test")).thenReturn(initialOffset == null ? emptyList() : singletonList(new Cursor("0", initialOffset)));

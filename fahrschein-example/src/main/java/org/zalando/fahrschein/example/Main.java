@@ -1,20 +1,34 @@
 package org.zalando.fahrschein.example;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import okhttp3.CertificatePinner;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.zalando.fahrschein.*;
+import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.zalando.fahrschein.EventProcessingException;
+import org.zalando.fahrschein.ExponentialBackoffStrategy;
+import org.zalando.fahrschein.IORunnable;
+import org.zalando.fahrschein.Listener;
+import org.zalando.fahrschein.NakadiClient;
+import org.zalando.fahrschein.NoBackoffStrategy;
+import org.zalando.fahrschein.StreamParameters;
+import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
@@ -23,7 +37,9 @@ import org.zalando.fahrschein.example.domain.OrderEvent;
 import org.zalando.fahrschein.example.domain.OrderEventProcessor;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
-import org.zalando.fahrschein.http.apache.HttpComponentsClientHttpRequestFactory;
+import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
+import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
@@ -71,7 +87,7 @@ public class Main {
         objectMapper.registerModule(new ParameterNamesModule());
 
         final Listener<SalesOrderPlaced> listener = events -> {
-            if (Math.random() < 0.0001) {
+            if (Math.random() < 0.0000001) {
                 // For testing reconnection logic
                 throw new EventProcessingException("Random failure");
             } else {
@@ -84,11 +100,13 @@ public class Main {
 
         //subscriptionListen(objectMapper, listener);
 
-        //subscriptionListenHttpComponents(objectMapper, listener);
+        subscriptionListenHttpComponents(objectMapper, listener);
+
+        //subscriptionListenSpringAdapter(objectMapper, listener);
 
         //subscriptionListenWithPositionCursors(objectMapper, listener);
 
-        subscriptionMultipleEvents(objectMapper);
+        //subscriptionMultipleEvents(objectMapper);
 
         //simpleListen(objectMapper, listener);
 
@@ -186,10 +204,10 @@ public class Main {
                 .setMaxConnPerRoute(2)
                 .build();
 
-        final ClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
 
         final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-                .withClientHttpRequestFactory(clientHttpRequestFactory)
+                .withRequestFactory(requestFactory)
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
@@ -202,6 +220,37 @@ public class Main {
                 .withObjectMapper(objectMapper)
                 .listen(SalesOrderPlaced.class, listener);
     }
+
+    private static void subscriptionListenSpringAdapter(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+
+        final OkHttpClient client = new OkHttpClient.Builder()
+                .readTimeout(60, TimeUnit.SECONDS)
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .connectionPool(new ConnectionPool(2, 5*60, TimeUnit.SECONDS))
+                .certificatePinner(new CertificatePinner.Builder()
+                        .add(NAKADI_URI.getHost(), "sha256/KMUmME9xy7BKVUZ80VcmQ75zIZo16IZRTqVRYHVZeWY=")
+                        .build())
+                .build();
+
+        final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
+        final SpringRequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory);
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withRequestFactory(requestFactory)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .build();
+
+        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+                .withConsumerGroup("fahrschein-demo")
+                .readFromEnd()
+                .subscribe();
+
+        nakadiClient.stream(subscription)
+                .withObjectMapper(objectMapper)
+                .listen(SalesOrderPlaced.class, listener);
+    }
+
 
     private static void simpleListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
         final InMemoryCursorManager cursorManager = new InMemoryCursorManager();

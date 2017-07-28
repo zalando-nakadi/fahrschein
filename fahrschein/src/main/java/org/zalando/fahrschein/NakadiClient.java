@@ -4,16 +4,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.BatchItemResponse;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
+import org.zalando.fahrschein.http.api.ContentType;
+import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.api.Response;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -35,7 +34,7 @@ public class NakadiClient {
     };
 
     private final URI baseUri;
-    private final ClientHttpRequestFactory clientHttpRequestFactory;
+    private final RequestFactory clientHttpRequestFactory;
     private final ObjectMapper internalObjectMapper;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
@@ -44,7 +43,7 @@ public class NakadiClient {
         return new NakadiClientBuilder(baseUri);
     }
 
-    NakadiClient(URI baseUri, ClientHttpRequestFactory clientHttpRequestFactory, ObjectMapper objectMapper, CursorManager cursorManager) {
+    NakadiClient(URI baseUri, RequestFactory clientHttpRequestFactory, ObjectMapper objectMapper, CursorManager cursorManager) {
         this.baseUri = baseUri;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.objectMapper = objectMapper;
@@ -54,8 +53,8 @@ public class NakadiClient {
 
     public List<Partition> getPartitions(String eventName) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/partitions", eventName));
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
-        try (final ClientHttpResponse response = request.execute()) {
+        final Request request = clientHttpRequestFactory.createRequest(uri, "GET");
+        try (final Response response = request.execute()) {
             try (final InputStream is = response.getBody()) {
                 return internalObjectMapper.readValue(is, LIST_OF_PARTITIONS);
             }
@@ -64,17 +63,17 @@ public class NakadiClient {
 
     public <T> void publish(String eventName, List<T> events) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events", eventName));
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.POST);
+        final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
 
-        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
         try (final OutputStream body = request.getBody()) {
             objectMapper.writeValue(body, events);
         }
 
-        try (final ClientHttpResponse response = request.execute()) {
-            final MediaType contentType = response.getHeaders().getContentType();
-            if (contentType != null && MediaType.APPLICATION_JSON.getType().equals(contentType.getType()) && MediaType.APPLICATION_JSON.getSubtype().equals(contentType.getSubtype())) {
+        try (final Response response = request.execute()) {
+            final ContentType contentType = response.getHeaders().getContentType();
+            if (contentType != null && ContentType.APPLICATION_JSON.getType().equals(contentType.getType()) && ContentType.APPLICATION_JSON.getSubtype().equals(contentType.getSubtype())) {
                 try (final InputStream is = response.getBody()) {
                     final BatchItemResponse[] responses = internalObjectMapper.readValue(is, BatchItemResponse[].class);
                     final List<BatchItemResponse> failed = new ArrayList<>(responses.length);
@@ -123,13 +122,13 @@ public class NakadiClient {
         checkArgument(!subscriptionId.isEmpty(), "Subscription ID cannot be empty.");
 
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s", subscriptionId));
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.DELETE);
+        final Request request = clientHttpRequestFactory.createRequest(uri, "DELETE");
 
-        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
-        try (final ClientHttpResponse response = request.execute()) {
+        try (final Response response = request.execute()) {
 
-            final int status = response.getStatusCode().value();
+            final int status = response.getStatusCode();
             if (status == 204) {
                 LOG.debug("Successfully deleted subscription [{}]", subscriptionId);
             }
@@ -144,15 +143,15 @@ public class NakadiClient {
         final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors);
 
         final URI uri = baseUri.resolve("/subscriptions");
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.POST);
+        final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
 
-        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
         try (final OutputStream os = request.getBody()) {
             internalObjectMapper.writeValue(os, subscription);
         }
 
-        try (final ClientHttpResponse response = request.execute()) {
+        try (final Response response = request.execute()) {
             try (final InputStream is = response.getBody()) {
                 final Subscription subscriptionResponse = internalObjectMapper.readValue(is, Subscription.class);
                 LOG.info("Created subscription for event {} with id [{}]", subscription.getEventTypes(), subscriptionResponse.getId());

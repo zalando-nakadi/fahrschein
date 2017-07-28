@@ -12,7 +12,7 @@
     </parent>
 
     <artifactId>fahrschein-http-simple</artifactId>
-    <name>Fahrschein HTTP Client HttpURLConnection</name>
+    <name>Fahrschein HTTP Client using HttpURLConnection</name>
 
     <build>
         <plugins>
@@ -27,24 +27,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${version.spring}</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-aop</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-context</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>commons-logging</groupId>
-                    <artifactId>commons-logging</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.zalando</groupId>
+            <artifactId>fahrschein-http-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>
