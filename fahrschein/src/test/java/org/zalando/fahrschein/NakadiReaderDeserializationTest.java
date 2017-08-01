@@ -180,8 +180,8 @@ public class NakadiReaderDeserializationTest {
         assertThat(metadata.getEid(), Matchers.equalTo("5678"));
         assertThat(metadata.getFlowId(), Matchers.equalTo("ABCD"));
 
-        //assertThat(metadata.getOccurredAt(), Matchers.equalTo(new Date(Date.UTC(116, 9, 26, 19, 20, 21))));
-        //assertThat(metadata.getReceivedAt(), Matchers.equalTo(new Date(Date.UTC(116, 9, 26, 20, 21, 22))));
+        assertThat(metadata.getOccurredAt(), Matchers.equalTo("2016-10-26T19:20:21.123Z"));
+        assertThat(metadata.getReceivedAt(), Matchers.equalTo("2016-10-26T20:21:22+01:00"));
     }
 
     @Test

@@ -1,23 +1,21 @@
 package org.zalando.fahrschein.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.concurrent.Immutable;
-import java.util.Date;
 
 @Immutable
 public final class Metadata {
     private final String eventType;
     private final String eid;
-    private final Date occurredAt;
-    private final Date receivedAt;
+    private final String occurredAt;
+    private final String receivedAt;
     private final String flowId;
 
     @JsonCreator
     @Deprecated
-    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") Date occurredAt, @JsonProperty("received_at") Date receivedAt, @JsonProperty("flow_id") String flowId) {
+    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId) {
         this.eventType = eventType;
         this.eid = eid;
         this.occurredAt = occurredAt;
@@ -25,7 +23,7 @@ public final class Metadata {
         this.flowId = flowId;
     }
 
-    public Metadata(String eid, Date occurredAt) {
+    public Metadata(String eid, String occurredAt) {
         this(null, eid, occurredAt, null, null);
     }
 
@@ -37,11 +35,11 @@ public final class Metadata {
         return eid;
     }
 
-    public Date getOccurredAt() {
+    public String getOccurredAt() {
         return occurredAt;
     }
 
-    public Date getReceivedAt() {
+    public String getReceivedAt() {
         return receivedAt;
     }
 

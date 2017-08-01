@@ -76,7 +76,6 @@ public class Main {
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
 

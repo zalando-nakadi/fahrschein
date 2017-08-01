@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,10 +16,10 @@ public class Subscription {
     private final String owningApplication;
     private final Set<String> eventTypes;
     private final String consumerGroup;
-    private final Date createdAt;
+    private final String createdAt;
 
     @JsonCreator
-    public Subscription(@JsonProperty("id") String id, @JsonProperty("owning_application") String owningApplication, @JsonProperty("event_types") Set<String> eventTypes, @JsonProperty("consumer_group") String consumerGroup, @JsonProperty("created_at") Date createdAt) {
+    public Subscription(@JsonProperty("id") String id, @JsonProperty("owning_application") String owningApplication, @JsonProperty("event_types") Set<String> eventTypes, @JsonProperty("consumer_group") String consumerGroup, @JsonProperty("created_at") String createdAt) {
         this.id = id;
         this.owningApplication = owningApplication;
         this.eventTypes = unmodifiableSet(eventTypes == null ? Collections.<String>emptySet() : new HashSet<>(eventTypes));
@@ -45,7 +44,7 @@ public class Subscription {
         return consumerGroup;
     }
 
-    public Date getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 }
