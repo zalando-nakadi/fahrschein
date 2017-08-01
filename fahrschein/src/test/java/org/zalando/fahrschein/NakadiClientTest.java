@@ -4,11 +4,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.http.api.ContentType;
 
 import java.io.IOException;
 import java.net.URI;
@@ -51,7 +49,7 @@ public class NakadiClientTest {
         final CursorManager cursorManager = mock(CursorManager.class);
 
         final NakadiClient nakadiClient = NakadiClient.builder(URI.create("http://example.com/"))
-                .withClientHttpRequestFactory(clientHttpRequestFactory)
+                .withRequestFactory(clientHttpRequestFactory)
                 .withCursorManager(cursorManager)
                 .build();
 
@@ -61,8 +59,8 @@ public class NakadiClientTest {
 
     @Test
     public void shouldGetPartitions() throws IOException {
-        server.expectRequestTo("http://example.com/event-types/foobar/partitions", HttpMethod.GET)
-                .andRespondWith(HttpStatus.OK, MediaType.APPLICATION_JSON, "[{\"partition\":\"0\", \"oldest_available_offset\":\"10\", \"newest_available_offset\":\"20\"},{\"partition\":\"1\", \"oldest_available_offset\":\"BEGIN\",\"newest_available_offset\":\"10\"}]")
+        server.expectRequestTo("http://example.com/event-types/foobar/partitions", "GET")
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "[{\"partition\":\"0\", \"oldest_available_offset\":\"10\", \"newest_available_offset\":\"20\"},{\"partition\":\"1\", \"oldest_available_offset\":\"BEGIN\",\"newest_available_offset\":\"10\"}]")
         .setup();
 
         final List<Partition> partitions = client.getPartitions("foobar");
@@ -75,12 +73,12 @@ public class NakadiClientTest {
 
     @Test
     public void shouldPostSubscription() throws IOException {
-        server.expectRequestTo("http://example.com/subscriptions", HttpMethod.POST)
+        server.expectRequestTo("http://example.com/subscriptions", "POST")
                 .andExpectJsonPath("$.owning_application", equalTo("nakadi-client-test"))
                 .andExpectJsonPath("$.event_types[0]", equalTo("foo"))
                 .andExpectJsonPath("$.consumer_group", equalTo("bar"))
                 .andExpectJsonPath("$.read_from", equalTo("end"))
-                .andRespondWith(HttpStatus.OK, MediaType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
         .setup();
 
         final Subscription subscription = client.subscription("nakadi-client-test", "foo")
@@ -99,13 +97,13 @@ public class NakadiClientTest {
 
     @Test
     public void shouldPostSubscriptionForMultipleEvents() throws IOException {
-        server.expectRequestTo("http://example.com/subscriptions", HttpMethod.POST)
+        server.expectRequestTo("http://example.com/subscriptions", "POST")
                 .andExpectJsonPath("$.owning_application", equalTo("nakadi-client-test"))
                 .andExpectJsonPath("$.event_types[0]", equalTo("foo1"))
                 .andExpectJsonPath("$.event_types[1]", equalTo("foo2"))
                 .andExpectJsonPath("$.consumer_group", equalTo("bar"))
                 .andExpectJsonPath("$.read_from", equalTo("end"))
-                .andRespondWith(HttpStatus.OK, MediaType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo1\", \"foo2\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo1\", \"foo2\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
                 .setup();
 
         final Subscription subscription = client.subscription("nakadi-client-test", new LinkedHashSet<>(asList("foo1", "foo2")))
@@ -125,12 +123,12 @@ public class NakadiClientTest {
 
     @Test
     public void shouldIncludeReadFromProperty() throws IOException {
-        server.expectRequestTo("http://example.com/subscriptions", HttpMethod.POST)
+        server.expectRequestTo("http://example.com/subscriptions", "POST")
                 .andExpectJsonPath("$.owning_application", equalTo("nakadi-client-test"))
                 .andExpectJsonPath("$.event_types[0]", equalTo("foo"))
                 .andExpectJsonPath("$.consumer_group", equalTo("bar"))
                 .andExpectJsonPath("$.read_from", equalTo("begin"))
-                .andRespondWith(HttpStatus.OK, MediaType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"bar\",\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
                 .setup();
 
         final Subscription subscription = client.subscription("nakadi-client-test", "foo")
@@ -150,8 +148,8 @@ public class NakadiClientTest {
 
     @Test
     public void shouldDeleteSubscription() throws IOException {
-        server.expectRequestTo("http://example.com/subscriptions/123", HttpMethod.DELETE)
-                .andRespondWith(HttpStatus.NO_CONTENT).setup();
+        server.expectRequestTo("http://example.com/subscriptions/123", "DELETE")
+                .andRespondWith(204).setup();
 
         client.deleteSubscription("123");
 
@@ -160,8 +158,8 @@ public class NakadiClientTest {
 
     @Test
     public void shouldThrowExceptionOnSubscriptionDeleteFailure() throws IOException {
-        server.expectRequestTo("http://example.com/subscriptions/123", HttpMethod.DELETE)
-                .andRespondWith(HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON, "{\n" +
+        server.expectRequestTo("http://example.com/subscriptions/123", "DELETE")
+                .andRespondWith(404, ContentType.APPLICATION_JSON, "{\n" +
                         "  \"type\": \"http://httpstatus.es/404\",\n" +
                         "  \"title\": \"Not Found\",\n" +
                         "  \"status\": 404,\n" +
@@ -179,10 +177,10 @@ public class NakadiClientTest {
 
     @Test
     public void shouldPublishEvents() throws IOException {
-        server.expectRequestTo("http://example.com/event-types/foobar/events", HttpMethod.POST)
+        server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
-                .andRespondWith(HttpStatus.OK)
+                .andRespondWith(200)
                 .setup();
 
         client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
@@ -190,10 +188,10 @@ public class NakadiClientTest {
 
     @Test
     public void shouldHandleBatchItemResponseWhenPublishing() throws IOException {
-        server.expectRequestTo("http://example.com/event-types/foobar/events", HttpMethod.POST)
+        server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
-                .andRespondWith(HttpStatus.MULTI_STATUS, MediaType.APPLICATION_JSON, "[{\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
+                .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
         expectedException.expect(EventPublishingException.class);

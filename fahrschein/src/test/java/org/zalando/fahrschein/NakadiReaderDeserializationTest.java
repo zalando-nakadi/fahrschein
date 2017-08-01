@@ -7,15 +7,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.Test;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.AbstractDataChangeEvent;
 import org.zalando.fahrschein.domain.DataChangeEvent;
 import org.zalando.fahrschein.domain.DataOperation;
 import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.domain.Metadata;
+import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.api.Response;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -33,7 +32,7 @@ public class NakadiReaderDeserializationTest {
     private final URI uri = java.net.URI.create("http://example.com/events");
     private final ObjectMapper objectMapper = createObjectMapper();
     private final CursorManager cursorManager = mock(CursorManager.class);
-    private final ClientHttpRequestFactory clientHttpRequestFactory = mock(ClientHttpRequestFactory.class);
+    private final RequestFactory requestFactory = mock(RequestFactory.class);
     private final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
 
     private static ObjectMapper createObjectMapper() {
@@ -127,19 +126,19 @@ public class NakadiReaderDeserializationTest {
 
     private void setupResponse(int partition, int offset, final String data) throws IOException {
         final String body = String.format("{\"cursor\":{\"partition\":\"%d\",\"offset\":\"%d\"},\"events\":[%s]}", partition, offset, data);
-        final ClientHttpResponse response = mock(ClientHttpResponse.class);
+        final Response response = mock(Response.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream(body.getBytes("utf-8"));
         when(response.getBody()).thenReturn(initialInputStream);
 
-        final ClientHttpRequest request = mock(ClientHttpRequest.class);
+        final Request request = mock(Request.class);
         when(request.execute()).thenReturn(response);
 
-        when(clientHttpRequestFactory.createRequest(uri, HttpMethod.GET)).thenReturn(request);
+        when(requestFactory.createRequest(uri, "GET")).thenReturn(request);
     }
 
     private <T> List<T> readSingleBatch(String eventName, Class<T> eventClass) throws IOException {
         final List<T> result = new ArrayList<>();
-        final NakadiReader<T> nakadiReader = new NakadiReader<T>(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper,
+        final NakadiReader<T> nakadiReader = new NakadiReader<T>(uri, requestFactory, backoffStrategy, cursorManager, objectMapper,
                 Collections.singleton(eventName), null, null, eventClass, new Listener<T>() {
             @Override
             public void accept(List<T> c) throws IOException, EventAlreadyProcessedException {

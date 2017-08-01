@@ -10,16 +10,15 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.ClientHttpResponse;
 import org.zalando.fahrschein.domain.Batch;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.http.api.Headers;
+import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.api.Response;
 
 import javax.annotation.Nullable;
 import java.io.Closeable;
@@ -46,7 +45,7 @@ class NakadiReader<T> implements IORunnable {
     };
 
     private final URI uri;
-    private final ClientHttpRequestFactory clientHttpRequestFactory;
+    private final RequestFactory requestFactory;
     private final BackoffStrategy backoffStrategy;
     private final CursorManager cursorManager;
 
@@ -69,15 +68,15 @@ class NakadiReader<T> implements IORunnable {
     /*
      * @VisibleForTesting
      */
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener) {
-        this(uri, clientHttpRequestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, DefaultErrorHandler.INSTANCE, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
+    NakadiReader(URI uri, RequestFactory requestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener) {
+        this(uri, requestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, DefaultErrorHandler.INSTANCE, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
     }
 
-    NakadiReader(URI uri, ClientHttpRequestFactory clientHttpRequestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, BatchHandler batchHandler, MetricsCollector metricsCollector) {
+    NakadiReader(URI uri, RequestFactory requestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, @Nullable Subscription subscription, @Nullable Lock lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, BatchHandler batchHandler, MetricsCollector metricsCollector) {
         checkState(subscription != null || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
         this.uri = uri;
-        this.clientHttpRequestFactory = clientHttpRequestFactory;
+        this.requestFactory = requestFactory;
         this.backoffStrategy = backoffStrategy;
         this.cursorManager = cursorManager;
         this.eventNames = eventNames;
@@ -96,15 +95,15 @@ class NakadiReader<T> implements IORunnable {
 
     static class JsonInput implements Closeable {
         private final JsonFactory jsonFactory;
-        private final ClientHttpResponse response;
+        private final Response response;
         private JsonParser jsonParser;
 
-        JsonInput(JsonFactory jsonFactory, ClientHttpResponse response) {
+        JsonInput(JsonFactory jsonFactory, Response response) {
             this.jsonFactory = jsonFactory;
             this.response = response;
         }
 
-        ClientHttpResponse getResponse() {
+        Response getResponse() {
             return response;
         }
 
@@ -136,8 +135,8 @@ class NakadiReader<T> implements IORunnable {
     }
 
     @Nullable
-    private static String getStreamId(ClientHttpResponse response) {
-        final HttpHeaders headers = response.getHeaders();
+    private static String getStreamId(Response response) {
+        final Headers headers = response.getHeaders();
         return headers == null ? null : headers.getFirst("X-Nakadi-StreamId");
     }
 
@@ -158,11 +157,11 @@ class NakadiReader<T> implements IORunnable {
 
     private JsonInput openJsonInput() throws IOException {
         final String cursorsHeader = getCursorsHeader();
-        final ClientHttpRequest request = clientHttpRequestFactory.createRequest(uri, HttpMethod.GET);
+        final Request request = requestFactory.createRequest(uri, "GET");
         if (cursorsHeader != null) {
-            request.getHeaders().put("X-Nakadi-Cursors", singletonList(cursorsHeader));
+            request.getHeaders().put("X-Nakadi-Cursors", cursorsHeader);
         }
-        final ClientHttpResponse response = request.execute();
+        final Response response = request.execute();
         try {
             final String streamId = getStreamId(response);
 

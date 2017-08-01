@@ -1,6 +1,5 @@
 package org.zalando.fahrschein;
 
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
