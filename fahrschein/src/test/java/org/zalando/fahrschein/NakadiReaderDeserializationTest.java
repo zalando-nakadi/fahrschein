@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.zalando.fahrschein.domain.AbstractDataChangeEvent;
@@ -21,12 +19,9 @@ import org.zalando.fahrschein.http.api.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -42,9 +37,6 @@ public class NakadiReaderDeserializationTest {
 
     private static ObjectMapper createObjectMapper() {
         final ObjectMapper objectMapper = new ObjectMapper();
-
-        objectMapper.registerModule(new Jdk8Module());
-        objectMapper.registerModule(new ParameterNamesModule());
 
         objectMapper.registerSubtypes(CustomerChanged.class);
 
@@ -69,8 +61,7 @@ public class NakadiReaderDeserializationTest {
         private final SalesOrder salesOrder;
 
         @JsonCreator
-        public SalesOrderPlaced(@JsonProperty("metadata") Metadata metadata,
-                                @JsonProperty("sales_order") SalesOrder salesOrder) {
+        public SalesOrderPlaced(@JsonProperty("metadata") Metadata metadata, @JsonProperty("sales_order") SalesOrder salesOrder) {
             this.metadata = metadata;
             this.salesOrder = salesOrder;
         }
@@ -90,8 +81,7 @@ public class NakadiReaderDeserializationTest {
         private final String name;
 
         @JsonCreator
-        public Customer(@JsonProperty("customer_number") String customerNumber,
-                        @JsonProperty("name")String name) {
+        public Customer(@JsonProperty("customer_number") String customerNumber, @JsonProperty("name") String name) {
             this.customerNumber = customerNumber;
             this.name = name;
         }
@@ -149,7 +139,12 @@ public class NakadiReaderDeserializationTest {
     private <T> List<T> readSingleBatch(String eventName, Class<T> eventClass) throws IOException {
         final List<T> result = new ArrayList<>();
         final NakadiReader<T> nakadiReader = new NakadiReader<T>(uri, requestFactory, backoffStrategy, cursorManager, objectMapper,
-                Collections.singleton(eventName), Optional.empty(), Optional.empty(), eventClass, result::addAll);
+                Collections.singleton(eventName), null, null, eventClass, new Listener<T>() {
+            @Override
+            public void accept(List<T> c) throws IOException, EventAlreadyProcessedException {
+                result.addAll(c);
+            }
+        });
         nakadiReader.readSingleBatch();
 
         return result;
@@ -184,8 +179,9 @@ public class NakadiReaderDeserializationTest {
         assertThat(metadata, Matchers.notNullValue());
         assertThat(metadata.getEid(), Matchers.equalTo("5678"));
         assertThat(metadata.getFlowId(), Matchers.equalTo("ABCD"));
-        assertThat(metadata.getOccurredAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 19, 20, 21, 123_000_000, ZoneOffset.UTC)));
-        assertThat(metadata.getReceivedAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 20, 21, 22, 0, ZoneOffset.ofHours(1))));
+
+        assertThat(metadata.getOccurredAt(), Matchers.equalTo("2016-10-26T19:20:21.123Z"));
+        assertThat(metadata.getReceivedAt(), Matchers.equalTo("2016-10-26T20:21:22+01:00"));
     }
 
     @Test

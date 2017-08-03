@@ -10,11 +10,13 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyListOf;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,13 +31,13 @@ public class LowLevelStreamBuilderTest {
     private final StreamBuilder.LowLevelStreamBuilder lowLevelStreamBuilder = new StreamBuilders.LowLevelStreamBuilderImpl(URI.create("http://example.com"), mock(RequestFactory.class), cursorManager, new ObjectMapper(), "test");
 
     private void run(@Nullable String initialOffset, String oldestAvailableOffset, String newestAvailableOffset, @Nullable String expectedOffset) throws IOException {
-        when(cursorManager.getCursors("test")).thenReturn(initialOffset == null ? emptyList() : singletonList(new Cursor("0", initialOffset)));
+        when(cursorManager.getCursors("test")).thenReturn(initialOffset == null ? Collections.<Cursor>emptyList() : singletonList(new Cursor("0", initialOffset)));
         lowLevelStreamBuilder.skipUnavailableOffsets(singletonList(new Partition("0", oldestAvailableOffset, newestAvailableOffset)));
         if (expectedOffset != null) {
             verify(cursorManager).onSuccess(eq("test"), expectedCursors(expectedOffset));
         } else {
-            verify(cursorManager, never()).onSuccess(any(), any(Cursor.class));
-            verify(cursorManager, never()).onSuccess(any(), anyList());
+            verify(cursorManager, never()).onSuccess(anyString(), any(Cursor.class));
+            verify(cursorManager, never()).onSuccess(anyString(), anyListOf(Cursor.class));
         }
     }
 

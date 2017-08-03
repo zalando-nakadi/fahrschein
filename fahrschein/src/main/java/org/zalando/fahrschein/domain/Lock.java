@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.zalando.fahrschein.Preconditions.checkState;
-
 @Immutable
 public final class Lock {
     private final String eventName;
@@ -14,10 +12,13 @@ public final class Lock {
     private final List<Partition> partitions;
 
     public Lock(String eventName, String lockedBy, List<Partition> partitions) {
-        checkState(!partitions.isEmpty(), "Locked partitions should not be empty");
         this.eventName = eventName;
         this.lockedBy = lockedBy;
         this.partitions = Collections.unmodifiableList(new ArrayList<>(partitions));
+    }
+
+    public boolean isLocked() {
+        return !partitions.isEmpty();
     }
 
     public String getEventName() {

@@ -75,7 +75,12 @@ public abstract class AbstractCursorManagerTest {
         cursorManager().onSuccess("test", new Cursor("1", "13"));
 
         final List<Cursor> cursors = new ArrayList<>(cursorManager().getCursors("test"));
-        Collections.sort(cursors, Comparator.comparing(Cursor::getPartition));
+        Collections.sort(cursors, new Comparator<Cursor>() {
+            @Override
+            public int compare(Cursor o1, Cursor o2) {
+                return o1.getPartition().compareTo(o2.getPartition());
+            }
+        });
 
         assertNotNull(cursors);
         assertEquals(2, cursors.size());

@@ -10,16 +10,13 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-
-import static java.util.Optional.ofNullable;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 class StreamBuilders {
     abstract static class AbstractStreamBuilder implements StreamBuilder {
@@ -52,8 +49,10 @@ class StreamBuilders {
 
         protected abstract URI getURI(String queryString);
         protected abstract Set<String> getEventNames();
-        protected abstract Optional<Subscription> getSubscription();
-        protected abstract Optional<Lock> getLock();
+        @Nullable
+        protected abstract Subscription getSubscription();
+        @Nullable
+        protected abstract Lock getLock();
 
         @Override
         public final <T> void listen(Class<T> eventClass, Listener<T> listener) throws IOException {
@@ -67,18 +66,23 @@ class StreamBuilders {
 
             final URI uri = getURI(queryString);
             final Set<String> eventNames = getEventNames();
-            final Optional<Subscription> subscription = getSubscription();
-            final Optional<Lock> lock = getLock();
+            final Subscription subscription = getSubscription();
+            final Lock lock = getLock();
 
             final BackoffStrategy backoffStrategy = this.backoffStrategy != null ? this.backoffStrategy : new ExponentialBackoffStrategy();
             final MetricsCollector metricsCollector = this.metricsCollector != null ? this.metricsCollector : NoMetricsCollector.NO_METRICS_COLLECTOR;
             final ErrorHandler errorHandler = this.errorHandler != null ? this.errorHandler : DefaultErrorHandler.INSTANCE;
+            final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
             final BatchHandler batchHandler = this.batchHandler != null ? this.batchHandler : DefaultBatchHandler.INSTANCE;
 
             return new NakadiReader<>(uri, requestFactory, backoffStrategy, cursorManager, objectMapper,
                     eventNames, subscription, lock, eventClass, listener, errorHandler, batchHandler, metricsCollector);
         }
 
+        @Override
+        public <T> Runnable uncheckedRunnable(Class<T> eventClass, Listener<T> listener) {
+            return new IORunnableAdapter(runnable(eventClass, listener));
+        }
     }
 
     static class SubscriptionStreamBuilderImpl extends AbstractStreamBuilder implements StreamBuilder.SubscriptionStreamBuilder {
@@ -104,13 +108,13 @@ class StreamBuilders {
         }
 
         @Override
-        protected Optional<Subscription> getSubscription() {
-            return Optional.of(subscription);
+        protected Subscription getSubscription() {
+            return subscription;
         }
 
         @Override
-        protected Optional<Lock> getLock() {
-            return Optional.empty();
+        protected Lock getLock() {
+            return null;
         }
 
         @Override
@@ -169,13 +173,13 @@ class StreamBuilders {
         }
 
         @Override
-        protected Optional<Subscription> getSubscription() {
-            return Optional.empty();
+        protected Subscription getSubscription() {
+            return null;
         }
 
         @Override
-        protected Optional<Lock> getLock() {
-            return ofNullable(lock);
+        protected Lock getLock() {
+            return lock;
         }
 
         @Override
@@ -217,7 +221,11 @@ class StreamBuilders {
          * Initializes offsets to start streaming at the oldest available offset (BEGIN).
          */
         public LowLevelStreamBuilder readFromBegin(List<Partition> partitions) throws IOException {
-            final List<Cursor> cursors = partitions.stream().map(p -> new Cursor(p.getPartition(), "BEGIN")).collect(toList());
+            final List<Cursor> cursors = new ArrayList<>(partitions.size());
+            for (Partition partition : partitions) {
+                cursors.add(new Cursor(partition.getPartition(), "BEGIN"));
+            }
+
             cursorManager.onSuccess(eventName, cursors);
             return this;
         }
@@ -227,7 +235,11 @@ class StreamBuilders {
          * This is similar to the default behaviour, but allows to specify the partitions to stream from instead of getting events from all partitions.
          */
         public LowLevelStreamBuilder readFromNewestAvailableOffset(List<Partition> partitions) throws IOException {
-            final List<Cursor> cursors = partitions.stream().map(p -> new Cursor(p.getPartition(), p.getNewestAvailableOffset())).collect(toList());
+            final List<Cursor> cursors = new ArrayList<>(partitions.size());
+            for (Partition partition : partitions) {
+                cursors.add(new Cursor(partition.getPartition(), partition.getNewestAvailableOffset()));
+            }
+
             cursorManager.onSuccess(eventName, cursors);
             return this;
         }
@@ -236,11 +248,24 @@ class StreamBuilders {
          * Updates cursors in case the currently stored offset is no longer available. Streaming will start at the oldest available offset (BEGIN) to minimize the amount of events skipped.
          */
         public LowLevelStreamBuilder skipUnavailableOffsets(List<Partition> partitions) throws IOException {
-            final Map<String, Cursor> cursorsByPartition = cursorManager.getCursors(eventName).stream().collect(toMap(Cursor::getPartition, identity()));
-            final List<Cursor> cursors = partitions.stream().filter(p -> isNoLongerAvailable(cursorsByPartition, p)).map(p -> new Cursor(p.getPartition(), "BEGIN")).collect(toList());
 
-            if (!cursors.isEmpty()) {
-                cursorManager.onSuccess(eventName, cursors);
+
+            final Collection<Cursor> cursors = cursorManager.getCursors(eventName);
+            final Map<String, Cursor> cursorsByPartition = new HashMap<>();
+            for (Cursor cursor : cursors) {
+                cursorsByPartition.put(cursor.getPartition(), cursor);
+            }
+
+            final List<Cursor> newCursors = new ArrayList<>(partitions.size());
+            for (Partition partition : partitions) {
+                final Cursor cursor = cursorsByPartition.get(partition.getPartition());
+                if (isNoLongerAvailable(cursorsByPartition, partition)) {
+                    newCursors.add(new Cursor(partition.getPartition(), "BEGIN"));
+                }
+            }
+
+            if (!newCursors.isEmpty()) {
+                cursorManager.onSuccess(eventName, newCursors);
             }
 
             return this;

@@ -3,6 +3,7 @@ package org.zalando.fahrschein.jdbc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.transaction.annotation.Transactional;
 import org.zalando.fahrschein.PartitionManager;
 import org.zalando.fahrschein.domain.Lock;
@@ -11,13 +12,12 @@ import org.zalando.fahrschein.domain.Partition;
 import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
 public class JdbcPartitionManager implements PartitionManager {
@@ -32,6 +32,14 @@ public class JdbcPartitionManager implements PartitionManager {
             this.consumerName = consumerName;
             this.eventName = eventName;
             this.partition = partition;
+        }
+    }
+
+    enum LockedPartitionRowMapper implements RowMapper<LockedPartition> {
+        INSTANCE;
+        @Override
+        public LockedPartition mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new LockedPartition(rs.getString(1), rs.getString(2), rs.getString(3));
         }
     }
 
@@ -60,32 +68,45 @@ public class JdbcPartitionManager implements PartitionManager {
         this(new JdbcTemplate(dataSource), consumerName);
     }
 
-    private LockedPartition getLockedPartition(ResultSet rs, int idx) throws SQLException {
-        return new LockedPartition(rs.getString(1), rs.getString(2), rs.getString(3));
-    }
-
     private String formatPartitionIds(List<Partition> partitions) {
-        return partitions.stream().map(Partition::getPartition).collect(joining(",", "{", "}"));
+        final StringBuilder sb = new StringBuilder();
+        final Iterator<Partition> iterator = partitions.iterator();
+
+        sb.append("{");
+        while (iterator.hasNext()) {
+            final Partition partition = iterator.next();
+            sb.append(partition.getPartition());
+            if (iterator.hasNext()) {
+                sb.append(",");
+            }
+        }
+        sb.append("}");
+
+        return sb.toString();
     }
 
     @Override
     @Transactional
-    public Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy) {
+    public Lock lockPartitions(String eventName, List<Partition> partitions, String lockedBy) {
         final String sql = String.format("SELECT * FROM %snakadi_partition_lock(?, ?, ?::text[], ?)", schemaPrefix);
 
         final String partitionIds = formatPartitionIds(partitions);
 
         final List<LockedPartition> lockedPartitions = template.query(sql,
                 new Object[]{consumerName, eventName, partitionIds, lockedBy},
-                this::getLockedPartition);
+                LockedPartitionRowMapper.INSTANCE);
 
-        if (lockedPartitions.isEmpty()) {
-            return Optional.<Lock>empty();
-        } else {
-            final Map<String, Partition> partitionsById = partitions.stream().collect(toMap(Partition::getPartition, p -> p));
-            final List<Partition> collect = lockedPartitions.stream().map(lp -> partitionsById.get(lp.partition)).collect(toList());
-            return Optional.of(new Lock(eventName, lockedBy, collect));
+        final Map<String, Partition> partitionsById = new HashMap<>();
+        for (Partition partition : partitions) {
+            partitionsById.put(partition.getPartition(), partition);
         }
+
+        final List<Partition> collect = new ArrayList<>(lockedPartitions.size());
+        for (LockedPartition lockedPartition : lockedPartitions) {
+            collect.add(partitionsById.get(lockedPartition.partition));
+        }
+
+        return new Lock(eventName, lockedBy, collect);
     }
 
     @Override
@@ -97,7 +118,7 @@ public class JdbcPartitionManager implements PartitionManager {
 
         final List<LockedPartition> unlockedPartitions = template.query(sql,
                 new Object[]{consumerName, lock.getEventName(), partitionIds, lock.getLockedBy()},
-                this::getLockedPartition);
+                LockedPartitionRowMapper.INSTANCE);
 
         if (unlockedPartitions.isEmpty()) {
             throw new IllegalStateException("Could not unlock [" + lock.getEventName() + "] by [" + lock.getLockedBy() + "]");

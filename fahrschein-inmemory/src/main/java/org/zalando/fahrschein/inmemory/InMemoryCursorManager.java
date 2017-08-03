@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
+import org.zalando.fahrschein.domain.Subscription;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -18,7 +19,19 @@ public final class InMemoryCursorManager implements CursorManager {
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, Cursor>> partitionsByEventName = new ConcurrentHashMap<>();
 
     private ConcurrentHashMap<String, Cursor> cursorsByPartition(final String eventName) {
-        return partitionsByEventName.computeIfAbsent(eventName, key -> new ConcurrentHashMap<>());
+        final ConcurrentHashMap<String, Cursor> next = new ConcurrentHashMap<>();
+        final ConcurrentHashMap<String, Cursor> prev = partitionsByEventName.putIfAbsent(eventName, next);
+        return prev != null ? prev : next;
+    }
+
+    @Override
+    public void addSubscription(Subscription subscription) {
+
+    }
+
+    @Override
+    public void addStreamId(Subscription subscription, String streamId) {
+
     }
 
     @Override

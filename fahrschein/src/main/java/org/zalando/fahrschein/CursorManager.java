@@ -17,12 +17,7 @@ public interface CursorManager {
 
     Collection<Cursor> getCursors(String eventName) throws IOException;
 
-    default void addSubscription(Subscription subscription) {
-
-    }
-
-    default void addStreamId(Subscription subscription, String streamId) {
-
-    }
+    void addSubscription(Subscription subscription);
+    void addStreamId(Subscription subscription, String streamId);
 
 }

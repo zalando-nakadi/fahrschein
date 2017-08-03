@@ -11,27 +11,37 @@ public class MultiplexingMetricsCollector implements MetricsCollector {
 
     @Override
     public void markMessageReceived() {
-        delegates.stream().forEach(mc -> mc.markMessageReceived());
+        for (MetricsCollector delegate : delegates) {
+            delegate.markMessageReceived();
+        }
     }
 
     @Override
     public void markEventsReceived(final int i) {
-        delegates.stream().forEach(mc -> mc.markEventsReceived(i));
+        for (MetricsCollector delegate : delegates) {
+            delegate.markEventsReceived(i);
+        }
     }
 
     @Override
     public void markErrorWhileConsuming() {
-        delegates.stream().forEach(mc -> mc.markErrorWhileConsuming());
+        for (MetricsCollector delegate : delegates) {
+            delegate.markErrorWhileConsuming();
+        }
     }
 
     @Override
     public void markReconnection() {
-        delegates.stream().forEach(mc -> mc.markReconnection());
+        for (MetricsCollector delegate : delegates) {
+            delegate.markReconnection();
+        }
     }
 
     @Override
     public void markMessageSuccessfullyProcessed() {
-        delegates.stream().forEach(mc -> mc.markMessageSuccessfullyProcessed());
+        for (MetricsCollector delegate : delegates) {
+            delegate.markMessageSuccessfullyProcessed();
+        }
     }
 
     public MultiplexingMetricsCollector register(final MetricsCollector metricsCollector) {

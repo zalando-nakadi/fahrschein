@@ -4,7 +4,6 @@ import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface PartitionManager {
     /**
@@ -13,9 +12,9 @@ public interface PartitionManager {
      * @param eventName Name of the event
      * @param partitions The partitions to lock
      * @param lockedBy Name of one node of the consuming application
-     * @return A {@link Lock} instance containing the list of locked partitions if locking succeeded, {@link Optional#empty()} otherwise
+     * @return A {@link Lock} instance containing the list of locked partitions if locking succeeded, or containing an empty list otherwise
      */
-    Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy);
+    Lock lockPartitions(String eventName, List<Partition> partitions, String lockedBy);
 
     /**
      * Unlocks previously locked partitions.

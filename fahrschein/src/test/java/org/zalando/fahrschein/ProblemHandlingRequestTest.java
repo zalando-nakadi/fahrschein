@@ -14,11 +14,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.instanceOf;
-import static org.hobsoft.hamcrest.compose.ComposeMatchers.hasFeature;
 import static org.mockito.Mockito.when;
 
 public class ProblemHandlingRequestTest {
@@ -42,10 +41,10 @@ public class ProblemHandlingRequestTest {
         when(request.execute()).thenReturn(response);
 
         expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(409)));
-        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("conflict")));
-        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.<String>empty())));
+        expectedException.expect(hasProperty("statusCode", equalTo(409)));
+        expectedException.expect(hasProperty("type", equalTo(URI.create("about:blank"))));
+        expectedException.expect(hasProperty("title", equalTo("conflict")));
+        expectedException.expect(hasProperty("detail", equalTo(null)));
 
         problemHandlingRequest.execute();
     }
@@ -63,10 +62,10 @@ public class ProblemHandlingRequestTest {
         when(request.execute()).thenReturn(response);
 
         expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(404)));
-        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("http://httpstatus.es/404"))));
-        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("Not Found")));
-        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("EventType does not exist."))));
+        expectedException.expect(hasProperty("statusCode", equalTo(404)));
+        expectedException.expect(hasProperty("type", equalTo(URI.create("http://httpstatus.es/404"))));
+        expectedException.expect(hasProperty("title", equalTo("Not Found")));
+        expectedException.expect(hasProperty("detail", equalTo("EventType does not exist.")));
 
         problemHandlingRequest.execute();
     }
@@ -84,10 +83,10 @@ public class ProblemHandlingRequestTest {
         when(request.execute()).thenReturn(response);
 
         expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(400)));
-        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("invalid_request")));
-        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Access Token not valid"))));
+        expectedException.expect(hasProperty("statusCode", equalTo(400)));
+        expectedException.expect(hasProperty("type", equalTo(URI.create("about:blank"))));
+        expectedException.expect(hasProperty("title", equalTo("invalid_request")));
+        expectedException.expect(hasProperty("detail", equalTo("Access Token not valid")));
 
         problemHandlingRequest.execute();
     }

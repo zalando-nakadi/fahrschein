@@ -4,8 +4,8 @@ package org.zalando.fahrschein;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public abstract class SimplePartitionManager implements PartitionManager {
 
@@ -13,11 +13,11 @@ public abstract class SimplePartitionManager implements PartitionManager {
     protected abstract void releaseLock(String eventName, String lockedBy);
 
     @Override
-    public Optional<Lock> lockPartitions(String eventName, List<Partition> partitions, String lockedBy) {
+    public Lock lockPartitions(String eventName, List<Partition> partitions, String lockedBy) {
         if (acquireLock(eventName, lockedBy)) {
-            return Optional.of(new Lock(eventName, lockedBy, partitions));
+            return new Lock(eventName, lockedBy, partitions);
         } else {
-            return Optional.empty();
+            return new Lock(eventName, lockedBy, Collections.<Partition>emptyList());
         }
     }
 

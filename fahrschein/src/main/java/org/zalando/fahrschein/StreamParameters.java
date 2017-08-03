@@ -2,9 +2,8 @@ package org.zalando.fahrschein;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class StreamParameters {
 
@@ -59,7 +58,16 @@ public class StreamParameters {
             params.add("max_uncommitted_events=" + maxUncommittedEvents);
         }
 
-        return params.stream().collect(Collectors.joining("&"));
+        final StringBuilder sb = new StringBuilder();
+        final Iterator<String> iterator = params.iterator();
+        while (iterator.hasNext()) {
+            String param = iterator.next();
+            sb.append(param);
+            if (iterator.hasNext()) {
+                sb.append("&");
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -154,27 +162,33 @@ public class StreamParameters {
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
     }
 
-    public Optional<Integer> getBatchLimit() {
-        return Optional.ofNullable(batchLimit);
+    @Nullable
+    public Integer getBatchLimit() {
+        return batchLimit;
     }
 
-    public Optional<Integer> getStreamLimit() {
-        return Optional.ofNullable(streamLimit);
+    @Nullable
+    public Integer getStreamLimit() {
+        return streamLimit;
     }
 
-    public Optional<Integer> getBatchFlushTimeout() {
-        return Optional.ofNullable(batchFlushTimeout);
+    @Nullable
+    public Integer getBatchFlushTimeout() {
+        return batchFlushTimeout;
     }
 
-    public Optional<Integer> getStreamTimeout() {
-        return Optional.ofNullable(streamTimeout);
+    @Nullable
+    public Integer getStreamTimeout() {
+        return streamTimeout;
     }
 
-    public Optional<Integer> getStreamKeepAliveLimit() {
-        return Optional.ofNullable(streamKeepAliveLimit);
+    @Nullable
+    public Integer getStreamKeepAliveLimit() {
+        return streamKeepAliveLimit;
     }
 
-    public Optional<Integer> getMaxUncommittedEvents() {
-        return Optional.ofNullable(maxUncommittedEvents);
+    @Nullable
+    public Integer getMaxUncommittedEvents() {
+        return maxUncommittedEvents;
     }
 }
