@@ -29,7 +29,7 @@ public final class HeadersImpl implements Headers {
             final List<String> value = headers.get(headerName);
             if (value.size() > 0) {
                 caseMapping.put(headerName, headerName);
-                this.headers.put(headerName, value);
+                this.headers.put(headerName, new ArrayList<>(value));
             }
         }
     }
