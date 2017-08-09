@@ -50,15 +50,22 @@ final class SimpleBufferingRequest implements Request {
 
     private Response executeInternal() throws IOException {
         final int size = this.bufferedOutput != null ? this.bufferedOutput.size() : 0;
-        if (this.headers.getContentLength() < 0) {
-            this.headers.setContentLength(size);
+
+        final long contentLength = this.headers.getContentLength();
+
+        if (contentLength >= 0 && contentLength != size) {
+            throw new IllegalStateException("Invalid Content-Length header [" + contentLength + "], request size is [" + size + "]");
         }
 
+        connection.setFixedLengthStreamingMode(size);
+
         for (String headerName : headers.headerNames()) {
-            final List<String> value = headers.get(headerName);
-            for (String headerValue : value) {
-                final String actualHeaderValue = headerValue != null ? headerValue : "";
-                connection.addRequestProperty(headerName, actualHeaderValue);
+            if (!Headers.CONTENT_LENGTH.equalsIgnoreCase(headerName)) {
+                final List<String> value = headers.get(headerName);
+                for (String headerValue : value) {
+                    final String actualHeaderValue = headerValue != null ? headerValue : "";
+                    connection.addRequestProperty(headerName, actualHeaderValue);
+                }
             }
         }
 
@@ -73,7 +80,9 @@ final class SimpleBufferingRequest implements Request {
         this.connection.connect();
 
         if (this.connection.getDoOutput() && this.bufferedOutput != null) {
-            this.bufferedOutput.writeTo(this.connection.getOutputStream());
+            try (final OutputStream out = this.connection.getOutputStream()) {
+                this.bufferedOutput.writeTo(out);
+            }
         } else {
             // Immediately trigger the request in a no-output scenario as well
             this.connection.getResponseCode();
