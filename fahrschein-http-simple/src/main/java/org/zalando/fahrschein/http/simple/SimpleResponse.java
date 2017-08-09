@@ -62,8 +62,10 @@ final class SimpleResponse implements Response {
 
     @Override
     public InputStream getBody() throws IOException {
-        InputStream errorStream = this.connection.getErrorStream();
-        this.responseStream = (errorStream != null ? errorStream : this.connection.getInputStream());
+        if (this.responseStream == null) {
+            final InputStream errorStream = connection.getErrorStream();
+            this.responseStream = (errorStream != null ? errorStream : connection.getInputStream());
+        }
         return this.responseStream;
     }
 

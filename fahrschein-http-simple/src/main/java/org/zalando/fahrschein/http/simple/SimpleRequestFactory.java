@@ -84,7 +84,6 @@ public class SimpleRequestFactory implements RequestFactory {
             connection.setReadTimeout(this.readTimeout);
         }
 
-
         connection.setDoInput(true);
 
         if ("GET".equals(httpMethod)) {
