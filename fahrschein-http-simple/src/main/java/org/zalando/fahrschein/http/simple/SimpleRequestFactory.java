@@ -20,17 +20,8 @@ import java.net.URLConnection;
  */
 public class SimpleRequestFactory implements RequestFactory {
 
-    private Proxy proxy;
     private int connectTimeout = -1;
     private int readTimeout = -1;
-
-
-    /**
-     * Set the {@link Proxy} to use for this request factory.
-     */
-    public void setProxy(Proxy proxy) {
-        this.proxy = proxy;
-    }
 
     /**
      * Set the underlying URLConnection's connect timeout (in milliseconds).
@@ -56,7 +47,7 @@ public class SimpleRequestFactory implements RequestFactory {
 
     @Override
     public Request createRequest(URI uri, String method) throws IOException {
-        HttpURLConnection connection = openConnection(uri.toURL(), this.proxy);
+        HttpURLConnection connection = openConnection(uri.toURL());
         prepareConnection(connection, method);
 
         return new SimpleBufferingRequest(connection);
@@ -64,16 +55,13 @@ public class SimpleRequestFactory implements RequestFactory {
 
     /**
      * Opens and returns a connection to the given URL.
-     * <p>The default implementation uses the given {@linkplain #setProxy(java.net.Proxy) proxy} -
-     * if any - to open a connection.
      *
      * @param url   the URL to open a connection to
-     * @param proxy the proxy to use, may be {@code null}
      * @return the opened connection
      * @throws IOException in case of I/O errors
      */
-    private HttpURLConnection openConnection(URL url, Proxy proxy) throws IOException {
-        URLConnection urlConnection = (proxy != null ? url.openConnection(proxy) : url.openConnection());
+    private HttpURLConnection openConnection(URL url) throws IOException {
+        URLConnection urlConnection = url.openConnection();
         if (!(urlConnection instanceof HttpURLConnection)) {
             throw new IllegalStateException("Connection should be an HttpURLConnection");
         }

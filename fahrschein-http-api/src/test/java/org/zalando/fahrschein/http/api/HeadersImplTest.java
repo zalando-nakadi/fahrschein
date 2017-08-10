@@ -2,6 +2,7 @@ package org.zalando.fahrschein.http.api;
 
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashSet;
 
 import static java.util.Arrays.asList;
@@ -76,6 +77,19 @@ public class HeadersImplTest {
         assertEquals("text/plain", readOnlyHeaders.getFirst("Content-Type"));
         readOnlyHeaders.put("Content-Type", "application/json");
     }
+
+    @Test
+    public void originalHeadersShouldNotAffectReadonlyCopy() {
+        final HeadersImpl headers = new HeadersImpl();
+        headers.put("Accept", "text/plain");
+
+        final HeadersImpl readOnlyHeaders = new HeadersImpl(headers, true);
+
+        headers.add("Accept", "application/json");
+
+        assertEquals(singletonList("text/plain"), readOnlyHeaders.get("Accept"));
+    }
+
 
     @Test
     public void shouldGetContentType() {

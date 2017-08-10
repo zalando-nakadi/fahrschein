@@ -39,29 +39,33 @@ final class SimpleResponse implements Response {
     @Override
     public Headers getHeaders() {
         if (this.headers == null) {
-            this.headers = new HeadersImpl();
+            final Headers headers = new HeadersImpl();
             // Header field 0 is the status line for most HttpURLConnections, but not on GAE
-            String name = this.connection.getHeaderFieldKey(0);
+            String name = connection.getHeaderFieldKey(0);
             if (name != null && name.length() > 0) {
-                this.headers.add(name, this.connection.getHeaderField(0));
+                headers.add(name, connection.getHeaderField(0));
             }
             int i = 1;
             while (true) {
-                name = this.connection.getHeaderFieldKey(i);
+                name = connection.getHeaderFieldKey(i);
                 if (name == null || name.length() == 0) {
                     break;
                 }
-                this.headers.add(name, this.connection.getHeaderField(i));
+                headers.add(name, this.connection.getHeaderField(i));
                 i++;
             }
+
+            this.headers = new HeadersImpl(headers, true);
         }
         return this.headers;
     }
 
     @Override
     public InputStream getBody() throws IOException {
-        InputStream errorStream = this.connection.getErrorStream();
-        this.responseStream = (errorStream != null ? errorStream : this.connection.getInputStream());
+        if (this.responseStream == null) {
+            final InputStream errorStream = connection.getErrorStream();
+            this.responseStream = (errorStream != null ? errorStream : connection.getInputStream());
+        }
         return this.responseStream;
     }
 
