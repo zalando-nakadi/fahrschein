@@ -1,7 +1,6 @@
 package org.zalando.fahrschein.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.concurrent.Immutable;
@@ -43,15 +42,6 @@ public final class Metadata {
 
     public OffsetDateTime getOccurredAt() {
         return occurredAt;
-    }
-
-    /**
-     * @deprecated use getOccurredAt instead
-     */
-    @Deprecated
-    @JsonIgnore
-    public OffsetDateTime getOccuredAt() {
-        return getOccurredAt();
     }
 
     public OffsetDateTime getReceivedAt() {

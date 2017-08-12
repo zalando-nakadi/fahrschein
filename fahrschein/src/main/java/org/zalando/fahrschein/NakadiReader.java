@@ -4,17 +4,11 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zalando.fahrschein.domain.Batch;
-import org.zalando.fahrschein.domain.Cursor;
-import org.zalando.fahrschein.domain.Lock;
-import org.zalando.fahrschein.domain.Partition;
-import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.domain.*;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -22,14 +16,11 @@ import org.zalando.fahrschein.http.api.Response;
 
 import javax.annotation.Nullable;
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +28,7 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.zalando.fahrschein.JsonParserHelper.expectToken;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
 class NakadiReader<T> implements IORunnable {
@@ -53,13 +45,11 @@ class NakadiReader<T> implements IORunnable {
     private final Set<String> eventNames;
     private final Optional<Subscription> subscription;
     private final Optional<Lock> lock;
-    private final Class<T> eventClass;
+    private final EventReader<T> eventReader;
     private final Listener<T> listener;
-    private final ErrorHandler errorHandler;
     private final BatchHandler batchHandler;
 
     private final JsonFactory jsonFactory;
-    private final ObjectReader eventReader;
     private final ObjectWriter cursorHeaderWriter;
 
     private final MetricsCollector metricsCollector;
@@ -68,10 +58,10 @@ class NakadiReader<T> implements IORunnable {
      * @VisibleForTesting
      */
     NakadiReader(URI uri, RequestFactory requestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener) {
-        this(uri, requestFactory, backoffStrategy, cursorManager, objectMapper, eventNames, subscription, lock, eventClass, listener, DefaultErrorHandler.INSTANCE, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
+        this(uri, requestFactory, backoffStrategy, cursorManager, eventNames, subscription, lock, new MappingEventReader<>(eventClass, objectMapper), listener, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
     }
 
-    NakadiReader(URI uri, RequestFactory requestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener, ErrorHandler errorHandler, BatchHandler batchHandler, final MetricsCollector metricsCollector) {
+    NakadiReader(URI uri, RequestFactory requestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, EventReader<T> eventReader, Listener<T> listener, BatchHandler batchHandler, final MetricsCollector metricsCollector) {
 
         checkState(subscription.isPresent() || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
@@ -82,15 +72,31 @@ class NakadiReader<T> implements IORunnable {
         this.eventNames = eventNames;
         this.subscription = subscription;
         this.lock = lock;
-        this.eventClass = eventClass;
+        this.eventReader = eventReader;
         this.listener = listener;
-        this.errorHandler = errorHandler;
         this.batchHandler = batchHandler;
         this.metricsCollector = metricsCollector;
 
-        this.jsonFactory = objectMapper.getFactory();
-        this.eventReader = objectMapper.reader().forType(eventClass);
+        this.jsonFactory = DefaultObjectMapper.INSTANCE.getFactory();
         this.cursorHeaderWriter = DefaultObjectMapper.INSTANCE.writerFor(COLLECTION_OF_CURSORS);
+    }
+
+    static final class Batch<T> {
+        private final Cursor cursor;
+        private final List<T> events;
+
+        Batch(Cursor cursor, List<T> events) {
+            this.cursor = cursor;
+            this.events = events;
+        }
+
+        Cursor getCursor() {
+            return cursor;
+        }
+
+        List<T> getEvents() {
+            return events;
+        }
     }
 
     static class JsonInput implements Closeable {
@@ -254,35 +260,6 @@ class NakadiReader<T> implements IORunnable {
         return new Cursor(partition, offset, eventType, cursorToken);
     }
 
-    private List<T> readEvents(final JsonParser jsonParser) throws IOException {
-        expectToken(jsonParser, JsonToken.START_ARRAY);
-        jsonParser.clearCurrentToken();
-
-        final Iterator<T> eventIterator = eventReader.readValues(jsonParser, eventClass);
-
-        final List<T> events = new ArrayList<>();
-        while (true) {
-            try {
-                // MappingIterator#hasNext can theoretically also throw RuntimeExceptions, that's why we use this strange loop structure
-                if (eventIterator.hasNext()) {
-                    events.add(eventClass.cast(eventIterator.next()));
-                } else {
-                    break;
-                }
-            } catch (RuntimeException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof JsonMappingException) {
-                    errorHandler.onMappingException((JsonMappingException) cause);
-                } else if (cause instanceof IOException) {
-                    throw (IOException)cause;
-                } else {
-                    throw e;
-                }
-            }
-        }
-        return events;
-    }
-
     @Override
     public void run() throws IOException {
         try {
@@ -384,7 +361,7 @@ class NakadiReader<T> implements IORunnable {
                     break;
                 }
                 case "events": {
-                    events = readEvents(jsonParser);
+                    events = eventReader.read(jsonParser);
                     break;
                 }
                 case "info": {
@@ -421,19 +398,4 @@ class NakadiReader<T> implements IORunnable {
             metricsCollector.markMessageSuccessfullyProcessed();
         }
     }
-
-    private void expectToken(JsonParser jsonParser, JsonToken expectedToken) throws IOException {
-        final JsonToken token = jsonParser.nextToken();
-        if (token == null) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedIOException("Thread was interrupted");
-            } else {
-                throw new EOFException("Stream was closed");
-            }
-        }
-        if (token != expectedToken) {
-            throw new IOException(String.format("Expected [%s] but got [%s]", expectedToken, token));
-        }
-    }
-
 }

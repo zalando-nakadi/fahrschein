@@ -9,7 +9,7 @@ class DefaultBatchHandler implements BatchHandler {
     }
 
     @Override
-    public void processBatch(IORunnable runnable) throws IOException {
-        runnable.run();
+    public void processBatch(IORunnable continuation) throws IOException {
+        continuation.run();
     }
 }
