@@ -73,7 +73,7 @@ final class SimpleBufferingRequest implements Request {
 
         this.connection.connect();
 
-        if (this.connection.getDoOutput() && this.bufferedOutput != null) {
+        if (this.connection.getDoOutput() && size > 0) {
             try (final OutputStream out = this.connection.getOutputStream()) {
                 this.bufferedOutput.writeTo(out);
             }
@@ -113,9 +113,9 @@ final class SimpleBufferingRequest implements Request {
      * Assert that this request has not been {@linkplain #execute() executed} yet.
      * @throws IllegalStateException if this request has been executed
      */
-    protected void assertNotExecuted() {
+    private void assertNotExecuted() {
         if (this.executed) {
-            throw new IllegalStateException("ClientHttpRequest already executed");
+            throw new IllegalStateException("Request already executed");
         }
     }
 }
