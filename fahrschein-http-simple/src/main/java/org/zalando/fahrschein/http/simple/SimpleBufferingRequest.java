@@ -57,8 +57,6 @@ final class SimpleBufferingRequest implements Request {
             throw new IllegalStateException("Invalid Content-Length header [" + contentLength + "], request size is [" + size + "]");
         }
 
-        connection.setFixedLengthStreamingMode(size);
-
         for (String headerName : headers.headerNames()) {
             if (!Headers.CONTENT_LENGTH.equalsIgnoreCase(headerName)) {
                 final List<String> value = headers.get(headerName);
