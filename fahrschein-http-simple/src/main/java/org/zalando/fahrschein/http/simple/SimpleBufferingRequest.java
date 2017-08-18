@@ -67,10 +67,6 @@ final class SimpleBufferingRequest implements Request {
             }
         }
 
-        // JDK <1.8 doesn't support getOutputStream with HTTP DELETE
-        if ("DELETE".equals(getMethod()) && size > 0) {
-            this.connection.setDoOutput(false);
-        }
         if (this.connection.getDoOutput()) {
             this.connection.setFixedLengthStreamingMode(size);
         }
