@@ -92,4 +92,22 @@ public class ProblemHandlingRequestTest {
         problemHandlingRequest.execute();
     }
 
+
+    @Test
+    public void shouldHandleMultiStatus() throws IOException {
+        when(response.getStatusCode()).thenReturn(207);
+        when(response.getStatusText()).thenReturn("Multistatus");
+        when(response.getBody()).thenReturn(new ByteArrayInputStream("[{\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]".getBytes(StandardCharsets.UTF_8)));
+
+        final Headers headers = new HeadersImpl();
+        headers.setContentType(ContentType.APPLICATION_JSON);
+        when(response.getHeaders()).thenReturn(headers);
+
+        when(request.execute()).thenReturn(response);
+
+        expectedException.expect(instanceOf(EventPublishingException.class));
+
+        problemHandlingRequest.execute();
+    }
+
 }

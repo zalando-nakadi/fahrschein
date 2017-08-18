@@ -2,16 +2,22 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.zalando.fahrschein.domain.BatchItemResponse;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.Response;
 
-import javax.annotation.Nullable;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.zalando.fahrschein.http.api.ContentType.APPLICATION_JSON;
+import static org.zalando.fahrschein.http.api.ContentType.APPLICATION_PROBLEM_JSON;
 
 
 class ProblemHandlingRequest implements Request {
@@ -21,7 +27,7 @@ class ProblemHandlingRequest implements Request {
     private final Request request;
     private final ObjectMapper objectMapper;
 
-    public ProblemHandlingRequest(Request request) {
+    ProblemHandlingRequest(Request request) {
         this.request = request;
         this.objectMapper = DefaultObjectMapper.INSTANCE;
     }
@@ -32,18 +38,23 @@ class ProblemHandlingRequest implements Request {
 
         try {
             final int statusCode = response.getStatusCode();
-            if (statusCode >= 400 && statusCode != 422) {
+            if (statusCode == 207 || statusCode >= 400) {
                 final String statusText = response.getStatusText();
+                final Headers headers = response.getHeaders();
+                final ContentType contentType = headers.getContentType();
 
-                final ContentType contentType = response.getHeaders().getContentType();
-                if (isProblem(contentType)) {
-                    try (final InputStream is = response.getBody()) {
-                        final IOProblem problem = deserializeProblem(is, statusCode);
-                        if (problem != null) {
-                            throw problem;
-                        } else {
-                            throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, statusCode);
-                        }
+                if (mightBeProblematic(contentType)) {
+
+                    final JsonNode json = objectMapper.readTree(response.getBody());
+
+                    if (isBatchItemResponse(json)) {
+                        handleBatchItemResponse(json);
+                    } else if (isAuthError(json)) {
+                        handleAuthError(json, statusCode);
+                    } else if (isProblem(json)) {
+                        handleProblem(json, statusCode);
+                    } else {
+                        throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, statusCode);
                     }
                 } else {
                     throw new IOProblem(DEFAULT_PROBLEM_TYPE, statusText, statusCode);
@@ -61,40 +72,57 @@ class ProblemHandlingRequest implements Request {
         return response;
     }
 
-    private static boolean isProblem(ContentType contentType) {
-        return ContentType.APPLICATION_JSON.getType().equals(contentType.getType()) && ContentType.APPLICATION_JSON.getSubtype().equals(contentType.getSubtype())
-                || ContentType.APPLICATION_PROBLEM_JSON.getType().equals(contentType.getType()) && ContentType.APPLICATION_PROBLEM_JSON.getSubtype().equals(contentType.getSubtype());
+    private static boolean mightBeProblematic(final ContentType contentType) {
+        final String type = contentType.getType();
+        final String subtype = contentType.getSubtype();
+
+        return APPLICATION_JSON.getType().equals(type) && APPLICATION_JSON.getSubtype().equals(subtype)
+                || APPLICATION_PROBLEM_JSON.getType().equals(type) && APPLICATION_PROBLEM_JSON.getSubtype().equals(subtype);
     }
 
-    private @Nullable IOProblem deserializeProblem(final InputStream is, final int statusCode) throws IOException {
-        final JsonNode rootNode = objectMapper.readTree(is);
+    private static boolean isProblem(final JsonNode json) {
+        return json.has("type") && json.has("title");
+    }
 
-        final JsonNode typeNode = rootNode.get("type");
-        final JsonNode titleNode = rootNode.get("title");
+    private static boolean isAuthError(final JsonNode json) {
+        return json.has("error") && json.has("error_description");
+    }
 
-        if (typeNode != null && titleNode != null) {
-            final String type = typeNode.asText();
-            final String title = titleNode.asText();
+    private static boolean isBatchItemResponse(final JsonNode json) {
+        return json.isArray() && json.size() > 0 && json.get(0).has("publishing_status");
+    }
 
-            final JsonNode detailNode = rootNode.get("detail");
-            final String detail = detailNode == null ? null : detailNode.asText(null);
+    private void handleProblem(final JsonNode rootNode, final int statusCode) throws IOException {
+        final String type = rootNode.get("type").asText();
+        final String title = rootNode.get("title").asText();
 
-            final JsonNode instanceNode = rootNode.get("instance");
-            final String instance = instanceNode == null ? null : instanceNode.asText(null);
+        final JsonNode detailNode = rootNode.get("detail");
+        final String detail = detailNode == null ? null : detailNode.asText(null);
 
-            return new IOProblem(URI.create(type), title, statusCode, detail, instance == null ? null : URI.create(instance));
-        } else {
-            final JsonNode errorNode = rootNode.get("error");
-            final JsonNode descriptionNode = rootNode.get("error_description");
+        final JsonNode instanceNode = rootNode.get("instance");
+        final String instance = instanceNode == null ? null : instanceNode.asText(null);
 
-            if (errorNode != null && descriptionNode != null) {
-                final String error = errorNode.asText();
-                final String description = descriptionNode.asText();
+        throw new IOProblem(URI.create(type), title, statusCode, detail, instance == null ? null : URI.create(instance));
+    }
 
-                return new IOProblem(DEFAULT_PROBLEM_TYPE, error, statusCode, description);
-            } else {
-                return null;
+    private void handleAuthError(final JsonNode rootNode, final int statusCode) throws IOProblem {
+        final String error = rootNode.get("error").asText();
+        final String description = rootNode.get("error_description").asText();
+
+        throw new IOProblem(DEFAULT_PROBLEM_TYPE, error, statusCode, description);
+    }
+
+    private void handleBatchItemResponse(JsonNode rootNode) throws IOException {
+        final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
+        final List<BatchItemResponse> failed = new ArrayList<>(responses.length);
+        for (BatchItemResponse batchItemResponse : responses) {
+            if (batchItemResponse.getPublishingStatus() != BatchItemResponse.PublishingStatus.SUBMITTED) {
+                failed.add(batchItemResponse);
             }
+        }
+        if (!failed.isEmpty()) {
+            // TODO: attach corresponding events?
+            throw new EventPublishingException(failed.toArray(new BatchItemResponse[failed.size()]));
         }
     }
 

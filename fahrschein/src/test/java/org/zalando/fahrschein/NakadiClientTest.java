@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.http.api.ContentType;
 
 import java.io.IOException;
@@ -165,14 +166,31 @@ public class NakadiClientTest {
                         "  \"type\": \"http://httpstatus.es/404\",\n" +
                         "  \"title\": \"Not Found\",\n" +
                         "  \"status\": 404,\n" +
-                        "  \"detail\": \"Subscription not found.\",\n" +
-                        "  \"instance\": \"string\"\n" +
+                        "  \"detail\": \"Subscription not found.\"\n" +
                         "}").setup();
 
         expectedException.expect(IOProblem.class);
         expectedException.expectMessage("Problem [http://httpstatus.es/404] with status [404]: [Not Found] [Subscription not found.]");
 
         client.deleteSubscription("123");
+
+        server.verify();
+    }
+
+    @Test
+    public void shouldThrowExceptionOnSubscriptionToUnknownEvent() throws IOException {
+        server.expectRequestTo("http://example.com/subscriptions", "POST")
+                .andRespondWith(422, ContentType.APPLICATION_JSON, "{\n" +
+                        "  \"type\": \"http://httpstatus.es/422\",\n" +
+                        "  \"title\": \"Unprocessable Entity\",\n" +
+                        "  \"status\": 422,\n" +
+                        "  \"detail\": \"Eventtype does not exist.\"\n" +
+                        "}").setup();
+
+        expectedException.expect(IOProblem.class);
+        expectedException.expectMessage("Problem [http://httpstatus.es/422] with status [422]: [Unprocessable Entity] [Eventtype does not exist.]");
+
+        client.subscribe("nakadi-client-test", Collections.singleton("non-existing-event"), "nakadi-client-test-consumer", SubscriptionRequest.Position.BEGIN, null);
 
         server.verify();
     }
@@ -189,7 +207,7 @@ public class NakadiClientTest {
     }
 
     @Test
-    public void shouldHandleBatchItemResponseWhenPublishing() throws IOException {
+    public void shouldHandleMultiStatusWhenPublishing() throws IOException {
         server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
@@ -198,6 +216,35 @@ public class NakadiClientTest {
 
         expectedException.expect(EventPublishingException.class);
         expectedException.expectMessage("returned status [failed] in step [validating] with detail [baz]");
+
+        client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+
+        server.verify();
+    }
+
+    @Test
+    public void shouldHandleSuccessFulMultiStatusWhenPublishing() throws IOException {
+        server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
+                .andExpectJsonPath("$[0].id", equalTo("1"))
+                .andExpectJsonPath("$[1].id", equalTo("2"))
+                .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"publishing_status\":\"submitted\"}, {\"publishing_status\":\"submitted\"}]")
+                .setup();
+
+        client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+
+        server.verify();
+    }
+
+    @Test
+    public void shouldHandleBatchItemResponseWhenPublishing() throws IOException {
+        server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
+                .andExpectJsonPath("$[0].id", equalTo("1"))
+                .andExpectJsonPath("$[1].id", equalTo("2"))
+                .andRespondWith(422, ContentType.APPLICATION_JSON, "[{\"publishing_status\":\"aborted\",\"step\":\"publishing\",\"detail\":\"baz\"}]")
+                .setup();
+
+        expectedException.expect(EventPublishingException.class);
+        expectedException.expectMessage("returned status [aborted] in step [publishing] with detail [baz]");
 
         client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
 

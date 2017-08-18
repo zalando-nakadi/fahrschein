@@ -52,6 +52,7 @@ class MockServer implements RequestFactory {
 
     private RequestFactory requestFactory;
     private Request request;
+    private Response response;
 
     public MockServer() {
         this.expectedJsonPaths = new LinkedHashMap<>();
@@ -110,14 +111,14 @@ class MockServer implements RequestFactory {
             responseHeaders.setContentType(responseContentType);
         }
 
-        final Response clientHttpResponse = mock(Response.class);
-        when(clientHttpResponse.getStatusCode()).thenReturn(responseStatus);
-        when(clientHttpResponse.getStatusCode()).thenReturn(responseStatus);
-        when(clientHttpResponse.getStatusText()).thenReturn("foobar");
-        when(clientHttpResponse.getBody()).thenReturn(new ByteArrayInputStream(responseBody.getBytes(StandardCharsets.UTF_8)));
-        when(clientHttpResponse.getHeaders()).thenReturn(responseHeaders);
+        response = mock(Response.class);
+        when(response.getStatusCode()).thenReturn(responseStatus);
+        when(response.getStatusCode()).thenReturn(responseStatus);
+        when(response.getStatusText()).thenReturn("foobar");
+        when(response.getBody()).thenReturn(new ByteArrayInputStream(responseBody.getBytes(StandardCharsets.UTF_8)));
+        when(response.getHeaders()).thenReturn(responseHeaders);
 
-        when(request.execute()).thenReturn(clientHttpResponse);
+        when(request.execute()).thenReturn(response);
         when(request.getURI()).thenReturn(expectedUri);
         when(request.getMethod()).thenReturn(expectedMethod);
         when(request.getBody()).thenReturn(requestBody = new ByteArrayOutputStream());
@@ -130,6 +131,10 @@ class MockServer implements RequestFactory {
     public void verify() throws IOException {
         Mockito.verify(request).execute();
         Mockito.verify(requestFactory).createRequest(expectedUri, expectedMethod);
+
+        if (response != null) {
+            Mockito.verify(response).close();
+        }
 
         if (expectedContentType != null) {
             assertEquals("requestContentType", requestHeaders.getContentType(), expectedContentType);
