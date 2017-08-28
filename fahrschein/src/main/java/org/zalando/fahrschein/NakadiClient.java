@@ -72,22 +72,7 @@ public class NakadiClient {
         }
 
         try (final Response response = request.execute()) {
-            final ContentType contentType = response.getHeaders().getContentType();
-            if (contentType != null && ContentType.APPLICATION_JSON.getType().equals(contentType.getType()) && ContentType.APPLICATION_JSON.getSubtype().equals(contentType.getSubtype())) {
-                try (final InputStream is = response.getBody()) {
-                    final BatchItemResponse[] responses = internalObjectMapper.readValue(is, BatchItemResponse[].class);
-                    final List<BatchItemResponse> failed = new ArrayList<>(responses.length);
-                    for (BatchItemResponse batchItemResponse : responses) {
-                        if (batchItemResponse.getPublishingStatus() != BatchItemResponse.PublishingStatus.SUBMITTED) {
-                            failed.add(batchItemResponse);
-                        }
-                    }
-                    if (!failed.isEmpty()) {
-                        // TODO: attach corresponding events?
-                        throw new EventPublishingException(failed.toArray(new BatchItemResponse[failed.size()]));
-                    }
-                }
-            }
+            LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
         }
     }
 
