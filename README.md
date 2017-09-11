@@ -13,9 +13,6 @@
 ## Features
 
  - Consistent error handling
-    - `IOException` handled as retryable
-    - `EventAlreadyProcessedException` is ignored
-    - `RuntimeException` aborts processing and can be handled outside the main loop
  - Stream-based parsing
     - Optimized utf-8 decoding by [Jackson](https://github.com/FasterXML/jackson)
     - No unnecessary buffering or line-based processing, causing less garbage
@@ -133,9 +130,12 @@ public void readSalesOrderPlacedEvents() throws IOException {
 
 Exception handling while streaming events follows some simple rules
 
- - `IOException` and its subclasses are treated as temporary failures and will be retried as specified by the `BackoffStrategy`
- - `RuntimeException` aborts streaming of events, the user is responsible for handling these
- - If an `IOException` happens when opening the initial connection, this is not retried as it probably indicates a configuration problem (wrong host name or missing scopes)
+ - `IOException` and its subclasses are treated as temporary failures. Library will automatically recover from this 
+ type of failure by retrying processing attempt after time interval specified by the `BackoffStrategy`.
+ **Special case**: if an `IOException` happens during opening the initial connection, this is treated as configuration 
+ problem (wrong host name or missing scopes). In this case processing will be aborted and exception will be re-thrown. 
+ - If `listener` throws `RuntimeException` streaming of events will be aborted. User is responsible for handling these exceptions.
+ Library code itself will not throw `RuntimeException`s.
  - Exceptions in other client methods are not automatically retried
 
 ## Stopping and resuming streams
