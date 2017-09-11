@@ -54,7 +54,7 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .build();
 
 // Create subscription using the high level api
-Subscription subscriptions = nakadiClient.subscription(applicationName, eventName).subscribe();
+Subscription subscription = nakadiClient.subscription(applicationName, eventName).subscribe();
 
 // Start streaming, the listen call will block and automatically reconnect on IOException
 nakadiClient.stream(subscription)
