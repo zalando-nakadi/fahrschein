@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -302,6 +301,9 @@ class NakadiReader<T> implements IORunnable {
                 readBatch(jsonParser);
 
                 errorCount = 0;
+            } catch (InterruptedIOException e) {
+                LOG.info("Got [{}] [{}] while reading events for {}", e.getClass().getSimpleName(), e.getMessage(), eventNames, e);
+                break;
             } catch (IOException e) {
 
                 metricsCollector.markErrorWhileConsuming();
