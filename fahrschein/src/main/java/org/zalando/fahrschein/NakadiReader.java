@@ -314,6 +314,8 @@ class NakadiReader<T> implements IORunnable {
 
                 errorCount = 0;
             } catch (IOException e) {
+                // Remember interrupted flag in case it accidentally gets cleared before the break
+                final boolean wasInterrupted = Thread.currentThread().isInterrupted();
 
                 metricsCollector.markErrorWhileConsuming();
 
@@ -325,7 +327,7 @@ class NakadiReader<T> implements IORunnable {
 
                 jsonInput.close();
 
-                if (Thread.currentThread().isInterrupted()) {
+                if (wasInterrupted || Thread.currentThread().isInterrupted()) {
                     LOG.warn("Thread was interrupted");
                     break;
                 }
