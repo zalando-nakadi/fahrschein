@@ -48,8 +48,9 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
             final String output = readAll(inputStream).trim();
             zign.waitFor(5, TimeUnit.SECONDS);
             if (zign.exitValue() != 0) {
-                throw new IOException("zign exit code was non-zero");
+                throw new IOException(String.format("zign failed with the exit code: %d", zign.exitValue()));
             }
+            LOG.debug("Refreshed token from zign");
             return output;
         } catch (InterruptedException e) {
             throw new IOException("zign process took longer than 5 seconds to exit");
@@ -59,9 +60,7 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
     private static Entry update(@Nullable Entry entry)  {
         final long now = System.currentTimeMillis();
         try {
-            final Entry newEntry = entry == null || entry.timestamp < now - CACHE_DURATION ? new Entry(now, zign()) : entry;
-            LOG.debug("Refreshed token from zign");
-            return newEntry;
+            return entry == null || entry.timestamp < now - CACHE_DURATION ? new Entry(now, zign()) : entry;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
