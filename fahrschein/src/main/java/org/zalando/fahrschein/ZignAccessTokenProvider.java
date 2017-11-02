@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ZignAccessTokenProvider implements AccessTokenProvider {
@@ -42,18 +43,25 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
 
     private static String zign() throws IOException {
         LOG.info("Refreshing token from zign...");
-        final Process zign = new ProcessBuilder("zign", "token", "uid").start();
+        final Process zign = new ProcessBuilder("zign", "token").start();
         try (final InputStream inputStream = zign.getInputStream()) {
-            return readAll(inputStream).trim();
-        } finally {
-            LOG.debug("Refreshed token from zign");
+            final String output = readAll(inputStream).trim();
+            zign.waitFor(5, TimeUnit.SECONDS);
+            if (zign.exitValue() != 0) {
+                throw new IOException("zign exit code was non-zero");
+            }
+            return output;
+        } catch (InterruptedException e) {
+            throw new IOException("zign process took longer than 5 seconds to exit");
         }
     }
 
     private static Entry update(@Nullable Entry entry)  {
         final long now = System.currentTimeMillis();
         try {
-            return entry == null || entry.timestamp < now - CACHE_DURATION ? new Entry(now, zign()) : entry;
+            final Entry newEntry = entry == null || entry.timestamp < now - CACHE_DURATION ? new Entry(now, zign()) : entry;
+            LOG.debug("Refreshed token from zign");
+            return newEntry;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
