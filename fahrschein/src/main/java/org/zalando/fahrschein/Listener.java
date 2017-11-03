@@ -1,7 +1,5 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-
 import java.io.IOException;
 import java.util.List;
 

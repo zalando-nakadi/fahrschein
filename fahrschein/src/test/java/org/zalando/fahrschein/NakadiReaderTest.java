@@ -31,10 +31,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -520,6 +518,62 @@ public class NakadiReaderTest {
         expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Stream was closed")));
 
         nakadiReader.runInternal();
+    }
+
+    @Test
+    public void shouldExtractPropertyFromEvents() throws IOException, InterruptedException, BackoffException, EventAlreadyProcessedException {
+        final Response response = mock(Response.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"},\"events\":[{\"id\":\"1\",\"foo\":\"bar\"},{\"foo\":\"bar\",\"id\":\"2\"},{\"foo\":[\"bar\"],\"id\":\"3\",\"baz\":{\"id\":\"xyz\"}},{}]}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+
+        final Request request = mock(Request.class);
+        when(request.execute()).thenReturn(response);
+
+        when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+
+        final List<String> ids = new ArrayList<>();
+
+        final NakadiReader<String> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), new StringPropertyExtractingEventReader("id"), ids::addAll, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
+
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
+        expectedException.expectCause(instanceOf(IOException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Stream was closed")));
+
+        nakadiReader.runInternal();
+
+        assertEquals(asList("1", "2", "3"), ids);
+    }
+
+    @Test
+    public void shouldExtractPropertyFromEmptyEvents() throws IOException, InterruptedException, BackoffException, EventAlreadyProcessedException {
+        final Response response = mock(Response.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"},\"events\":[]}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+
+        final Request request = mock(Request.class);
+        when(request.execute()).thenReturn(response);
+
+        when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
+
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+
+        final List<String> ids = new ArrayList<>();
+
+        final NakadiReader<String> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), new StringPropertyExtractingEventReader("id"), ids::addAll, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
+
+        expectedException.expect(BackoffException.class);
+        expectedException.expect(ComposeMatchers.hasFeature(BackoffException::getRetries, equalTo(0)));
+        expectedException.expectCause(instanceOf(IOException.class));
+        expectedException.expectCause(ComposeMatchers.hasFeature("message", Exception::getMessage, Matchers.containsString("Stream was closed")));
+
+        nakadiReader.runInternal();
+
+        assertEquals(emptyList(), ids);
     }
 
     @Test

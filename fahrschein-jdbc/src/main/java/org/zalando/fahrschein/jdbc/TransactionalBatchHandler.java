@@ -10,7 +10,7 @@ public class TransactionalBatchHandler implements BatchHandler {
 
     @Override
     @Transactional(rollbackFor = {Error.class, RuntimeException.class, IOException.class})
-    public void processBatch(final IORunnable runnable) throws IOException {
-        runnable.run();
+    public void processBatch(final IORunnable continuation) throws IOException {
+        continuation.run();
     }
 }

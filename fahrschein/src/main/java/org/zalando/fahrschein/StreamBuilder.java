@@ -15,8 +15,6 @@ public interface StreamBuilder {
         @Override
         SubscriptionStreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
         @Override
-        SubscriptionStreamBuilder withErrorHandler(ErrorHandler errorHandler);
-        @Override
         SubscriptionStreamBuilder withBatchHandler(BatchHandler batchHandler);
         @Override
         SubscriptionStreamBuilder withStreamParameters(StreamParameters streamParameters);
@@ -27,8 +25,6 @@ public interface StreamBuilder {
         LowLevelStreamBuilder withBackoffStrategy(BackoffStrategy backoffStrategy);
         @Override
         LowLevelStreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
-        @Override
-        LowLevelStreamBuilder withErrorHandler(ErrorHandler errorHandler);
         @Override
         LowLevelStreamBuilder withBatchHandler(BatchHandler batchHandler);
         @Override
@@ -41,8 +37,6 @@ public interface StreamBuilder {
         LowLevelStreamBuilder skipUnavailableOffsets(List<Partition> partitions) throws IOException;
     }
 
-    StreamBuilder withErrorHandler(ErrorHandler errorHandler);
-
     StreamBuilder withBatchHandler(BatchHandler batchHandler);
 
     StreamBuilder withMetricsCollector(MetricsCollector metricsCollector);
@@ -54,6 +48,9 @@ public interface StreamBuilder {
     StreamBuilder withBackoffStrategy(BackoffStrategy backoffStrategy);
 
     <T> IORunnable runnable(Class<T> eventClass, Listener<T> listener);
+    <T> IORunnable runnable(EventReader<T> eventReader, Listener<T> listener);
+
     <T> void listen(Class<T> eventClass, Listener<T> listener) throws IOException;
+    <T> void listen(EventReader<T> eventReader, Listener<T> listener) throws IOException;
 
 }
