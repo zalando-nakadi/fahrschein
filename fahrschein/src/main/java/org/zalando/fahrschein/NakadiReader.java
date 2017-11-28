@@ -346,6 +346,8 @@ class NakadiReader<T> implements IORunnable {
 
                 errorCount++;
             } catch (Throwable e) {
+                LOG.warn("Got [{}] [{}] while reading events for {}", e.getClass().getSimpleName(), e.getMessage(), eventNames, e);
+
                 try {
                     jsonInput.close();
                 } catch (Throwable suppressed) {
