@@ -7,6 +7,7 @@ env:
   matrix:
     - VERSION_JACKSON='-Dversion.jackson=2.6.7' PROJECTS='-pl !fahrschein-typeresolver,!fahrschein-example'
     - VERSION_JACKSON='-Dversion.jackson=2.7.9' PROJECTS='-pl !fahrschein-typeresolver,!fahrschein-example'
+    - VERSION_JACKSON='-Dversion.jackson=2.8.11'
     - DEFAULTS=''
 script: mvn -V $VERSION_JACKSON $PROJECTS $FAIL_ON_WARN clean verify
 addons:
