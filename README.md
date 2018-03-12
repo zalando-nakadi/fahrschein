@@ -45,7 +45,7 @@ final Listener<SalesOrderPlaced> listener = events -> {
     }
 };
 
-// Configure client, defaults to using the high level api with ManagedCursorManger and SimpleClientHttpRequestFactory
+// Configure client, defaults to using the high level api with ManagedCursorManger and SimpleRequestFactory
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
@@ -204,7 +204,7 @@ final CloseableHttpClient httpClient = HttpClients.custom()
 final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-        .withClientHttpRequestFactory(requestFactory)
+        .withRequestFactory(requestFactory)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
 ```
@@ -227,7 +227,7 @@ final ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpR
 final RequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-        .withClientHttpRequestFactory(requestFactory)
+        .withRequestFactory(requestFactory)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
 
