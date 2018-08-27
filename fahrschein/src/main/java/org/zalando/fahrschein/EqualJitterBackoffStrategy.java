@@ -17,12 +17,12 @@ public class EqualJitterBackoffStrategy extends ExponentialBackoffStrategy {
         super(initialDelay, backoffFactor, maxDelay, maxRetries);
     }
 
-    private EqualJitterBackoffStrategy(EqualJitterBackoffStrategy other) {
+    private EqualJitterBackoffStrategy(ExponentialBackoffStrategy other) {
         super(other);
     }
 
     public EqualJitterBackoffStrategy withMaxRetries(int maxRetries) {
-        return new EqualJitterBackoffStrategy(this.withMaxRetries(maxRetries));
+        return new EqualJitterBackoffStrategy(super.withMaxRetries(maxRetries));
     }
 
     protected long calculateDelay(double count) {

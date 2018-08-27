@@ -21,14 +21,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
-import org.zalando.fahrschein.EventProcessingException;
-import org.zalando.fahrschein.ExponentialBackoffStrategy;
-import org.zalando.fahrschein.IORunnable;
-import org.zalando.fahrschein.Listener;
-import org.zalando.fahrschein.NakadiClient;
-import org.zalando.fahrschein.NoBackoffStrategy;
-import org.zalando.fahrschein.StreamParameters;
-import org.zalando.fahrschein.ZignAccessTokenProvider;
+import org.zalando.fahrschein.*;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
@@ -265,7 +258,7 @@ public class Main {
         nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
                 .readFromBegin(partitions)
                 .withObjectMapper(objectMapper)
-                .withBackoffStrategy(new ExponentialBackoffStrategy().withMaxRetries(10))
+                .withBackoffStrategy(new EqualJitterBackoffStrategy().withMaxRetries(10))
                 .listen(SalesOrderPlaced.class, listener);
     }
 

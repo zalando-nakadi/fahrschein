@@ -17,12 +17,12 @@ public class FullJitterBackoffStrategy extends ExponentialBackoffStrategy {
         super(initialDelay, backoffFactor, maxDelay, maxRetries);
     }
 
-    private FullJitterBackoffStrategy(FullJitterBackoffStrategy other) {
+    private FullJitterBackoffStrategy(ExponentialBackoffStrategy other) {
         super(other);
     }
 
     public FullJitterBackoffStrategy withMaxRetries(int maxRetries) {
-        return new FullJitterBackoffStrategy(this.withMaxRetries(maxRetries));
+        return new FullJitterBackoffStrategy(super.withMaxRetries(maxRetries));
     }
 
     protected long calculateDelay(double count) {

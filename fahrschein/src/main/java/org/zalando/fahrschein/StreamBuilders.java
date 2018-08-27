@@ -72,7 +72,7 @@ class StreamBuilders {
             final Optional<Subscription> subscription = getSubscription();
             final Optional<Lock> lock = getLock();
 
-            final BackoffStrategy backoffStrategy = this.backoffStrategy != null ? this.backoffStrategy : new ExponentialBackoffStrategy();
+            final BackoffStrategy backoffStrategy = this.backoffStrategy != null ? this.backoffStrategy : new EqualJitterBackoffStrategy();
             final MetricsCollector metricsCollector = this.metricsCollector != null ? this.metricsCollector : NoMetricsCollector.NO_METRICS_COLLECTOR;
             final BatchHandler batchHandler = this.batchHandler != null ? this.batchHandler : DefaultBatchHandler.INSTANCE;
 
