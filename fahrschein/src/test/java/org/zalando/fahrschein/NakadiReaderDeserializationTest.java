@@ -23,11 +23,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -186,6 +184,24 @@ public class NakadiReaderDeserializationTest {
         assertThat(metadata.getFlowId(), Matchers.equalTo("ABCD"));
         assertThat(metadata.getOccurredAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 19, 20, 21, 123_000_000, ZoneOffset.UTC)));
         assertThat(metadata.getReceivedAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 20, 21, 22, 0, ZoneOffset.ofHours(1))));
+        assertThat(metadata.getSpanCtx(), Matchers.equalTo(null));
+    }
+
+    @Test
+    public void shouldDeserializeSpanCtxInBusinessEventMetadata() throws IOException {
+        setupResponse(1, 1, "{\"metadata\":{\"eid\":\"5678\",\"occurred_at\":\"2016-10-26T19:20:21.123Z\",\"received_at\":\"2016-10-26T20:21:22+01:00\",\"flow_id\":\"ABCD\",\"span_ctx\":{\"ot-tracer-spanid\":\"78cc5b6e96e8a5a2\",\"ot-tracer-traceid\":\"9df69e766320993f\",\"ot-tracer-sampled\":\"true\"}},\"sales_order\":{\"order_number\":\"1234\"}}");
+
+        final List<SalesOrderPlaced> events = readSingleBatch("sales-salesOrder-placed", SalesOrderPlaced.class);
+
+        assertThat(events, Matchers.notNullValue());
+        assertThat(events, hasSize(1));
+        final SalesOrderPlaced salesOrderPlaced = events.get(0);
+        final SalesOrder salesOrder = salesOrderPlaced.getSalesOrder();
+        final Metadata metadata = salesOrderPlaced.getMetadata();
+
+        assertThat(metadata.getSpanCtx(), Matchers.hasEntry("ot-tracer-spanid", "78cc5b6e96e8a5a2"));
+        assertThat(metadata.getSpanCtx(), Matchers.hasEntry("ot-tracer-traceid", "9df69e766320993f"));
+        assertThat(metadata.getSpanCtx(), Matchers.hasEntry("ot-tracer-sampled", "true"));
     }
 
     @Test

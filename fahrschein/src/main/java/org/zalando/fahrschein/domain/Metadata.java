@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.concurrent.Immutable;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Immutable
 public final class Metadata {
@@ -13,23 +15,25 @@ public final class Metadata {
     private final OffsetDateTime occurredAt;
     private final OffsetDateTime receivedAt;
     private final String flowId;
+    private final Map<String, String> spanCtx;
 
     @JsonCreator
     @Deprecated
-    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId) {
-        this(eventType, eid, occurredAt == null ? null : OffsetDateTime.parse(occurredAt), receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId);
+    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId, @JsonProperty("span_ctx") Map<String, String> spanCtx) {
+        this(eventType, eid, occurredAt == null ? null : OffsetDateTime.parse(occurredAt), receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId, spanCtx);
     }
 
-    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, OffsetDateTime receivedAt, String flowId) {
+    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, OffsetDateTime receivedAt, String flowId, Map<String, String> spanCtx) {
         this.eventType = eventType;
         this.eid = eid;
         this.occurredAt = occurredAt;
         this.receivedAt = receivedAt;
         this.flowId = flowId;
+        this.spanCtx = spanCtx;
     }
 
     public Metadata(String eid, OffsetDateTime occurredAt) {
-        this(null, eid, occurredAt, null, null);
+        this(null, eid, occurredAt, null, null, null);
     }
 
     public String getEventType() {
@@ -50,5 +54,9 @@ public final class Metadata {
 
     public String getFlowId() {
         return flowId;
+    }
+
+    public Map<String, String> getSpanCtx() {
+        return spanCtx;
     }
 }
