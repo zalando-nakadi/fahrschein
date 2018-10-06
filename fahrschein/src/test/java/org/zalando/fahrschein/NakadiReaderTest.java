@@ -175,7 +175,7 @@ public class NakadiReaderTest {
 
         when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
 
-        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 1);
+        final ExponentialBackoffStrategy backoffStrategy = new EqualJitterBackoffStrategy(1, 1, 2, 1);
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener);
 
         expectedException.expect(BackoffException.class);
@@ -197,7 +197,7 @@ public class NakadiReaderTest {
 
         when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
 
-        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
+        final ExponentialBackoffStrategy backoffStrategy = new EqualJitterBackoffStrategy(1, 1, 2, 4);
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener);
 
         expectedException.expect(BackoffException.class);
@@ -219,7 +219,7 @@ public class NakadiReaderTest {
 
         when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
 
-        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
+        final ExponentialBackoffStrategy backoffStrategy = new EqualJitterBackoffStrategy(1, 1, 2, 4);
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener);
 
         expectedException.expect(BackoffException.class);
@@ -375,7 +375,7 @@ public class NakadiReaderTest {
 
         when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
 
-        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy(1, 1, 2, 4);
+        final ExponentialBackoffStrategy backoffStrategy = new EqualJitterBackoffStrategy(1, 1, 2, 4);
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener);
 
         final Future<?> future = Executors.newCachedThreadPool().submit(nakadiReader.unchecked());
@@ -613,7 +613,7 @@ public class NakadiReaderTest {
 
         when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
 
-        final ExponentialBackoffStrategy backoffStrategy = new ExponentialBackoffStrategy().withMaxRetries(2);
+        final ExponentialBackoffStrategy backoffStrategy = new EqualJitterBackoffStrategy().withMaxRetries(2);
 
         final Listener<SomeEvent> listener = events -> {
             throw new FileNotFoundException("from listener");
