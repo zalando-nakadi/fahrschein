@@ -21,12 +21,13 @@ public class StreamParametersTest {
                 .withBatchFlushTimeout(104)
                 .withStreamTimeout(105)
                 .withStreamKeepAliveLimit(106)
-                .withMaxUncommittedEvents(107);
+                .withMaxUncommittedEvents(107)
+                .withCommitTimeout(60);
 
         final String queryString = streamParameters.toQueryString();
         final String[] queryParamStrings = queryString.split("&");
 
-        assertThat(queryParamStrings, arrayWithSize(6));
+        assertThat(queryParamStrings, arrayWithSize(7));
 
         assertThat(queryParamStrings, arrayContainingInAnyOrder(
                 "batch_limit=102",
@@ -34,7 +35,8 @@ public class StreamParametersTest {
                 "batch_flush_timeout=104",
                 "stream_timeout=105",
                 "stream_keep_alive_limit=106",
-                "max_uncommitted_events=107"
+                "max_uncommitted_events=107",
+                "commit_timeout=60"
         ));
     }
 
@@ -69,6 +71,26 @@ public class StreamParametersTest {
         final StreamParameters streamParameters = new StreamParameters()
                 .withBatchLimit(0)
                 .withStreamLimit(10);
+    }
+
+    @Test
+    public void streamParametersWithCommitTimeoutAbove60() throws IllegalArgumentException {
+
+        expectedEx.expect(IllegalArgumentException.class);
+        expectedEx.expectMessage("commit_timeout can't be higher than 60.");
+
+        final StreamParameters streamParameters = new StreamParameters()
+                .withCommitTimeout(61);
+    }
+
+    @Test
+    public void streamParametersWithCommitTimeoutBelowZero() throws IllegalArgumentException {
+
+        expectedEx.expect(IllegalArgumentException.class);
+        expectedEx.expectMessage("commit_timeout can't be lower than 0.");
+
+        final StreamParameters streamParameters = new StreamParameters()
+                .withCommitTimeout(-1);
     }
 
 }

@@ -23,18 +23,22 @@ public class StreamParameters {
     // Only used in the subscription api
     @Nullable
     private final Integer maxUncommittedEvents;
+    @Nullable
+    private final Integer commitTimeout;
 
-    private StreamParameters(@Nullable Integer batchLimit, @Nullable Integer streamLimit, @Nullable Integer batchFlushTimeout, @Nullable Integer streamTimeout, @Nullable Integer streamKeepAliveLimit, @Nullable Integer maxUncommittedEvents) {
+
+    private StreamParameters(@Nullable Integer batchLimit, @Nullable Integer streamLimit, @Nullable Integer batchFlushTimeout, @Nullable Integer streamTimeout, @Nullable Integer streamKeepAliveLimit, @Nullable Integer maxUncommittedEvents, @Nullable Integer commitTimeout) {
         this.batchLimit = batchLimit;
         this.streamLimit = streamLimit;
         this.batchFlushTimeout = batchFlushTimeout;
         this.streamTimeout = streamTimeout;
         this.streamKeepAliveLimit = streamKeepAliveLimit;
         this.maxUncommittedEvents = maxUncommittedEvents;
+        this.commitTimeout = commitTimeout;
     }
 
     public StreamParameters() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
     }
 
     String toQueryString() {
@@ -57,6 +61,9 @@ public class StreamParameters {
         }
         if (maxUncommittedEvents != null) {
             params.add("max_uncommitted_events=" + maxUncommittedEvents);
+        }
+        if (commitTimeout != null) {
+            params.add("commit_timeout=" + commitTimeout);
         }
 
         return params.stream().collect(Collectors.joining("&"));
@@ -86,7 +93,7 @@ public class StreamParameters {
         if(batchLimit < DEFAULT_BATCH_LIMIT){
             throw new IllegalArgumentException("batch_limit can't be lower than 1.");
         }
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
     }
 
     /**
@@ -103,7 +110,7 @@ public class StreamParameters {
         if(batchLimit != null && batchLimit > streamLimit){
             throw new IllegalArgumentException("streamLimit is lower than batch_limit.");
         }
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
     }
 
     /**
@@ -121,7 +128,7 @@ public class StreamParameters {
             throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
         }
 
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
     }
 
     /**
@@ -136,7 +143,27 @@ public class StreamParameters {
         if(batchFlushTimeout != null && batchFlushTimeout > streamTimeout){
             throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
         }
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+    }
+
+    /**
+     * Maximum amount of seconds that nakadi will be waiting for commit after sending a batch to a client.
+     * In case if commit is not coming within this timeout, nakadi will initialize stream termination, no
+     * new data will be sent. Partitions from this stream will be assigned to other streams.
+     * Setting commit_timeout to 0 is equal to setting it to maximum allowed value - 60 seconds.
+     *
+     * @param commitTimeout
+     *          Stream initialization will fail if commit_timeout is lower than 0 or higher than 60.
+     * @throws IllegalArgumentException
+     */
+    public StreamParameters withCommitTimeout(int commitTimeout) throws IllegalArgumentException {
+        if(commitTimeout < 0){
+            throw new IllegalArgumentException("commit_timeout can't be lower than 0.");
+        }
+        if(commitTimeout > 60){
+            throw new IllegalArgumentException("commit_timeout can't be higher than 60.");
+        }
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
     }
 
     /**
@@ -147,11 +174,11 @@ public class StreamParameters {
      *          If 0 or undefined will send keep alive messages indefinitely.
      */
     public StreamParameters withStreamKeepAliveLimit(int streamKeepAliveLimit) {
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
     }
 
     public StreamParameters withMaxUncommittedEvents(int maxUncommittedEvents) {
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
     }
 
     public Optional<Integer> getBatchLimit() {
@@ -177,4 +204,9 @@ public class StreamParameters {
     public Optional<Integer> getMaxUncommittedEvents() {
         return Optional.ofNullable(maxUncommittedEvents);
     }
+
+    public Optional<Integer> getCommitTimeout() {
+        return Optional.ofNullable(commitTimeout);
+    }
+
 }
