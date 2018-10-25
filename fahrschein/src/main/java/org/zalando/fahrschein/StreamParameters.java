@@ -148,21 +148,12 @@ public class StreamParameters {
 
     /**
      * Maximum amount of seconds that nakadi will be waiting for commit after sending a batch to a client.
-     * In case if commit is not coming within this timeout, nakadi will initialize stream termination, no
+     * If the commit does not come within this timeout, nakadi will initialize stream termination, no
      * new data will be sent. Partitions from this stream will be assigned to other streams.
-     * Setting commit_timeout to 0 is equal to setting it to maximum allowed value - 60 seconds.
      *
      * @param commitTimeout
-     *          Stream initialization will fail if commit_timeout is lower than 0 or higher than 60.
-     * @throws IllegalArgumentException
      */
-    public StreamParameters withCommitTimeout(int commitTimeout) throws IllegalArgumentException {
-        if(commitTimeout < 0){
-            throw new IllegalArgumentException("commit_timeout can't be lower than 0.");
-        }
-        if(commitTimeout > 60){
-            throw new IllegalArgumentException("commit_timeout can't be higher than 60.");
-        }
+    public StreamParameters withCommitTimeout(int commitTimeout) {
         return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
     }
 

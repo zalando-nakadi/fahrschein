@@ -73,24 +73,4 @@ public class StreamParametersTest {
                 .withStreamLimit(10);
     }
 
-    @Test
-    public void streamParametersWithCommitTimeoutAbove60() throws IllegalArgumentException {
-
-        expectedEx.expect(IllegalArgumentException.class);
-        expectedEx.expectMessage("commit_timeout can't be higher than 60.");
-
-        final StreamParameters streamParameters = new StreamParameters()
-                .withCommitTimeout(61);
-    }
-
-    @Test
-    public void streamParametersWithCommitTimeoutBelowZero() throws IllegalArgumentException {
-
-        expectedEx.expect(IllegalArgumentException.class);
-        expectedEx.expectMessage("commit_timeout can't be lower than 0.");
-
-        final StreamParameters streamParameters = new StreamParameters()
-                .withCommitTimeout(-1);
-    }
-
 }
