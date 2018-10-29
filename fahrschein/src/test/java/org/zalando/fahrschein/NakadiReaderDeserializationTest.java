@@ -184,11 +184,11 @@ public class NakadiReaderDeserializationTest {
         assertThat(metadata.getFlowId(), Matchers.equalTo("ABCD"));
         assertThat(metadata.getOccurredAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 19, 20, 21, 123_000_000, ZoneOffset.UTC)));
         assertThat(metadata.getReceivedAt(), Matchers.equalTo(OffsetDateTime.of(2016, 10, 26, 20, 21, 22, 0, ZoneOffset.ofHours(1))));
-        assertThat(metadata.any(), Matchers.equalTo(new HashMap<String, Object>()));
+        assertThat(metadata.getSpanCtx(), Matchers.equalTo(Collections.emptyMap()));
     }
 
     @Test
-    public void shouldDeserializeSpanContextInBusinessEventMetadata() throws IOException {
+    public void shouldDeserializeSpanCtxInBusinessEventMetadata() throws IOException {
         setupResponse(1, 1, "{\"metadata\":{\"eid\":\"5678\",\"occurred_at\":\"2016-10-26T19:20:21.123Z\",\"received_at\":\"2016-10-26T20:21:22+01:00\",\"flow_id\":\"ABCD\",\"span_ctx\":{\"ot-tracer-spanid\":\"78cc5b6e96e8a5a2\",\"ot-tracer-traceid\":\"9df69e766320993f\",\"ot-tracer-sampled\":\"true\"}},\"sales_order\":{\"order_number\":\"1234\"}}");
 
         final List<SalesOrderPlaced> events = readSingleBatch("sales-salesOrder-placed", SalesOrderPlaced.class);
@@ -199,10 +199,9 @@ public class NakadiReaderDeserializationTest {
         final SalesOrder salesOrder = salesOrderPlaced.getSalesOrder();
         final Metadata metadata = salesOrderPlaced.getMetadata();
 
-        final Map<String, String> spanContext = (Map<String, String>) metadata.get("span_ctx");
-        assertThat(spanContext, Matchers.hasEntry("ot-tracer-spanid", "78cc5b6e96e8a5a2"));
-        assertThat(spanContext, Matchers.hasEntry("ot-tracer-traceid", "9df69e766320993f"));
-        assertThat(spanContext, Matchers.hasEntry("ot-tracer-sampled", "true"));
+        assertThat(metadata.getSpanCtx(), Matchers.hasEntry("ot-tracer-spanid", "78cc5b6e96e8a5a2"));
+        assertThat(metadata.getSpanCtx(), Matchers.hasEntry("ot-tracer-traceid", "9df69e766320993f"));
+        assertThat(metadata.getSpanCtx(), Matchers.hasEntry("ot-tracer-sampled", "true"));
     }
 
     @Test
