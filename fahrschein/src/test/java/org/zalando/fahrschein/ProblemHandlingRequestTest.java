@@ -31,6 +31,27 @@ public class ProblemHandlingRequestTest {
     private final ProblemHandlingRequest problemHandlingRequest = new ProblemHandlingRequest(request);
 
     @Test
+    public void shouldCreateProblemWhenTypeIsMissing() throws IOException {
+        when(response.getStatusCode()).thenReturn(422);
+        when(response.getStatusText()).thenReturn("Unprocessable Entity");
+        when(response.getBody()).thenReturn(new ByteArrayInputStream("{ \"title\":\"Unprocessable Entity\",\"status\":422, \"detail\": \"Session with stream id not found\" }".getBytes(StandardCharsets.UTF_8)));
+
+        final Headers headers = new HeadersImpl();
+        headers.setContentType(ContentType.APPLICATION_PROBLEM_JSON);
+        when(response.getHeaders()).thenReturn(headers);
+
+        when(request.execute()).thenReturn(response);
+
+        expectedException.expect(instanceOf(IOProblem.class));
+        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(422)));
+        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
+        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("Unprocessable Entity")));
+        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Session with stream id not found"))));
+
+        problemHandlingRequest.execute();
+    }
+
+    @Test
     public void shouldCreateProblemFromStatusAndText() throws IOException {
         when(response.getStatusCode()).thenReturn(409);
         when(response.getStatusText()).thenReturn("conflict");

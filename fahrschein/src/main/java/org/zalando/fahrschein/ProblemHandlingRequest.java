@@ -79,7 +79,7 @@ class ProblemHandlingRequest implements Request {
     }
 
     private static boolean isProblem(final JsonNode json) {
-        return json.has("type") && json.has("title");
+        return json.has("title");
     }
 
     private static boolean isAuthError(final JsonNode json) {
@@ -91,7 +91,9 @@ class ProblemHandlingRequest implements Request {
     }
 
     private void handleProblem(final JsonNode rootNode, final int statusCode) throws IOException {
-        final String type = rootNode.get("type").asText();
+        final JsonNode typeNode = rootNode.get("type");
+        final String type = typeNode == null ? "about:blank" : typeNode.asText();
+
         final String title = rootNode.get("title").asText();
 
         final JsonNode detailNode = rootNode.get("detail");
