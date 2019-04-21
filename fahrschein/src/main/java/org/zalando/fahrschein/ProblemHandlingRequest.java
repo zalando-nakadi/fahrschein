@@ -8,9 +8,7 @@ import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.Response;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
