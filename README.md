@@ -80,7 +80,9 @@ cursorManager.updatePartitions(eventName, partitions);
 
 ## Using the low-level api
 
-You can also use the low-level api, which requires local persistence of partition offsets. There are persistent `CursorManager` implementations using either Postgres or Redis.
+*Please do not use the low-level api, as it is deprecated.*
+
+The low-level api requires local persistence of partition offsets. There are persistent `CursorManager` implementations using either Postgres or Redis.
 
 ```java
 final HikariConfig hikariConfig = new HikariConfig();
