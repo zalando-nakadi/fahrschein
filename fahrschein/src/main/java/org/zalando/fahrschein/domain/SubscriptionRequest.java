@@ -2,6 +2,7 @@ package org.zalando.fahrschein.domain;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.util.*;
 
@@ -31,17 +32,19 @@ public class SubscriptionRequest {
     private final String consumerGroup;
     private final Position readFrom;
     private final List<Cursor> initialCursors;
+    private final Authorization authorization;
 
-    public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup, Position readFrom, List<Cursor> initialCursors) {
+    public SubscriptionRequest(String owningApplication, @Nullable Set<String> eventTypes, String consumerGroup, Position readFrom, @Nullable List<Cursor> initialCursors, @Nullable Authorization authorization) {
         this.owningApplication = owningApplication;
         this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.readFrom = readFrom;
         this.initialCursors = unmodifiableList((initialCursors == null) ? emptyList() : new ArrayList<>(initialCursors));
+        this.authorization = authorization;
     }
 
     public SubscriptionRequest(String owningApplication, Set<String> eventTypes, String consumerGroup) {
-        this(owningApplication, eventTypes, consumerGroup, Position.END, emptyList());
+        this(owningApplication, eventTypes, consumerGroup, Position.END, emptyList(), null);
     }
 
     public String getOwningApplication() {
@@ -62,5 +65,9 @@ public class SubscriptionRequest {
 
     public List<Cursor> getInitialCursors() {
         return initialCursors;
+    }
+
+    public Authorization getAuthorization() {
+        return authorization;
     }
 }

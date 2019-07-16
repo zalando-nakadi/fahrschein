@@ -19,8 +19,11 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
+import static org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute.ANYONE;
 
 public class NakadiClientTest {
     public static class SomeEvent {
@@ -150,6 +153,38 @@ public class NakadiClientTest {
     }
 
     @Test
+    public void shouldIncludeAuthorization() throws IOException {
+        server.expectRequestTo("http://example.com/subscriptions", "POST")
+                .andExpectJsonPath("$.authorization", notNullValue())
+                .andExpectJsonPath("$.authorization.admins[0].data_type", equalTo("user"))
+                .andExpectJsonPath("$.authorization.admins[0].value", equalTo("mmusterman"))
+                .andExpectJsonPath("$.authorization.admins[1].data_type", equalTo("service"))
+                .andExpectJsonPath("$.authorization.admins[1].value", equalTo("jdoe"))
+                .andExpectJsonPath("$.authorization.readers.[0].data_type", equalTo("*"))
+                .andExpectJsonPath("$.authorization.readers.[0].value", equalTo("*"))
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"default\",\"authorization\":{\"admins\":[{\"data_type\":\"user\",\"value\":\"mmusterman\"},{\"data_type\":\"service\",\"value\":\"jdoe\"}],\"readers\":[{\"data_type\":\"*\",\"value\":\"*\"}]},\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
+                .setup();
+
+        final Subscription subscription = client.subscription("nakadi-client-test", "foo")
+                .withAuthorization(authorization()
+                        .addAdmin("user", "mmusterman")
+                        .addAdmin("service", "jdoe")
+                        .withReaders(ANYONE)
+                        .build())
+                .subscribe();
+
+        server.verify();
+
+        assertNotNull(subscription);
+        assertEquals("user", subscription.getAuthorization().getAdmins().get(0).getDataType());
+        assertEquals("mmusterman", subscription.getAuthorization().getAdmins().get(0).getValue());
+        assertEquals("service", subscription.getAuthorization().getAdmins().get(1).getDataType());
+        assertEquals("jdoe", subscription.getAuthorization().getAdmins().get(1).getValue());
+        assertEquals("*", subscription.getAuthorization().getReaders().get(0).getDataType());
+        assertEquals("*", subscription.getAuthorization().getReaders().get(0).getValue());
+    }
+
+    @Test
     public void shouldDeleteSubscription() throws IOException {
         server.expectRequestTo("http://example.com/subscriptions/123", "DELETE")
                 .andRespondWith(204).setup();
@@ -190,7 +225,7 @@ public class NakadiClientTest {
         expectedException.expect(IOProblem.class);
         expectedException.expectMessage("Problem [http://httpstatus.es/422] with status [422]: [Unprocessable Entity] [Eventtype does not exist.]");
 
-        client.subscribe("nakadi-client-test", Collections.singleton("non-existing-event"), "nakadi-client-test-consumer", SubscriptionRequest.Position.BEGIN, null);
+        client.subscribe("nakadi-client-test", Collections.singleton("non-existing-event"), "nakadi-client-test-consumer", SubscriptionRequest.Position.BEGIN, null, null);
 
         server.verify();
     }
