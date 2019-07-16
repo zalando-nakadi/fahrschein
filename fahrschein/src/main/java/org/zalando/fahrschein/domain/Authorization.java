@@ -2,6 +2,7 @@ package org.zalando.fahrschein.domain;
 
 import javax.annotation.concurrent.Immutable;
 import java.util.List;
+import java.util.Objects;
 
 @Immutable
 public class Authorization {
@@ -25,6 +26,22 @@ public class Authorization {
 
         public String getValue() {
             return value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof AuthorizationAttribute))
+                return false;
+            AuthorizationAttribute that = (AuthorizationAttribute) o;
+            return dataType.equals(that.dataType) &&
+                    value.equals(that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dataType, value);
         }
     }
 

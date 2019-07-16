@@ -3,33 +3,33 @@ package org.zalando.fahrschein;
 import org.zalando.fahrschein.domain.Authorization;
 import org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+import static org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute.ANYONE;
 
+/**
+ * Use factory method {@link AuthorizationBuilder#authorization()} to create
+ * an allow-all authorization object and use {@link #withAdmins} / {@link #withReaders}
+ * methods to override admins and/or readers lists.
+ */
 public class AuthorizationBuilder {
 
     private final List<AuthorizationAttribute> admins;
     private final List<AuthorizationAttribute> readers;
-
-    private AuthorizationBuilder() {
-        admins = null;
-        readers = null;
-    }
 
     private AuthorizationBuilder(List<AuthorizationAttribute> admins, List<AuthorizationAttribute> readers) {
         this.admins = admins;
         this.readers = readers;
     }
 
+    /**
+     * No restrictions by default, use {@link #withAdmins} / {@link #withReaders} methods to add them.
+     */
     public static AuthorizationBuilder authorization() {
-        return new AuthorizationBuilder();
-    }
-
-    public static Authorization notRestricted() {
-        return authorization().withAdmins(AuthorizationAttribute.ANYONE).withReaders(AuthorizationAttribute.ANYONE).build();
+        return new AuthorizationBuilder(singletonList(ANYONE), singletonList(ANYONE));
     }
 
     public AuthorizationBuilder withAdmins(List<AuthorizationAttribute> admins) {
@@ -49,13 +49,13 @@ public class AuthorizationBuilder {
     }
 
     public AuthorizationBuilder addAdmin(String dataType, String value) {
-        ArrayList<AuthorizationAttribute> newAdmins = Optional.ofNullable(admins).map(ArrayList::new).orElse(new ArrayList<>());
+        List<AuthorizationAttribute> newAdmins = admins.stream().filter(aa -> !aa.equals(ANYONE)).collect(toList());
         newAdmins.add(new AuthorizationAttribute(dataType, value));
         return withAdmins(newAdmins);
     }
 
     public AuthorizationBuilder addReader(String dataType, String value) {
-        ArrayList<AuthorizationAttribute> newReaders = Optional.ofNullable(readers).map(ArrayList::new).orElse(new ArrayList<>());
+        List<AuthorizationAttribute> newReaders = readers.stream().filter(aa -> !aa.equals(ANYONE)).collect(toList());;
         newReaders.add(new AuthorizationAttribute(dataType, value));
         return withReaders(newReaders);
     }

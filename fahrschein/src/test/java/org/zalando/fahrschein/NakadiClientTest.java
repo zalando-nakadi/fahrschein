@@ -156,20 +156,22 @@ public class NakadiClientTest {
     public void shouldIncludeAuthorization() throws IOException {
         server.expectRequestTo("http://example.com/subscriptions", "POST")
                 .andExpectJsonPath("$.authorization", notNullValue())
+                .andExpectJsonPath("$.authorization.admins.size()", equalTo(2))
                 .andExpectJsonPath("$.authorization.admins[0].data_type", equalTo("user"))
                 .andExpectJsonPath("$.authorization.admins[0].value", equalTo("mmusterman"))
                 .andExpectJsonPath("$.authorization.admins[1].data_type", equalTo("service"))
                 .andExpectJsonPath("$.authorization.admins[1].value", equalTo("jdoe"))
-                .andExpectJsonPath("$.authorization.readers.[0].data_type", equalTo("*"))
-                .andExpectJsonPath("$.authorization.readers.[0].value", equalTo("*"))
-                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"default\",\"authorization\":{\"admins\":[{\"data_type\":\"user\",\"value\":\"mmusterman\"},{\"data_type\":\"service\",\"value\":\"jdoe\"}],\"readers\":[{\"data_type\":\"*\",\"value\":\"*\"}]},\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
+                .andExpectJsonPath("$.authorization.readers.size()", equalTo(1))
+                .andExpectJsonPath("$.authorization.readers.[0].data_type", equalTo("rick"))
+                .andExpectJsonPath("$.authorization.readers.[0].value", equalTo("astley"))
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"default\",\"authorization\":{\"admins\":[{\"data_type\":\"user\",\"value\":\"mmusterman\"},{\"data_type\":\"service\",\"value\":\"jdoe\"}],\"readers\":[{\"data_type\":\"rick\",\"value\":\"astley\"}]},\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
                 .setup();
 
         final Subscription subscription = client.subscription("nakadi-client-test", "foo")
                 .withAuthorization(authorization()
                         .addAdmin("user", "mmusterman")
                         .addAdmin("service", "jdoe")
-                        .withReaders(ANYONE)
+                        .addReader("rick", "astley")
                         .build())
                 .subscribe();
 
@@ -180,6 +182,32 @@ public class NakadiClientTest {
         assertEquals("mmusterman", subscription.getAuthorization().getAdmins().get(0).getValue());
         assertEquals("service", subscription.getAuthorization().getAdmins().get(1).getDataType());
         assertEquals("jdoe", subscription.getAuthorization().getAdmins().get(1).getValue());
+        assertEquals("rick", subscription.getAuthorization().getReaders().get(0).getDataType());
+        assertEquals("astley", subscription.getAuthorization().getReaders().get(0).getValue());
+    }
+
+    @Test
+    public void shouldIncludeAllowAllAuthorizationByDefault() throws IOException {
+        server.expectRequestTo("http://example.com/subscriptions", "POST")
+                .andExpectJsonPath("$.authorization", notNullValue())
+                .andExpectJsonPath("$.authorization.admins.size()", equalTo(1))
+                .andExpectJsonPath("$.authorization.admins[0].data_type", equalTo("*"))
+                .andExpectJsonPath("$.authorization.admins[0].value", equalTo("*"))
+                .andExpectJsonPath("$.authorization.readers.size()", equalTo(1))
+                .andExpectJsonPath("$.authorization.readers.[0].data_type", equalTo("*"))
+                .andExpectJsonPath("$.authorization.readers.[0].value", equalTo("*"))
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"id\":\"1234\",\"owning_application\":\"nakadi-client-test\",\"event_types\":[\"foo\"],\"consumer_group\":\"default\",\"authorization\":{\"admins\":[{\"data_type\":\"*\",\"value\":\"*\"}],\"readers\":[{\"data_type\":\"*\",\"value\":\"*\"}]},\"created_at\":\"2016-11-15T15:23:42.123+01:00\"}")
+                .setup();
+
+        final Subscription subscription = client.subscription("nakadi-client-test", "foo")
+                .withAuthorization(authorization().build())
+                .subscribe();
+
+        server.verify();
+
+        assertNotNull(subscription);
+        assertEquals("*", subscription.getAuthorization().getAdmins().get(0).getDataType());
+        assertEquals("*", subscription.getAuthorization().getAdmins().get(0).getValue());
         assertEquals("*", subscription.getAuthorization().getReaders().get(0).getDataType());
         assertEquals("*", subscription.getAuthorization().getReaders().get(0).getValue());
     }
