@@ -4,11 +4,13 @@ import javax.annotation.concurrent.Immutable;
 import java.util.List;
 import java.util.Objects;
 
+import static java.util.Collections.unmodifiableList;
+
 @Immutable
-public class Authorization {
+public final class Authorization {
 
     @Immutable
-    public static class AuthorizationAttribute {
+    public static final class AuthorizationAttribute {
 
         public static final AuthorizationAttribute ANYONE = new AuthorizationAttribute("*", "*");
 
@@ -49,8 +51,8 @@ public class Authorization {
     private final List<AuthorizationAttribute> readers;
 
     public Authorization(List<AuthorizationAttribute> admins, List<AuthorizationAttribute> readers) {
-        this.admins = admins;
-        this.readers = readers;
+        this.admins = unmodifiableList(admins);
+        this.readers = unmodifiableList(readers);
     }
 
     public List<AuthorizationAttribute> getAdmins() {
