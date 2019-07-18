@@ -11,7 +11,6 @@ import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.api.Response;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static java.util.Collections.singletonList;
 import static org.zalando.fahrschein.NakadiClientBuilder.wrapClientHttpRequestFactory;
+import static java.util.Collections.singletonList;
 
 public class ManagedCursorManager implements CursorManager {
 
@@ -73,8 +72,8 @@ public class ManagedCursorManager implements CursorManager {
     private final ObjectMapper objectMapper;
     private final Map<String, SubscriptionStream> streams;
 
-    public ManagedCursorManager(URI baseUri, RequestFactory clientHttpRequestFactory, AccessTokenProvider accessTokenProvider) {
-        this(baseUri, wrapClientHttpRequestFactory(clientHttpRequestFactory, accessTokenProvider), true);
+    public ManagedCursorManager(URI baseUri, RequestFactory clientHttpRequestFactory, AuthorizationProvider authorizationProvider) {
+        this(baseUri, wrapClientHttpRequestFactory(clientHttpRequestFactory, authorizationProvider), true);
     }
 
     public ManagedCursorManager(URI baseUri, RequestFactory clientHttpRequestFactory) {

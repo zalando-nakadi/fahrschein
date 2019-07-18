@@ -3,7 +3,6 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
-
 import javax.annotation.Nullable;
 import java.net.URI;
 
@@ -17,7 +16,7 @@ public final class NakadiClientBuilder {
     @Nullable
     private final ObjectMapper objectMapper;
     @Nullable
-    private final AccessTokenProvider accessTokenProvider;
+    private final AuthorizationProvider authorizationProvider;
     @Nullable
     private final RequestFactory clientHttpRequestFactory;
     @Nullable
@@ -27,28 +26,32 @@ public final class NakadiClientBuilder {
         this(baseUri, DefaultObjectMapper.INSTANCE, null, null, null);
     }
 
-    private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AccessTokenProvider accessTokenProvider, @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
+    private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider, @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
-        this.accessTokenProvider = accessTokenProvider;
+        this.authorizationProvider = authorizationProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
     }
 
     public NakadiClientBuilder withObjectMapper(ObjectMapper objectMapper) {
-        return new NakadiClientBuilder(baseUri, objectMapper, accessTokenProvider, clientHttpRequestFactory, cursorManager);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
     }
 
     public NakadiClientBuilder withAccessTokenProvider(AccessTokenProvider accessTokenProvider) {
-        return new NakadiClientBuilder(baseUri, objectMapper, accessTokenProvider, clientHttpRequestFactory, cursorManager);
+        return withAuthorizationProvider(accessTokenProvider);
+    }
+
+    public NakadiClientBuilder withAuthorizationProvider(AuthorizationProvider authorizationProvider) {
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
     }
 
     public NakadiClientBuilder withRequestFactory(RequestFactory clientHttpRequestFactory) {
-        return new NakadiClientBuilder(baseUri, objectMapper, accessTokenProvider, clientHttpRequestFactory, cursorManager);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
     }
 
     public NakadiClientBuilder withCursorManager(CursorManager cursorManager) {
-        return new NakadiClientBuilder(baseUri, objectMapper, accessTokenProvider, clientHttpRequestFactory, cursorManager);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
     }
 
     private RequestFactory defaultClientHttpRequestFactory() {
@@ -58,17 +61,17 @@ public final class NakadiClientBuilder {
         return clientHttpRequestFactory;
     }
 
-    static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AccessTokenProvider accessTokenProvider) {
+    static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
         RequestFactory requestFactory = new ProblemHandlingRequestFactory(delegate);
-        if (accessTokenProvider != null) {
-            requestFactory = new AuthorizedRequestFactory(requestFactory, accessTokenProvider);
+        if (authorizationProvider != null) {
+            requestFactory = new AuthorizedRequestFactory(requestFactory, authorizationProvider);
         }
 
         return requestFactory;
     }
 
     public NakadiClient build() {
-        final RequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory != null ? this.clientHttpRequestFactory : defaultClientHttpRequestFactory(), accessTokenProvider);
+        final RequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory != null ? this.clientHttpRequestFactory : defaultClientHttpRequestFactory(), authorizationProvider);
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
 
