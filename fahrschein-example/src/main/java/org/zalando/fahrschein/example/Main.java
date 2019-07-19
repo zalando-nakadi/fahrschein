@@ -51,6 +51,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Arrays.asList;
+import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
+import static org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute.ANYONE;
 
 public class Main {
 
@@ -104,6 +106,8 @@ public class Main {
         //simpleListen(objectMapper, listener);
 
         //persistentListen(objectMapper, listener);
+
+        //subscriptionCreateWithAuthorization(objectMapper, listener);
 
         //multiInstanceListen(objectMapper, listener);
     }
@@ -281,6 +285,27 @@ public class Main {
 
         nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
                 .readFromBegin(partitions)
+                .withObjectMapper(objectMapper)
+                .listen(SalesOrderPlaced.class, listener);
+    }
+
+    private static void subscriptionCreateWithAuthorization(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
+
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+                .withAccessTokenProvider(new ZignAccessTokenProvider())
+                .build();
+
+        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", SALES_ORDER_SERVICE_ORDER_PLACED)
+                .withConsumerGroup("fahrschein-demo")
+                .withAuthorization(authorization()
+                    .addAdmin("user", "you")
+                    .addAdmin("user", "your_friend")
+                    .addAdmin("user", "your_dog")
+                    .withReaders(ANYONE)
+                    .build())
+                .subscribe();
+
+        nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
                 .listen(SalesOrderPlaced.class, listener);
     }

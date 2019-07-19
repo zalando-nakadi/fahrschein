@@ -38,7 +38,7 @@ public class ManagedCursorManagerTest {
                 .andRespondWith(204)
                 .setup();
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
         cursorManager.addSubscription(subscription);
         cursorManager.addStreamId(subscription, "stream-id");
 
@@ -53,7 +53,7 @@ public class ManagedCursorManagerTest {
                 .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"items\":[{\"partition\":\"0\",\"offset\":\"10\"},{\"partition\":\"1\",\"offset\":\"20\"}]}")
                 .setup();
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now());
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
         cursorManager.addSubscription(subscription);
 
         final Collection<Cursor> cursors = cursorManager.getCursors("foo");

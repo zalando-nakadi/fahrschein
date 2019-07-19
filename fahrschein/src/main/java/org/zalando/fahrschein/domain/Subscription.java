@@ -15,13 +15,15 @@ public class Subscription {
     private final Set<String> eventTypes;
     private final String consumerGroup;
     private final OffsetDateTime createdAt;
+    private final Authorization authorization;
 
-    public Subscription(String id, String owningApplication, Set<String> eventTypes, String consumerGroup, OffsetDateTime createdAt) {
+    public Subscription(String id, String owningApplication, Set<String> eventTypes, String consumerGroup, OffsetDateTime createdAt, Authorization authorization) {
         this.id = id;
         this.owningApplication = owningApplication;
         this.eventTypes = unmodifiableSet(eventTypes == null ? emptySet() : new HashSet<>(eventTypes));
         this.consumerGroup = consumerGroup;
         this.createdAt = createdAt;
+        this.authorization = authorization;
     }
 
 
@@ -43,5 +45,9 @@ public class Subscription {
 
     public OffsetDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public Authorization getAuthorization() {
+        return authorization;
     }
 }
