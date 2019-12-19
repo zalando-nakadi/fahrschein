@@ -19,13 +19,10 @@ public class MetadataTest {
 
         final Metadata metadata = new Metadata(eventType, eid, occurredAt, receivedAt, flowId, Collections.emptyMap());
 
-        Assert.assertEquals(metadata.toString(),
-                "Metadata{" +
-                        "eventType='" + metadata.getEventType() + '\'' +
-                        ", eid='" + metadata.getEid() + '\'' +
-                        ", occurredAt=" + metadata.getOccurredAt() +
-                        ", receivedAt=" + metadata.getReceivedAt() +
-                        ", flowId='" + metadata.getFlowId() + '\'' +
-                        '}');
+        Assert.assertTrue(metadata.toString().contains(metadata.getEventType()));
+        Assert.assertTrue(metadata.toString().contains(metadata.getEid()));
+        Assert.assertTrue(metadata.toString().contains(metadata.getOccurredAt().toString()));
+        Assert.assertTrue(metadata.toString().contains(metadata.getReceivedAt().toString()));
+        Assert.assertTrue(metadata.toString().contains(metadata.getFlowId()));
     }
 }
