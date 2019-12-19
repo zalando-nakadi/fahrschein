@@ -64,4 +64,15 @@ public final class Metadata {
     public Map<String, String> getSpanCtx() {
         return spanCtx;
     }
+
+    @Override
+    public String toString() {
+        return "Metadata{" +
+                "eventType='" + eventType + '\'' +
+                ", eid='" + eid + '\'' +
+                ", occurredAt=" + occurredAt +
+                ", receivedAt=" + receivedAt +
+                ", flowId='" + flowId + '\'' +
+                '}';
+    }
 }
