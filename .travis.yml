@@ -3,6 +3,7 @@ sudo: false
 jdk:
   - oraclejdk8
 install: true
+dist: trusty
 env:
   matrix:
     - VERSION_JACKSON='-Dversion.jackson=2.6.7' PROJECTS='-pl !fahrschein-typeresolver,!fahrschein-example'
