@@ -260,6 +260,22 @@ class NakadiReader<T> implements IORunnable {
         return new Cursor(partition, offset, eventType, cursorToken);
     }
 
+    private void logInfo(JsonParser parser) throws IOException {
+        expectToken(parser, JsonToken.START_OBJECT);
+        while(parser.nextToken() != JsonToken.END_OBJECT) {
+            final String x = parser.getCurrentName();
+            switch (x) {
+                case "debug":
+                    LOG.info("STREAM DEBUG: {}", parser.nextTextValue());
+                    break;
+                default:
+                    parser.nextToken();
+                    parser.skipChildren();
+                    break;
+            }
+        }
+    }
+
     @Override
     public void run() throws IOException {
         try {
@@ -369,9 +385,7 @@ class NakadiReader<T> implements IORunnable {
                     break;
                 }
                 case "info": {
-                    LOG.debug("Skipping stream info in event batch");
-                    jsonParser.nextToken();
-                    jsonParser.skipChildren();
+                    logInfo(jsonParser);
                     break;
                 }
                 default: {
