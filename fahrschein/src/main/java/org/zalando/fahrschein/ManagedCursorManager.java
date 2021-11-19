@@ -129,8 +129,12 @@ public class ManagedCursorManager implements CursorManager {
             } else if (status == 200) {
                 LOG.warn("Cursor for subscription [{}] to event [{}] in partition [{}] with offset [{}] was already committed", subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
             } else {
-                throw new IOException(String.format("Unexpected status code [%s] for subscription [%s] to event [%s]", status, subscriptionId, eventName));
+                throw new CursorOffsetCommitException(status, cursor, subscriptionId);
             }
+        } catch (IOProblem e) {
+            // in order to not have to refactor the entire ProblemHandlingRequest class,
+            // we are catching the error here and re-throwing a more specific one
+            throw new CursorOffsetCommitException(e.getStatusCode(), cursor, subscriptionId);
         }
     }
 
