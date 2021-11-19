@@ -29,8 +29,11 @@ public class CursorOffsetCommitException extends IOException {
         String msg;
         switch (statusCode) {
             case 422:
-                msg = String.format("Cursor for subscription [%s] to event [%s] in partition [%s] with offset [%s] failed to commit because of error 422 (Unprocessable Entity). This likely means that the processing time of the batch exceeded the timeout of 60 seconds. In such case, you may want to investigate the slowness in the processing, and/or reduce the batch size", 
-                                    nullSafe(subscriptionId), nullSafe(cursor.getEventType()), cursor.getPartition(), cursor.getOffset());
+                msg = String.format(
+                    "Cursor for subscription [%s] to event [%s] in partition [%s] with offset [%s] failed to commit because of error 422 (Unprocessable Entity). " +
+                    "This likely means that the processing time of the batch exceeded the timeout of 60 seconds. " + 
+                    "In such case, you may want to investigate the slowness in the processing, and/or reduce the batch size.", 
+                    nullSafe(subscriptionId), nullSafe(cursor.getEventType()), cursor.getPartition(), cursor.getOffset());
                 break;
             default: 
                 msg = String.format("Unexpected status code [%s] for subscription [%s] to event [%s]", 
