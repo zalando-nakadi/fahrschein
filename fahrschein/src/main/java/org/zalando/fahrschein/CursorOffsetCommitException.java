@@ -11,6 +11,13 @@ public class CursorOffsetCommitException extends IOException {
     private final Cursor cursor;
     private final String subscriptionId;
 
+    public CursorOffsetCommitException(int statusCode, Cursor cursor, String subscriptionId, IOException cause) {
+        super(formatMessage(statusCode, cursor, subscriptionId), cause);
+        this.statusCode = statusCode;
+        this.cursor = cursor;
+        this.subscriptionId = subscriptionId;
+    }
+
     public CursorOffsetCommitException(int statusCode, Cursor cursor, String subscriptionId) {
         super(formatMessage(statusCode, cursor, subscriptionId));
         this.statusCode = statusCode;

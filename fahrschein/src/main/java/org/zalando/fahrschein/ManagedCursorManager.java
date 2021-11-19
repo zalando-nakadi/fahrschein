@@ -134,7 +134,7 @@ public class ManagedCursorManager implements CursorManager {
         } catch (IOProblem e) {
             // in order to not have to refactor the entire ProblemHandlingRequest class,
             // we are catching the error here and re-throwing a more specific one
-            throw new CursorOffsetCommitException(e.getStatusCode(), cursor, subscriptionId);
+            throw new CursorOffsetCommitException(e.getStatusCode(), cursor, subscriptionId, e);
         }
     }
 
