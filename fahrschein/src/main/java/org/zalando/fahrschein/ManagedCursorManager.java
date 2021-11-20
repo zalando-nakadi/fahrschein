@@ -11,14 +11,18 @@ import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.api.Response;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.zalando.fahrschein.NakadiClientBuilder.wrapClientHttpRequestFactory;
 import static java.util.Collections.singletonList;
@@ -104,7 +108,7 @@ public class ManagedCursorManager implements CursorManager {
     }
 
     @Override
-    public void onSuccess(String eventName, Cursor cursor) throws IOException {
+    public void onSuccess(String eventName, Cursor cursor) throws IOException, CursorCommitException {
 
         final SubscriptionStream stream = streams.get(eventName);
         final String subscriptionId = stream.getSubscriptionId();
@@ -129,13 +133,18 @@ public class ManagedCursorManager implements CursorManager {
             } else if (status == 200) {
                 LOG.warn("Cursor for subscription [{}] to event [{}] in partition [{}] with offset [{}] was already committed", subscriptionId, eventName, cursor.getPartition(), cursor.getOffset());
             } else {
-                throw new CursorOffsetCommitException(status, cursor, subscriptionId);
+                throw new CursorCommitException(status, cursor, subscriptionId, inputStreamToString(response.getBody()));
             }
         } catch (IOProblem e) {
             // in order to not have to refactor the entire ProblemHandlingRequest class,
             // we are catching the error here and re-throwing a more specific one
-            throw new CursorOffsetCommitException(e.getStatusCode(), cursor, subscriptionId, e);
+            throw new CursorCommitException(e.getStatusCode(), cursor, subscriptionId, e);
         }
+    }
+
+    private String inputStreamToString(InputStream inputStream) {
+        return new BufferedReader(new InputStreamReader(inputStream))
+            .lines().collect(Collectors.joining("\n"));
     }
 
     @Override
