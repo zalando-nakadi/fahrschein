@@ -17,6 +17,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 public class ManagedCursorManagerTest {
     private MockServer server;
@@ -45,6 +48,61 @@ public class ManagedCursorManagerTest {
         cursorManager.onSuccess("foo", new Cursor("0", "10", "foo", "token"));
 
         server.verify();
+    }
+
+    @Test
+    public void shouldThrowCursorCommitExceptionWhenServerReturnsError() throws IOException {
+        int errorCode = 422;
+        String streamId = "stream-id";
+        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", "POST")
+                .andExpectHeader("X-Nakadi-StreamId", streamId)
+                .andExpectJsonPath("$.items[0].partition", equalTo("0"))
+                .andExpectJsonPath("$.items[0].offset", equalTo("10"))
+                .andExpectJsonPath("$.items[0].cursor_token", equalTo("token"))
+                .andRespondWith(errorCode, ContentType.TEXT_PLAIN, "Session with stream id " + streamId + " not found")
+                .setup();
+
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
+        cursorManager.addSubscription(subscription);
+        cursorManager.addStreamId(subscription, streamId);
+        Cursor cursor = new Cursor("0", "10", "foo", "token");
+        try {
+            cursorManager.onSuccess("foo", cursor);
+            fail(CursorCommitException.class + " was not thrown");
+        } catch (CursorCommitException e) {
+            assertEquals(errorCode, e.getStatusCode());
+            assertEquals(cursor, e.getCursor());
+            assertEquals(subscription.getId(), e.getSubscriptionId());
+            assertNotNull(e.getCause());
+        } finally {
+            server.verify();
+        }
+    }
+
+    @Test
+    public void shouldThrowCursorCommitExceptionWhenServerReturnsErrorUnknownCode() throws IOException {
+        int errorCode = 201;
+        String streamId = "stream-id";
+        server.expectRequestTo("http://example.com/subscriptions/1234/cursors", "POST")
+                .andExpectHeader("X-Nakadi-StreamId", streamId)
+                .andRespondWith(errorCode, ContentType.TEXT_PLAIN, "Session with stream id " + streamId + " not found")
+                .setup();
+
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
+        cursorManager.addSubscription(subscription);
+        cursorManager.addStreamId(subscription, streamId);
+        Cursor cursor = new Cursor("0", "10", "foo", "token");
+        try {
+            cursorManager.onSuccess("foo", cursor);
+            fail(CursorCommitException.class + " was not thrown");
+        } catch (CursorCommitException e) {
+            assertEquals(errorCode, e.getStatusCode());
+            assertEquals(cursor, e.getCursor());
+            assertEquals(subscription.getId(), e.getSubscriptionId());
+            assertNull(e.getCause());
+        } finally {
+            server.verify();
+        }
     }
 
     @Test
