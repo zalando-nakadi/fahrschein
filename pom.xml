@@ -53,7 +53,7 @@
         <version.spring>4.3.13.RELEASE</version.spring>
         <version.slf4j>1.7.25</version.slf4j>
         <version.log4j>2.7</version.log4j>
-        <version.mockito>2.13.0</version.mockito>
+        <version.mockito>2.28.2</version.mockito>
     </properties>
 
     <modules>
@@ -160,7 +160,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.7.201606060606</version>
+                <version>0.8.7</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>

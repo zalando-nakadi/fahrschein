@@ -1,0 +1,40 @@
+name: Build And Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      # https://github.com/actions/example-services/blob/master/.github/workflows/postgres-service.yml
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt-hotspot'
+          java-version: '11'
+          cache: 'maven'
+      - name: Test Default
+        run: mvn clean verify
+      - name: Test Ancient Jackson
+        run: mvn -Dversion.jackson=2.6.7 -pl !fahrschein-typeresolver,!fahrschein-example clean verify
+      - name: Test Historical Jackson
+        run: mvn -Dversion.jackson=2.7.9 -pl !fahrschein-typeresolver,!fahrschein-example clean verify
+      - name: Test Old Jackson
+        run: mvn -Dversion.jackson=2.7.9 -pl !fahrschein-typeresolver,!fahrschein-example clean verify
