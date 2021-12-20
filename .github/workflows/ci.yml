@@ -36,5 +36,3 @@ jobs:
         run: mvn -Dversion.jackson=2.6.7 -pl !fahrschein-typeresolver,!fahrschein-example clean verify
       - name: Test Historical Jackson
         run: mvn -Dversion.jackson=2.7.9 -pl !fahrschein-typeresolver,!fahrschein-example clean verify
-      - name: Test Old Jackson
-        run: mvn -Dversion.jackson=2.7.9 -pl !fahrschein-typeresolver,!fahrschein-example clean verify
