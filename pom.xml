@@ -65,6 +65,7 @@
         <version.slf4j>1.7.25</version.slf4j>
         <version.log4j>2.7</version.log4j>
         <version.mockito>2.28.2</version.mockito>
+        <version.junit>4.13.1</version.junit>
     </properties>
 
     <modules>
