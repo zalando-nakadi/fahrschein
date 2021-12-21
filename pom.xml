@@ -29,17 +29,29 @@
 
     <developers>
         <developer>
-            <name>Jörn Horstmann</name>
-            <email>joern.horstmann@zalando.de</email>
+            <name>Othon Crelier</name>
+            <email>othon.crelier@zalando.de</email>
+            <organization>Zalando SE</organization>
+            <organizationUrl>https://tech.zalando.com/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Malte Pickhan</name>
+            <email>malte.pickhan@zalando.de</email>
+            <organization>Zalando Payments GmbH</organization>
+            <organizationUrl>https://tech.zalando.com/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Oliver Trosien</name>
+            <email>oliver.trosien@zalando.de</email>
             <organization>Zalando SE</organization>
             <organizationUrl>https://tech.zalando.com/</organizationUrl>
         </developer>
     </developers>
 
     <scm>
-        <url>https://github.com/zalando-incubator/fahrschein</url>
-        <connection>scm:git:git@github.com:zalando-incubator/fahrschein.git</connection>
-        <developerConnection>scm:git:git@github.com:zalando-incubator/fahrschein.git</developerConnection>
+        <url>https://github.com/zalando-nakadi/fahrschein</url>
+        <connection>scm:git:git@github.com:zalando-nakadi/fahrschein.git</connection>
+        <developerConnection>scm:git:git@github.com:zalando-nakadi/fahrschein.git</developerConnection>
     </scm>
 
     <distributionManagement>
