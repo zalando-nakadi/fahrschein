@@ -60,7 +60,7 @@ public class NakadiClient {
         }
     }
 
-    public <T> void publish(String eventName, List<T> events) throws IOException {
+    public <T> void publish(String eventName, List<T> events) throws EventPublishingException, IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events", eventName));
         final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
 
