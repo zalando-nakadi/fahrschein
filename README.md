@@ -18,7 +18,7 @@
     - No unnecessary buffering or line-based processing, causing less garbage
     - Less garbage and higher performance
     - No required base classes for events
- - Support for both high-level (subscription) and low-level apis
+ - Support for both high-level (subscription) and low-level APIs
  - Pluggable HTTP client implementations
 
 ## Installation
@@ -251,7 +251,16 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
 
 If you have questions, concerns, bug reports, etc, please file an issue in this repository's issue tracker.
 
+## Local development
+
+For local development, Fahrschein requires:
+
+* A local installation of JDK8
+* Any recent version of Maven
+* A PostgreSQL 13 installation listening on `localhost:5432` with user `postgres` and password `postgres`. For example via `docker run -p 5432:5432 --name fahrschein-postgres -e POSTGRES_PASSWORD=postgres -d postgres:13`
+
+When developing, make sure to run unit and integration tests with `mvn verify`. Integration tests can be skipped with `-DskipITs=true`.
+
 ## Getting involved
 
-To contribute, simply make a pull request and add a brief description (1-2 sentences) of your addition or change.
-For more details check the [contribution guidelines](CONTRIBUTING.md).
+Check the [contribution guidelines](CONTRIBUTING.md) if you want to get involved in Fahrschein development.
