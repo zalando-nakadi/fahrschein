@@ -1,0 +1,30 @@
+name: release-to-maven-central
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version'
+        required: true
+        default: '2.4.0'
+      next_version:
+        description: 'Next version'
+        required: true
+        default: '2.4.0'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Java for Maven Version iteration
+        uses: actions/setup-java@v2
+      - run: |
+          echo "Release version ${{ github.event.inputs.release_version }}!"
+          # release
+          mvn scm:check-local-modification versions:set -DnewVersion=${{ github.event.inputs.release_version }} scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Release ${{ github.event.inputs.release_version }}"
+
+          mvn -Prelease clean scm:tag deploy
+
+          # next development version
+          mvn versions:set -DnewVersion=${{ github.event.inputs.next_version }} scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Develop ${{ github.event.inputs.next_version }}"
+
