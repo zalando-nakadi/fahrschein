@@ -23,59 +23,6 @@
                     <failIfNoTests>false</failIfNoTests>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>sql-maven-plugin</artifactId>
-                <version>1.4</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.postgresql</groupId>
-                        <artifactId>postgresql</artifactId>
-                        <version>9.4.1208</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <driver>org.postgresql.Driver</driver>
-                    <username>postgres</username>
-                    <password>postgres</password>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>create-db</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipITs}</skip>
-                            <url>jdbc:postgresql://localhost:5432/postgres</url>
-                            <autocommit>true</autocommit>
-                            <sqlCommand>DROP DATABASE IF EXISTS local_nakadi_cursor_db; CREATE DATABASE local_nakadi_cursor_db;</sqlCommand>
-                            <onError>continue</onError>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>create-tables-and-sprocs</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>execute</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${skipITs}</skip>
-                            <url>jdbc:postgresql://localhost:5432/local_nakadi_cursor_db</url>
-                            <delimiterType>row</delimiterType>
-                            <keepFormat>true</keepFormat>
-                            <orderFile>ascending</orderFile>
-                            <fileset>
-                                <basedir>${basedir}/src/main/resources/org/zalando/fahrschein/jdbc</basedir>
-                                <includes>
-                                    <include>**/*.sql</include>
-                                </includes>
-                            </fileset>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -110,6 +57,14 @@
             <version>${version.junit}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>8.4.1</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
@@ -168,6 +123,12 @@
         </dependency>
 
         <!--database driver and connection pool for tests-->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.16.2</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>

@@ -257,9 +257,9 @@ For local development, Fahrschein requires:
 
 * A local installation of JDK8
 * Any recent version of Maven
-* A PostgreSQL 13 installation listening on `localhost:5432` with user `postgres` and password `postgres`. For example via `docker run -p 5432:5432 --name fahrschein-postgres -e POSTGRES_PASSWORD=postgres -d postgres:13`
+* A local Docker installation for running integration tests
 
-When developing, make sure to run unit and integration tests with `mvn verify`. Integration tests can be skipped with `-DskipITs=true`.
+When developing, make sure to run unit and integration tests with `mvn verify`.
 
 ## Getting involved
 
