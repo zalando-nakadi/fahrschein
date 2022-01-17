@@ -26,5 +26,5 @@ jobs:
           mvn -Prelease clean scm:tag deploy
 
           # next development version
-          mvn versions:set -DnewVersion=${{ github.event.inputs.next_version }} scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Develop ${{ github.event.inputs.next_version }}"
+          mvn versions:set -DnewVersion=${{ github.event.inputs.next_version }} scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Develop ${{ github.event.inputs.next_version }} "
 
