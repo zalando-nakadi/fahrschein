@@ -24,8 +24,8 @@ A clear and concise description of what you expected to happen.
 If applicable, add logs to help demonstrate your problem.
 
 **Environment:**
- - OS: [e.g. Ubuntu, OS X, Windows]
  - JDK flavor and version [e.g. `OpenJDK Runtime Environment AdoptOpenJDK-11.0.11+9 (build 11.0.11+9)`]
+ - Full `java` command line (`cat /proc/$PID/cmdline` on Linux)
  - Fahrschein Version [e.g. `0.18.0`]
 
 **Additional context**
