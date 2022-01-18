@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Set up Java for Maven Version iteration
         uses: actions/setup-java@v2
+        with:
+          java-version: '11'
       - run: |
           echo "Release version ${{ github.event.inputs.release_version }}!"
           # release
