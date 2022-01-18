@@ -5,11 +5,9 @@ on:
       release_version:
         description: 'Release version'
         required: true
-        default: '2.4.0'
       next_version:
         description: 'Next version'
         required: true
-        default: '2.4.0'
 
 jobs:
   publish:
