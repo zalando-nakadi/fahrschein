@@ -102,6 +102,11 @@ nakadiClient.stream(eventName)
         .listen(SalesOrderPlaced.class, listener);
 ```
 
+### Fahrschein-JDBC Schema migration
+
+Fahrschein-JDBC provides Flyway schema migrations in the `fahrschein-db` resource folder. You can
+point Flyway to it using the `resources` configuration.
+
 ## Using multiple partitions and multiple consumers
 
 With the `PartitionManager` api it is possible to coordinate between multiple nodes of one application, so that only one node is consuming events from a partition at the same time.

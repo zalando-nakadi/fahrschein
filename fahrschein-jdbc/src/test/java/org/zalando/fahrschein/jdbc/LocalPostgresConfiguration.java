@@ -24,7 +24,7 @@ public class LocalPostgresConfiguration {
 
     static {
         db.start();
-        Flyway flyway = Flyway.configure().dataSource(db.getJdbcUrl(), db.getUsername(), db.getPassword()).load();
+        Flyway flyway = Flyway.configure().locations("fahrschein-db").dataSource(db.getJdbcUrl(), db.getUsername(), db.getPassword()).load();
         flyway.migrate();
     }
 
