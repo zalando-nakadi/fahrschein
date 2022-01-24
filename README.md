@@ -105,7 +105,7 @@ nakadiClient.stream(eventName)
 ### Fahrschein-JDBC Schema migration
 
 Fahrschein-JDBC provides Flyway schema migrations in the `fahrschein-db` resource folder. You can
-point Flyway to it using the `resources` configuration.
+point Flyway to it using the [`resources`](https://flywaydb.org/documentation/configuration/parameters/locations) configuration parameter.
 
 ## Using multiple partitions and multiple consumers
 
