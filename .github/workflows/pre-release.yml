@@ -18,13 +18,8 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
+          distribution: 'adopt'
       - run: |
-          echo "Release version ${{ github.event.inputs.release_version }}!"
-          # release
           mvn scm:check-local-modification versions:set -DnewVersion=${{ github.event.inputs.release_version }} scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Release ${{ github.event.inputs.release_version }}"
-
           mvn -Prelease clean scm:tag deploy
-
-          # next development version
           mvn versions:set -DnewVersion=${{ github.event.inputs.next_version }} scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Develop ${{ github.event.inputs.next_version }} "
-
