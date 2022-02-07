@@ -1,8 +1,7 @@
 name: Publish package to the Maven Central Repository and GitHub Packages
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [created]
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -23,4 +22,4 @@ jobs:
           gpg_passphrase: ${{ secrets.GPG_PASSPHRASE }}
           nexus_username: ${{ secrets.OSSRH_USERNAME }}
           nexus_password: ${{ secrets.OSSRH_TOKEN }}
-          maven_args: -DskipITs=true
+          maven_args: -DskipITs=true -Prelease
