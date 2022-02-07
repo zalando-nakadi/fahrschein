@@ -78,11 +78,16 @@ cursorManager.fromNewestAvailableOffsets(eventName, partitions);
 cursorManager.updatePartitions(eventName, partitions);
 ```
 
-## Using the low-level api
+## Using Nakadi's Low-level API
 
-*Please do not use the low-level api, as it is deprecated.*
+*Please do not use the Low-level API, as it is deprecated by Nakadi.*
 
-The low-level api requires local persistence of partition offsets. There are persistent `CursorManager` implementations using either Postgres or Redis.
+The Low-level API requires local persistence of partition offsets.
+There are currently three persistent `CursorManager` implementations: InMemory, Postgres and Redis.
+
+!!! warning
+    Postgres and Redis cursor managers are DEPRECATED and will be
+    removed in an upcoming version of Fahrschein.
 
 ```java
 final HikariConfig hikariConfig = new HikariConfig();
