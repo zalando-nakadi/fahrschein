@@ -12,6 +12,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Deprecated for removal. Externally managing Nakadi cursors is not recommended
+ * practice, not useful, and not really seen in the field.
+ */
+@Deprecated
 public class RedisCursorManager implements CursorManager {
     private static final Logger LOG = LoggerFactory.getLogger(RedisCursorManager.class);
 
