@@ -1,0 +1,10 @@
+{
+"name": "order.ORDER_RECEIVED",
+"owning_application": "order-service",
+"category": "undefined",
+"partition_strategy": "random",
+"schema": {
+"type": "json_schema",
+"schema": "{ \"properties\": { \"order_number\": { \"type\": \"string\" } } }"
+}
+}
