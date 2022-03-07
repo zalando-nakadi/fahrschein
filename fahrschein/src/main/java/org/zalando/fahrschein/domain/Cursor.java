@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
+import java.util.Objects;
 
 @Immutable
 public final class Cursor {
@@ -71,4 +72,16 @@ public final class Cursor {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Cursor cursor = (Cursor) o;
+        return Objects.equals(partition, cursor.partition) && Objects.equals(offset, cursor.offset) && Objects.equals(eventType, cursor.eventType) && Objects.equals(cursorToken, cursor.cursorToken);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(partition, offset, eventType, cursorToken);
+    }
 }
