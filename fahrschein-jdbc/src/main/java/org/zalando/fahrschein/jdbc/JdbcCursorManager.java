@@ -14,6 +14,11 @@ import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
+/**
+ * Deprecated for removal. Externally managing Nakadi cursors is not recommended
+ * practice, not useful, and not really seen in the field.
+ */
+@Deprecated
 public class JdbcCursorManager implements CursorManager {
 
     private static final String FIND_BY_EVENT_NAME = "SELECT * FROM %snakadi_cursor_find_by_event_name(?, ?)";

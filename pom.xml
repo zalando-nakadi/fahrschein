@@ -6,7 +6,7 @@
 
     <groupId>org.zalando</groupId>
     <artifactId>fahrschein-parent</artifactId>
-    <version>0.19.0-SNAPSHOT</version>
+    <version>0.19.0</version>
     <packaging>pom</packaging>
 
     <name>Fahrschein Parent</name>
@@ -239,6 +239,12 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -249,7 +255,7 @@
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
-                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>true</autoReleaseAfterClose>
                         </configuration>
                     </plugin>
