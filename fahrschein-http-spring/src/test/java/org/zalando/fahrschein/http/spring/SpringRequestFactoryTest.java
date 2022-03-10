@@ -1,8 +1,10 @@
-package org.zalando.fahrschein.http.simple;
+package org.zalando.fahrschein.http.spring;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import okhttp3.OkHttpClient;
+import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -20,7 +23,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -32,7 +37,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SimpleRequestFactoryTest {
+public class SpringRequestFactoryTest {
 
     static HttpServer server;
     static URI serverAddress;
@@ -41,65 +46,13 @@ public class SimpleRequestFactoryTest {
     public static void startServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress("localhost", 0), 1);
         serverAddress = URI.create("http://localhost:" + server.getAddress().getPort());
-        server.setExecutor(Executors.newSingleThreadExecutor());
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        server.setExecutor(executor);
         server.start();
     }
 
     @Captor
     public ArgumentCaptor<HttpExchange> exchangeCaptor;
-
-    @Test
-    public void testGetRequest() throws IOException {
-        // given
-        String expectedResponse = "{}";
-        HttpHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(expectedResponse));
-        server.createContext("/get", spy);
-
-        // when
-        RequestFactory f = getRequestFactory();
-        f.disableContentCompression();
-        Request r = f.createRequest(serverAddress.resolve("/get"), "GET");
-        Response executed = r.execute();
-        String actualResponse = readStream(executed.getBody());
-
-        // then
-        assertEquals(serverAddress.resolve("/get"), r.getURI());
-        Mockito.verify(spy).handle(exchangeCaptor.capture());
-        HttpExchange capturedArgument = exchangeCaptor.<HttpExchange> getValue();
-        assertEquals("GET", capturedArgument.getRequestMethod());
-        assertEquals(200, executed.getStatusCode());
-        assertEquals("OK", executed.getStatusText());
-        assertEquals(expectedResponse, actualResponse);
-    }
-
-    @Test
-    public void testPostRequest() throws IOException {
-        // given
-        String requestBody = "{}";
-        String responseBody = "{}";
-        SimpleRequestResponseContentHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(responseBody));
-        server.createContext("/post", spy);
-
-        // when
-        SimpleRequestFactory f = new SimpleRequestFactory();
-        f.disableContentCompression();
-        Request r = f.createRequest(serverAddress.resolve("/post"), "POST");
-        r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
-        try (final OutputStream body = r.getBody()) {
-            body.write(requestBody.getBytes());
-        }
-        Response executed = r.execute();
-        String actualResponse = readStream(executed.getBody());
-
-        // then
-        Mockito.verify(spy).handle(exchangeCaptor.capture());
-        HttpExchange capturedArgument = exchangeCaptor.getValue();
-        assertEquals("POST", capturedArgument.getRequestMethod());
-        assertThat("no content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), nullValue());
-        assertEquals(URI.create("/post"), capturedArgument.getRequestURI());
-        assertEquals(requestBody, spy.getRequestBody());
-        assertEquals(responseBody, actualResponse);
-    }
 
     @Test
     public void testGzippedResponseBody() throws IOException {
@@ -109,7 +62,7 @@ public class SimpleRequestFactoryTest {
         server.createContext("/gzipped", spy);
 
         // when
-        RequestFactory f = getRequestFactory();
+        final RequestFactory f = defaultRequestFactory();
         f.disableContentCompression();
         Request r = f.createRequest(serverAddress.resolve("/gzipped"), "GET");
         Response executed = r.execute();
@@ -135,8 +88,11 @@ public class SimpleRequestFactoryTest {
         });
 
         // when
-        SimpleRequestFactory f = new SimpleRequestFactory();
-        f.setReadTimeout(1);
+        OkHttpClient client = new OkHttpClient.Builder()
+                .readTimeout(1, TimeUnit.MILLISECONDS)
+                .build();
+        OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
+        SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");
         r.execute();
     }
@@ -150,11 +106,11 @@ public class SimpleRequestFactoryTest {
         server.createContext("/gzipped-post", spy);
 
         // when
-        RequestFactory f = getRequestFactory();
+        final RequestFactory f = defaultRequestFactory();
         Request r = f.createRequest(serverAddress.resolve("/gzipped-post"), "POST");
         r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
         try (final OutputStream body = r.getBody()) {
-            body.write("{}".getBytes());
+            body.write(requestBody.getBytes());
         }
         Response executed = r.execute();
         String actualResponse = readStream(executed.getBody());
@@ -169,8 +125,13 @@ public class SimpleRequestFactoryTest {
         assertEquals(responseBody, actualResponse);
     }
 
-    private RequestFactory getRequestFactory() {
-        return new SimpleRequestFactory();
+    @NotNull
+    private RequestFactory defaultRequestFactory() {
+        final OkHttpClient client = new OkHttpClient.Builder()
+                .build();
+        final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
+        final SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory);
+        return f;
     }
 
     static String readStream(InputStream stream) throws IOException {
@@ -197,18 +158,20 @@ public class SimpleRequestFactoryTest {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-
-            if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("gzip")) {
-                requestBody = readStream(new GZIPInputStream(exchange.getRequestBody()));
-            } else {
-                requestBody = readStream(exchange.getRequestBody());
+            try {
+                if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("gzip")) {
+                    requestBody = readStream(new GZIPInputStream(exchange.getRequestBody()));
+                } else {
+                    requestBody = readStream(exchange.getRequestBody());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             byte[] bytes = responseBody.getBytes(UTF_8);
             exchange.sendResponseHeaders(200, bytes.length);
             OutputStream responseBody = exchange.getResponseBody();
             responseBody.write(bytes);
-            responseBody.flush();
             responseBody.close();
         }
     }
@@ -235,5 +198,4 @@ public class SimpleRequestFactoryTest {
             responseBody.close();
         }
     }
-
 }

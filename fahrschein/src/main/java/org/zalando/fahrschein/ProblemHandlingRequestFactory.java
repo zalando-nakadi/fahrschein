@@ -14,6 +14,11 @@ class ProblemHandlingRequestFactory implements RequestFactory {
     }
 
     @Override
+    public void disableContentCompression() {
+        delegate.disableContentCompression();
+    }
+
+    @Override
     public Request createRequest(URI uri, String method) throws IOException {
         final Request request = delegate.createRequest(uri, method);
         return new ProblemHandlingRequest(request);

@@ -13,6 +13,9 @@ import java.util.zip.GZIPInputStream;
  * {@link Response} implementation that uses standard JDK facilities.
  * Obtained via {@link SimpleBufferingRequest#execute()}.
  *
+ * See original
+ * <a href="https://github.com/spring-projects/spring-framework/blob/main/spring-web/src/main/java/org/springframework/http/client/SimpleClientHttpResponse.java">code from Spring Framework</a>.
+ *
  * @author Arjen Poutsma
  * @author Brian Clozel
  * @author Joern Horstmann
@@ -84,5 +87,4 @@ final class SimpleResponse implements Response {
             }
         }
     }
-
 }

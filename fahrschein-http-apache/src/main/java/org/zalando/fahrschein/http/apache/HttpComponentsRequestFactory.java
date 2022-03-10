@@ -35,6 +35,7 @@ import java.net.URI;
 public class HttpComponentsRequestFactory implements RequestFactory {
 
     private final HttpClient httpClient;
+    private boolean contentCompression = true;
 
     /**
      * Create a new instance of the {@code HttpComponentsRequestFactory}
@@ -49,10 +50,15 @@ public class HttpComponentsRequestFactory implements RequestFactory {
     }
 
     @Override
+    public void disableContentCompression() {
+        this.contentCompression = false;
+    }
+
+    @Override
     public Request createRequest(URI uri, String httpMethod) throws IOException {
         final HttpUriRequest httpRequest = createHttpUriRequest(httpMethod, uri);
 
-        return new HttpComponentsRequest(httpClient, httpRequest);
+        return new HttpComponentsRequest(httpClient, httpRequest, contentCompression);
     }
 
     /**

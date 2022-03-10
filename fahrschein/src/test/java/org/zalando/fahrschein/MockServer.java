@@ -160,6 +160,11 @@ class MockServer implements RequestFactory {
     }
 
     @Override
+    public void disableContentCompression() {
+        requestFactory.disableContentCompression();
+    }
+
+    @Override
     public Request createRequest(URI uri, String method) throws IOException {
         return requestFactory.createRequest(uri, method);
     }

@@ -12,10 +12,14 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * {@link Request} implementation that uses standard JDK facilities to
  * execute buffered requests. Created via the {@link SimpleRequestFactory}.
+ *
+ * See original
+ * <a href="https://github.com/spring-projects/spring-framework/blob/main/spring-web/src/main/java/org/springframework/http/client/SimpleBufferingClientHttpRequest.java">code from Spring Framework</a>.
  *
  * @author Arjen Poutsma
  * @author Juergen Hoeller
@@ -26,12 +30,14 @@ final class SimpleBufferingRequest implements Request {
 
     private final HttpURLConnection connection;
     private final Headers headers;
+    private final Boolean contentCompression;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    SimpleBufferingRequest(HttpURLConnection connection) {
+    SimpleBufferingRequest(HttpURLConnection connection, Boolean contentCompression) {
         this.connection = connection;
         this.headers = new HeadersImpl();
+        this.contentCompression = contentCompression;
     }
 
     @Override
@@ -52,7 +58,6 @@ final class SimpleBufferingRequest implements Request {
         final int size = this.bufferedOutput != null ? this.bufferedOutput.size() : 0;
 
         final long contentLength = this.headers.getContentLength();
-
         if (contentLength >= 0 && contentLength != size) {
             throw new IllegalStateException("Invalid Content-Length header [" + contentLength + "], request size is [" + size + "]");
         }
@@ -66,12 +71,17 @@ final class SimpleBufferingRequest implements Request {
                 }
             }
         }
+
+        // allow gzip-compression from server response
         if (connection.getRequestProperty("Accept-Encoding") == null) {
             connection.setRequestProperty("Accept-Encoding", "gzip");
         }
 
         if (this.connection.getDoOutput()) {
             this.connection.setFixedLengthStreamingMode(size);
+            if(this.contentCompression && this.connection.getRequestProperty("Content-Encoding") == null) {
+                connection.setRequestProperty("Content-Encoding", "gzip");
+            }
         }
 
         this.connection.connect();
@@ -100,6 +110,9 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
+            if (this.contentCompression) {
+                return new GZIPOutputStream(this.bufferedOutput);
+            }
         }
         return this.bufferedOutput;
     }
