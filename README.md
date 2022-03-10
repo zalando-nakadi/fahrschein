@@ -20,6 +20,7 @@
     - No required base classes for events
  - Support for both high-level (subscription) and low-level APIs
  - Pluggable HTTP client implementations
+ - Gzip encoding for publishing and consuming events, enabled by default
 
 ## Installation
 
@@ -245,7 +246,21 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
 
 ```
 
-**Note:** The implementations from spring framework don't handle closing of streams as expected. They will try to consume remaining data, which will usually time out when nakadi does not receive a commit.
+**Note:** The implementations from the Spring framework don't handle closing of streams as expected. They will try to consume remaining data, which will usually time out when nakadi does not receive a commit.
+
+## Content-Compression
+
+Fahrschein handles content compression transparently to the API consumer, and mostly independently of the actual HTTP client implementation. Since version `0.20.0` it is enabled by default, to both compress HTTP POST bodies for event-publishing, as well as requesting compression from the server when consuming events.
+
+### Consuming
+
+For event consumption the underlying HTTP client implementations send `Accept-Encoding` headers indicating the supported compression algorithm. At the time of writing, the default settings for all tested client implementations support `gzip` compression.
+
+If this is undesired, please add the following header to your request: `Accept-Encoding: identity`.
+
+### Publishing
+
+For event publishing, the `Request` body gets gzip-encoded by Fahrschein. To disable compression of the POST body, you need to call `disableContentCompression()` on your `RequestFactory`.
 
 
 ## Fahrschein compared to other Nakadi client libraries
