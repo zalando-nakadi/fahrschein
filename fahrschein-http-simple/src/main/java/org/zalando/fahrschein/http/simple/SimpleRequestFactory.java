@@ -58,11 +58,12 @@ public class SimpleRequestFactory implements RequestFactory {
      * @param url   the URL to open a connection to
      * @return the opened connection
      * @throws IOException in case of I/O errors
+     * @throws IllegalArgumentException in case {{@link java.net.URL#openConnection()}} does not lead to a HttpURLConnection
      */
     private HttpURLConnection openConnection(URL url) throws IOException {
         URLConnection urlConnection = url.openConnection();
         if (!(urlConnection instanceof HttpURLConnection)) {
-            throw new IllegalStateException("Connection should be an HttpURLConnection");
+            throw new IllegalArgumentException("Connection should be an HttpURLConnection");
         }
         return (HttpURLConnection) urlConnection;
     }

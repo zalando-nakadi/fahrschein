@@ -66,6 +66,9 @@ final class SimpleBufferingRequest implements Request {
                 }
             }
         }
+        if (connection.getRequestProperty("Accept-Encoding") == null) {
+            connection.setRequestProperty("Accept-Encoding", "gzip");
+        }
 
         if (this.connection.getDoOutput()) {
             this.connection.setFixedLengthStreamingMode(size);
