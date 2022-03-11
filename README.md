@@ -107,6 +107,11 @@ nakadiClient.stream(eventName)
         .listen(SalesOrderPlaced.class, listener);
 ```
 
+### Fahrschein-JDBC Schema migration
+
+Fahrschein-JDBC provides Flyway schema migrations in the `fahrschein-db` resource folder. You can
+point Flyway to it using the [`resources`](https://flywaydb.org/documentation/configuration/parameters/locations) configuration parameter.
+
 ## Using multiple partitions and multiple consumers
 
 With the `PartitionManager` api it is possible to coordinate between multiple nodes of one application, so that only one node is consuming events from a partition at the same time.
@@ -262,9 +267,9 @@ For local development, Fahrschein requires:
 
 * A local installation of JDK8
 * Any recent version of Maven
-* A PostgreSQL 13 installation listening on `localhost:5432` with user `postgres` and password `postgres`. For example via `docker run -p 5432:5432 --name fahrschein-postgres -e POSTGRES_PASSWORD=postgres -d postgres:13`
+* A local Docker installation for running integration tests
 
-When developing, make sure to run unit and integration tests with `mvn verify`. Integration tests can be skipped with `-DskipITs=true`.
+When developing, make sure to run unit and integration tests with `mvn verify`.
 
 ## Getting involved
 

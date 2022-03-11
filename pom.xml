@@ -79,6 +79,7 @@
         <version.log4j>2.17.1</version.log4j>
         <version.mockito>2.28.2</version.mockito>
         <version.junit>4.13.1</version.junit>
+        <version.testcontainers>1.16.2</version.testcontainers>
     </properties>
 
     <modules>
@@ -149,38 +150,6 @@
                         <version>2.19.1</version>
                     </dependency>
                 </dependencies>
-                <configuration>
-                    <failIfNoTests>true</failIfNoTests>
-                    <includes>
-                        <include>**/*Test.java</include>
-                    </includes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit47</artifactId>
-                        <version>2.19.1</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <failIfNoTests>false</failIfNoTests>
-                    <includes>
-                        <include>**/*IT.java</include>
-                    </includes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>

@@ -1,8 +1,9 @@
 package org.zalando.fahrschein.redis;
 
-import org.junit.Ignore;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.testcontainers.containers.GenericContainer;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 import redis.clients.jedis.JedisShardInfo;
@@ -18,13 +19,16 @@ public class RedisCursorManagerIT {
 
     public static final String EVENT_TYPE_NAME = generateUniqueEventType();
 
+    @ClassRule
+    public static GenericContainer redis = new GenericContainer<>("redis:latest")
+            .withExposedPorts(6379);
+
     @Test
-    @Ignore("Meant for local testing. You need a running redis cluster on localhost.")
     public void connectToRedisAndUseCursorManager() throws IOException {
 
         final JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
         jedisConnectionFactory.setUsePool(true);
-        jedisConnectionFactory.setShardInfo(new JedisShardInfo("localhost", 6379));
+        jedisConnectionFactory.setShardInfo(new JedisShardInfo(redis.getHost(), redis.getFirstMappedPort()));
         final CursorManager cursorManager = new RedisCursorManager(jedisConnectionFactory, "fahrschein_redis_test");
 
         Collection<Cursor> cursors;
