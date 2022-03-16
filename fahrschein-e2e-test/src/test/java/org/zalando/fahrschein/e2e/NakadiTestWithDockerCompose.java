@@ -10,6 +10,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 
 import java.io.File;
@@ -19,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
@@ -27,7 +29,7 @@ public abstract class NakadiTestWithDockerCompose {
 
     private static final boolean COMPOSE_PROVIDED = System.getProperty("COMPOSE_PROVIDED") != null;
     private static final Logger LOG = LoggerFactory.getLogger("docker-compose");
-    private static final Slf4jLogConsumer LOG_CONSUMER = new Slf4jLogConsumer(LOG);
+    private static final Consumer<OutputFrame> LOG_CONSUMER = new Slf4jLogConsumer(LOG);
 
     public static DockerComposeContainer<?> compose;
 

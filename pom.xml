@@ -6,12 +6,12 @@
 
     <groupId>org.zalando</groupId>
     <artifactId>fahrschein-parent</artifactId>
-    <version>0.19.0</version>
+    <version>0.20.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Fahrschein Parent</name>
     <description>A java client for the nakadi event bus</description>
-    <url>https://github.com/zalando-incubator/fahrschein</url>
+    <url>https://github.com/zalando-nakadi/fahrschein</url>
 
     <organization>
         <name>Zalando SE</name>
@@ -88,7 +88,6 @@
         <module>fahrschein-redis</module>
         <module>fahrschein-inmemory</module>
         <module>fahrschein-metrics-dropwizard</module>
-        <module>fahrschein-e2e-test</module>
         <module>fahrschein-example</module>
         <module>fahrschein-test-support</module>
         <module>fahrschein-typeresolver</module>
@@ -96,6 +95,7 @@
         <module>fahrschein-http-simple</module>
         <module>fahrschein-http-apache</module>
         <module>fahrschein-http-spring</module>
+        <module>fahrschein-e2e-test</module>
     </modules>
 
     <build>
