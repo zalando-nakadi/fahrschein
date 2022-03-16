@@ -271,6 +271,14 @@ For local development, Fahrschein requires:
 
 When developing, make sure to run unit and integration tests with `mvn verify`.
 
+The `fahrschein-example` module has end-to-end tests with `docker-compose`. If you wish to leave the Docker containers running between tests, you can also bring up docker-compose manually using its [docker-compose.yaml](fahrschein-example/src/test/resources/docker-compose.yaml), before running the tests.
+
+```sh
+docker-compose -f fahrschein-example/src/test/resources/docker-compose.yaml up -d
+mvn verify -DCOMPOSE_PROVIDED
+```
+
+
 ## Getting involved
 
 Check the [contribution guidelines](CONTRIBUTING.md) if you want to get involved in Fahrschein development.
