@@ -1,4 +1,4 @@
-package e2e;
+package org.zalando.fahrschein.e2e;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;

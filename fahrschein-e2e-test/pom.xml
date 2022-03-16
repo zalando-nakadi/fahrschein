@@ -10,20 +10,9 @@
         <version>0.19.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>fahrschein-example</artifactId>
+    <artifactId>fahrschein-e2e-test</artifactId>
 
-    <name>Fahrschein Example</name>
-
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <failIfNoTests>false</failIfNoTests>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+    <name>Fahrschein End-to-End Tests</name>
 
     <dependencies>
         <dependency>
@@ -53,16 +42,6 @@
         </dependency>
         <dependency>
             <groupId>org.zalando</groupId>
-            <artifactId>fahrschein-inmemory</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>fahrschein-jdbc</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.zalando</groupId>
             <artifactId>fahrschein-typeresolver</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -85,12 +64,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>jackson-datatype-money</artifactId>
-            <version>0.6.0</version>
-        </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -117,16 +90,24 @@
             <version>${version.slf4j}</version>
         </dependency>
 
+        <!-- testing -->
         <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.3.3</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${version.junit}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-            <version>5.0.0</version>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${version.testcontainers}</version>
+            <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>4.3.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -248,7 +248,7 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
 **Note:** The implementations from spring framework don't handle closing of streams as expected. They will try to consume remaining data, which will usually time out when nakadi does not receive a commit.
 
 
-## Fahrschein compared to other nakadi client libraries
+## Fahrschein compared to other Nakadi client libraries
 
 |                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
 | -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
@@ -271,10 +271,10 @@ For local development, Fahrschein requires:
 
 When developing, make sure to run unit and integration tests with `mvn verify`.
 
-The `fahrschein-example` module has end-to-end tests with `docker-compose`. If you wish to leave the Docker containers running between tests, you can also bring up docker-compose manually using its [docker-compose.yaml](fahrschein-example/src/test/resources/docker-compose.yaml), before running the tests.
+The `fahrschein-e2e-test` module has end-to-end tests using `docker-compose`. If you wish to leave the Docker containers running between tests, you can also bring up docker-compose manually using its [docker-compose.yaml](fahrschein-e2e-test/src/test/resources/docker-compose.yaml), before running the tests.
 
 ```sh
-docker-compose -f fahrschein-example/src/test/resources/docker-compose.yaml up -d
+docker-compose -f fahrschein-e2e-test/src/test/resources/docker-compose.yaml up -d
 mvn verify -DCOMPOSE_PROVIDED
 ```
 

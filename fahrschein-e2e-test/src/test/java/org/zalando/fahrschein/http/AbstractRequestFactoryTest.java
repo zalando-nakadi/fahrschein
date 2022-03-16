@@ -1,13 +1,12 @@
 package org.zalando.fahrschein.http;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import e2e.NakadiTestWithDockerCompose;
+import org.zalando.fahrschein.e2e.NakadiTestWithDockerCompose;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
