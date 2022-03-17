@@ -271,7 +271,7 @@ For local development, Fahrschein requires:
 
 When developing, make sure to run unit and integration tests with `mvn verify`.
 
-The `fahrschein-e2e-test` module has end-to-end tests using `docker-compose`. If you wish to leave the Docker containers running between tests, you can also bring up docker-compose manually using its [docker-compose.yaml](fahrschein-e2e-test/src/test/resources/docker-compose.yaml), before running the tests.
+The `fahrschein-e2e-test` module has end-to-end tests using `docker-compose`. If you wish to leave the Docker containers running between tests, you can also bring up docker-compose manually using its [docker-compose.yaml](fahrschein-e2e-test/src/test/resources/docker-compose.yaml), before running the tests. In either case, you will need the port `8080` to be available for Nakadi to run.
 
 ```sh
 docker-compose -f fahrschein-e2e-test/src/test/resources/docker-compose.yaml up -d
