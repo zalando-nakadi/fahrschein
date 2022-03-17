@@ -41,11 +41,6 @@
             <version>4.9.3</version>
         </dependency>
         <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>fahrschein-typeresolver</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
             <version>${version.spring}</version>
