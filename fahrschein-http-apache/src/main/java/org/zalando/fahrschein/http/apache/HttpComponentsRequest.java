@@ -4,7 +4,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.GzipCompressingEntity;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.protocol.HTTP;
@@ -35,16 +34,18 @@ final class HttpComponentsRequest implements Request {
 
     private final HttpClient httpClient;
     private final HttpUriRequest httpRequest;
-    private final Boolean contentCompression;
+    private final boolean compressEntity;
 
     private final Headers headers;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    HttpComponentsRequest(HttpClient client, HttpUriRequest request, Boolean contentCompression) {
+    HttpComponentsRequest(HttpClient client, HttpUriRequest request, boolean enableContentCompression) {
         this.httpClient = client;
         this.httpRequest = request;
-        this.contentCompression = contentCompression;
+        this.compressEntity = enableContentCompression &&
+                request.getFirstHeader("Content-Encoding") == null &&
+                request instanceof HttpEntityEnclosingRequest;
         this.headers = new HeadersImpl();
     }
 
@@ -78,9 +79,6 @@ final class HttpComponentsRequest implements Request {
             HttpEntityEnclosingRequest entityEnclosingRequest = (HttpEntityEnclosingRequest) this.httpRequest;
             HttpEntity requestEntity = new ByteArrayEntity(bytes);
             entityEnclosingRequest.setEntity(requestEntity);
-            if(this.contentCompression && this.httpRequest.getFirstHeader("Content-Encoding") == null) {
-                this.httpRequest.setHeader("Content-Encoding", "gzip");
-            }
         }
 
         final HttpResponse httpResponse = this.httpClient.execute(this.httpRequest);
@@ -100,7 +98,8 @@ final class HttpComponentsRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.contentCompression) {
+            if (this.compressEntity) {
+                this.httpRequest.setHeader("Content-Encoding", "gzip");
                 return new GZIPOutputStream(this.bufferedOutput);
             }
         }

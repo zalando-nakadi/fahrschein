@@ -30,14 +30,16 @@ final class SimpleBufferingRequest implements Request {
 
     private final HttpURLConnection connection;
     private final Headers headers;
-    private final Boolean contentCompression;
+    private final boolean compressEntity;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    SimpleBufferingRequest(HttpURLConnection connection, Boolean contentCompression) {
+    SimpleBufferingRequest(HttpURLConnection connection, boolean enableContentCompression) {
         this.connection = connection;
         this.headers = new HeadersImpl();
-        this.contentCompression = contentCompression;
+        this.compressEntity = enableContentCompression &&
+                this.connection.getRequestProperty("Content-Encoding") == null &&
+                this.connection.getDoOutput();
     }
 
     @Override
@@ -79,9 +81,6 @@ final class SimpleBufferingRequest implements Request {
 
         if (this.connection.getDoOutput()) {
             this.connection.setFixedLengthStreamingMode(size);
-            if(this.contentCompression && this.connection.getRequestProperty("Content-Encoding") == null) {
-                connection.setRequestProperty("Content-Encoding", "gzip");
-            }
         }
 
         this.connection.connect();
@@ -110,7 +109,8 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.contentCompression) {
+            if (this.compressEntity) {
+                connection.setRequestProperty("Content-Encoding", "gzip");
                 return new GZIPOutputStream(this.bufferedOutput);
             }
         }

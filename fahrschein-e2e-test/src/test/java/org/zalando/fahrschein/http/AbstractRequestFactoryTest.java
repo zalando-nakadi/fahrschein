@@ -87,10 +87,10 @@ public abstract class AbstractRequestFactoryTest extends NakadiTestWithDockerCom
                     return;
                 }));
         testPublish();
-        Mockito.verify(listener, timeout(10000).times(1)).accept(anyList());
+        Mockito.verify(listener, timeout(10000).atLeastOnce()).accept(anyList());
     }
 
     public Listener<OrderEvent> subscriptionListener() {
-        return Mockito.mock(Listener.class, withSettings().verboseLogging());
+        return Mockito.mock(Listener.class);
     }
 }

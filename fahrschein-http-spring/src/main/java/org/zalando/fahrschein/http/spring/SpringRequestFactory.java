@@ -10,15 +10,10 @@ import java.net.URI;
 
 public class SpringRequestFactory implements RequestFactory {
     private final ClientHttpRequestFactory clientRequestFactory;
-    private Boolean contentCompression;
+    private boolean contentCompression = true;
 
     public SpringRequestFactory(ClientHttpRequestFactory clientRequestFactory) {
-        this(clientRequestFactory, true);
-    }
-
-    public SpringRequestFactory(ClientHttpRequestFactory clientRequestFactory, Boolean contentCompression) {
         this.clientRequestFactory = clientRequestFactory;
-        this.contentCompression = contentCompression;
     }
 
     @Override
