@@ -1,0 +1,18 @@
+{
+  "name": "fahrschein.e2e-test.ordernumber",
+  "owning_application": "acme-order-service",
+  "category": "business",
+  "partition_strategy": "hash",
+  "partition_key_fields": ["order_number"],
+  "enrichment_strategies": ["metadata_enrichment"],
+  "default_statistic": {
+    "messages_per_minute": 1000,
+    "message_size": 5,
+    "read_parallelism": 1,
+    "write_parallelism": 1
+  },
+  "schema": {
+    "type": "json_schema",
+    "schema": "{ \"properties\": { \"order_number\": { \"type\": \"string\" } } }"
+  }
+}

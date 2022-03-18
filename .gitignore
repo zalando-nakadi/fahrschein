@@ -7,3 +7,5 @@ target/
 .classpath
 .factorypath
 .settings/
+.vscode
+bin/
