@@ -1,6 +1,6 @@
 package org.zalando.fahrschein.http.spring;
 
-import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.ClientHttpRequest;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Headers;
@@ -43,7 +43,7 @@ class RequestAdapter implements Request {
     @Override
     public OutputStream getBody() throws IOException {
         if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(contentEncoding)) {
-            clientHttpRequest.getHeaders().set("Content-Encoding", contentEncoding.getEncoding());
+            clientHttpRequest.getHeaders().set(HttpHeaders.CONTENT_ENCODING, contentEncoding.getEncoding());
             return new GZIPOutputStream(clientHttpRequest.getBody());
         }
         return clientHttpRequest.getBody();

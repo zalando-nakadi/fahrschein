@@ -2,6 +2,7 @@ package org.zalando.fahrschein.http.apache;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -101,7 +102,7 @@ final class HttpComponentsRequest implements Request {
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
             if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
-                this.httpRequest.setHeader("Content-Encoding", this.contentEncoding.getEncoding());
+                this.httpRequest.setHeader(HttpHeaders.CONTENT_ENCODING, this.contentEncoding.getEncoding());
                 return new GZIPOutputStream(this.bufferedOutput);
             }
         }
