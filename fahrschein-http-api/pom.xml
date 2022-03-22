@@ -14,17 +14,6 @@
     <artifactId>fahrschein-http-api</artifactId>
     <name>Fahrschein HTTP API</name>
 
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <failIfNoTests>false</failIfNoTests>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
     <dependencies>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>

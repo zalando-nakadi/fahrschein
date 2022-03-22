@@ -14,17 +14,6 @@
     <artifactId>fahrschein-http-spring</artifactId>
     <name>Fahrschein HTTP Spring Adapter</name>
 
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <failIfNoTests>false</failIfNoTests>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
     <dependencies>
         <dependency>
             <groupId>org.zalando</groupId>
