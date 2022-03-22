@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
-import static org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute.ANYONE;
 
 public class NakadiClientTest {
     public static class SomeEvent {
