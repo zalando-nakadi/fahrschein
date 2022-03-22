@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
 class RequestAdapter implements Request {
     private final ClientHttpRequest clientHttpRequest;
@@ -42,9 +41,13 @@ class RequestAdapter implements Request {
 
     @Override
     public OutputStream getBody() throws IOException {
-        if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(contentEncoding)) {
-            clientHttpRequest.getHeaders().set(HttpHeaders.CONTENT_ENCODING, contentEncoding.value());
-            return new GZIPOutputStream(clientHttpRequest.getBody());
+        if (writeMethods.contains(getMethod())) {
+            // probably premature optimization, but we're omitting the unnecessary
+            // "Content-Encoding: identity" header
+            if (ContentEncoding.IDENTITY != this.contentEncoding) {
+                clientHttpRequest.getHeaders().set(HttpHeaders.CONTENT_ENCODING, contentEncoding.value());
+            }
+            return this.contentEncoding.wrap(clientHttpRequest.getBody());
         }
         return clientHttpRequest.getBody();
     }

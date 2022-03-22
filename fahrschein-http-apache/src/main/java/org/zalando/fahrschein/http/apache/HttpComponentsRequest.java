@@ -101,9 +101,13 @@ final class HttpComponentsRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
-                this.httpRequest.setHeader(HttpHeaders.CONTENT_ENCODING, this.contentEncoding.value());
-                return new GZIPOutputStream(this.bufferedOutput);
+            if (writeMethods.contains(getMethod())) {
+                // probably premature optimization, but we're omitting the unnecessary
+                // "Content-Encoding: identity" header
+                if (ContentEncoding.IDENTITY != this.contentEncoding) {
+                    this.httpRequest.setHeader(HttpHeaders.CONTENT_ENCODING, this.contentEncoding.value());
+                }
+                return this.contentEncoding.wrap(this.bufferedOutput);
             }
         }
         return this.bufferedOutput;

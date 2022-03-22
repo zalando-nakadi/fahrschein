@@ -108,9 +108,13 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.connection.getDoOutput() && ContentEncoding.GZIP.equals(this.contentEncoding)) {
-                this.connection.setRequestProperty("Content-Encoding", this.contentEncoding.value());
-                return new GZIPOutputStream(this.bufferedOutput);
+            if (this.connection.getDoOutput()) {
+                // probably premature optimization, but we're omitting the unnecessary
+                // "Content-Encoding: identity" header
+                if (ContentEncoding.IDENTITY != this.contentEncoding) {
+                    this.connection.setRequestProperty("Content-Encoding", this.contentEncoding.value());
+                }
+                return this.contentEncoding.wrap(this.bufferedOutput);
             }
         }
         return this.bufferedOutput;

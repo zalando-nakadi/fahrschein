@@ -7,6 +7,15 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.zalando.fahrschein.e2e.NakadiTestWithDockerCompose;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,22 +23,39 @@ import org.mockito.Mockito;
 import org.zalando.fahrschein.*;
 import org.zalando.fahrschein.domain.Metadata;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
+import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import static org.junit.runners.Parameterized.*;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 /*
  * Enable wire-debug by running with -Djdk.httpclient.HttpClient.log=requests
  */
-public abstract class AbstractRequestFactoryTest extends NakadiTestWithDockerCompose {
+@RunWith(Parameterized.class)
+public class RequestFactoryTest extends NakadiTestWithDockerCompose {
+
+    private static final Logger logger = LoggerFactory.getLogger("okhttp3.wire");
+    private static final HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(logger::debug);
+    static {
+        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.HEADERS);
+    }
 
     private static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -44,17 +70,55 @@ public abstract class AbstractRequestFactoryTest extends NakadiTestWithDockerCom
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
+    public final RequestFactory requestFactory;
+
     private NakadiClient nakadiClient;
+
+    public RequestFactoryTest(RequestFactory requestFactory) {
+        this.requestFactory = requestFactory;
+    }
 
     @Before
     public void setUpNakadiClient() {
         nakadiClient = NakadiClient
-                .builder(getNakadiUrl(), getRequestFactory())
+                .builder(getNakadiUrl(), requestFactory)
                 .withObjectMapper(objectMapper)
                 .build();
     }
 
-    protected abstract RequestFactory getRequestFactory();
+    @Parameters
+    public static Collection<Object[]> getRequestFactories() {
+        List<Function<RequestFactory, RequestFactory>> wrappers = List.of(a -> a, a -> new IdentityAcceptEncodingRequestFactory(a));
+        List<Function<ContentEncoding, RequestFactory>> factoryProviders = List.of(RequestFactoryTest::apache, RequestFactoryTest::spring, RequestFactoryTest::simple);
+        List<Object[]> parameters = new ArrayList<>();
+        for (ContentEncoding e : ContentEncoding.values()) {
+            wrappers.forEach(wrapper ->
+                    factoryProviders.forEach(factoryProvider ->
+                            parameters.add(new Object[]{wrapper.apply(factoryProvider.apply(e))})
+                    )
+            );
+        }
+        return parameters;
+    }
+
+    private static RequestFactory apache(ContentEncoding encoding) {
+        final CloseableHttpClient httpClient = HttpClients.createDefault();
+        return new HttpComponentsRequestFactory(httpClient, encoding);
+    }
+
+    private static RequestFactory spring(ContentEncoding encoding) {
+        final OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(loggingInterceptor)
+                .build();
+
+        final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
+        return new SpringRequestFactory(clientHttpRequestFactory, encoding);
+
+    }
+
+    private static RequestFactory simple(ContentEncoding contentEncoding) {
+        return new SimpleRequestFactory(contentEncoding);
+    }
 
     @Before
     public void createEventTypes() throws IOException {
