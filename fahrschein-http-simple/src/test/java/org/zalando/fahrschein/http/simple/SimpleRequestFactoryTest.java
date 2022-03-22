@@ -10,6 +10,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -56,8 +57,7 @@ public class SimpleRequestFactoryTest {
         server.createContext("/get", spy);
 
         // when
-        RequestFactory f = getRequestFactory();
-        f.disableContentCompression();
+        RequestFactory f = defaultRequestFactory(ContentEncoding.GZIP);
         Request r = f.createRequest(serverAddress.resolve("/get"), "GET");
         Response executed = r.execute();
         String actualResponse = readStream(executed.getBody());
@@ -81,8 +81,7 @@ public class SimpleRequestFactoryTest {
         server.createContext("/post", spy);
 
         // when
-        SimpleRequestFactory f = new SimpleRequestFactory();
-        f.disableContentCompression();
+        SimpleRequestFactory f = new SimpleRequestFactory(ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/post"), "POST");
         r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
         try (final OutputStream body = r.getBody()) {
@@ -109,8 +108,7 @@ public class SimpleRequestFactoryTest {
         server.createContext("/gzipped", spy);
 
         // when
-        RequestFactory f = getRequestFactory();
-        f.disableContentCompression();
+        RequestFactory f = defaultRequestFactory(ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/gzipped"), "GET");
         Response executed = r.execute();
         String actualResponse = readStream(executed.getBody());
@@ -135,7 +133,7 @@ public class SimpleRequestFactoryTest {
         });
 
         // when
-        SimpleRequestFactory f = new SimpleRequestFactory();
+        SimpleRequestFactory f = new SimpleRequestFactory(ContentEncoding.IDENTITY);
         f.setReadTimeout(1);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");
         r.execute();
@@ -150,7 +148,7 @@ public class SimpleRequestFactoryTest {
         server.createContext("/gzipped-post", spy);
 
         // when
-        RequestFactory f = getRequestFactory();
+        RequestFactory f = defaultRequestFactory(ContentEncoding.GZIP);
         Request r = f.createRequest(serverAddress.resolve("/gzipped-post"), "POST");
         r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
         try (final OutputStream body = r.getBody()) {
@@ -169,8 +167,8 @@ public class SimpleRequestFactoryTest {
         assertEquals(responseBody, actualResponse);
     }
 
-    private RequestFactory getRequestFactory() {
-        return new SimpleRequestFactory();
+    private RequestFactory defaultRequestFactory(ContentEncoding contentEncoding) {
+        return new SimpleRequestFactory(contentEncoding);
     }
 
     static String readStream(InputStream stream) throws IOException {

@@ -7,6 +7,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.protocol.HTTP;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Request;
@@ -16,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
@@ -34,18 +36,18 @@ final class HttpComponentsRequest implements Request {
 
     private final HttpClient httpClient;
     private final HttpUriRequest httpRequest;
-    private final boolean compressEntity;
+    private final ContentEncoding contentEncoding;
 
     private final Headers headers;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    HttpComponentsRequest(HttpClient client, HttpUriRequest request, boolean enableContentCompression) {
+    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
+
+    HttpComponentsRequest(HttpClient client, HttpUriRequest request, ContentEncoding contentEncoding) {
         this.httpClient = client;
         this.httpRequest = request;
-        this.compressEntity = enableContentCompression &&
-                request.getFirstHeader("Content-Encoding") == null &&
-                request instanceof HttpEntityEnclosingRequest;
+        this.contentEncoding = contentEncoding;
         this.headers = new HeadersImpl();
     }
 
@@ -98,8 +100,8 @@ final class HttpComponentsRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.compressEntity) {
-                this.httpRequest.setHeader("Content-Encoding", "gzip");
+            if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
+                this.httpRequest.setHeader("Content-Encoding", this.contentEncoding.getEncoding());
                 return new GZIPOutputStream(this.bufferedOutput);
             }
         }

@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -66,8 +67,7 @@ public class HttpComponentsRequestFactoryTest {
         server.createContext("/gzipped", spy);
 
         // when
-        final RequestFactory f = defaultRequestFactory();
-        f.disableContentCompression();
+        final RequestFactory f = defaultRequestFactory(ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/gzipped"), "GET");
         Response executed = r.execute();
         String actualResponse = readStream(executed.getBody());
@@ -94,7 +94,7 @@ public class HttpComponentsRequestFactoryTest {
         // when
         RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(1).build();
         final CloseableHttpClient httpClient = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
-        RequestFactory f = new HttpComponentsRequestFactory(httpClient);
+        RequestFactory f = new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");
         r.execute();
     }
@@ -108,8 +108,7 @@ public class HttpComponentsRequestFactoryTest {
         server.createContext("/gzipped-post", spy);
 
         // when
-        CloseableHttpClient c = HttpClients.createDefault();
-        HttpComponentsRequestFactory f = new HttpComponentsRequestFactory(c);
+        RequestFactory f = defaultRequestFactory(ContentEncoding.GZIP);
 
         Request r = f.createRequest(serverAddress.resolve("/gzipped-post"), "POST");
         r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
@@ -129,8 +128,8 @@ public class HttpComponentsRequestFactoryTest {
         assertEquals(responseBody, actualResponse);
     }
 
-    private RequestFactory defaultRequestFactory() {
-        return new HttpComponentsRequestFactory(HttpClients.createDefault());
+    private RequestFactory defaultRequestFactory(ContentEncoding contentEncoding) {
+        return new HttpComponentsRequestFactory(HttpClients.createDefault(), contentEncoding);
     }
 
     static String readStream(InputStream stream) throws IOException {

@@ -42,9 +42,8 @@ public abstract class AbstractRequestFactoryTest extends NakadiTestWithDockerCom
     @Before
     public void setUpNakadiClient() {
         nakadiClient = NakadiClient
-                .builder(getNakadiUrl())
+                .builder(getNakadiUrl(), getRequestFactory())
                 .withObjectMapper(objectMapper)
-                .withRequestFactory(getRequestFactory())
                 .build();
     }
 

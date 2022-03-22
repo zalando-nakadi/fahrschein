@@ -5,6 +5,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ public class ApacheNakadiClientTest extends AbstractRequestFactoryTest {
                 .setMaxConnPerRoute(2)
                 .build();
 
-        return new HttpComponentsRequestFactory(httpClient);
+        return new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
     }
 
 }

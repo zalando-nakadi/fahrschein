@@ -7,6 +7,7 @@ import org.zalando.fahrschein.http.AbstractRequestFactoryTest;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,7 @@ public class SpringNakadiClientTest extends AbstractRequestFactoryTest {
                 .build();
 
         final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
-        return new SpringRequestFactory(clientHttpRequestFactory);
+        return new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.GZIP);
     }
 
 }

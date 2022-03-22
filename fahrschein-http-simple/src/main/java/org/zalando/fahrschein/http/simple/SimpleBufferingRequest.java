@@ -1,5 +1,6 @@
 package org.zalando.fahrschein.http.simple;
 
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Request;
@@ -13,6 +14,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+
+import static org.zalando.fahrschein.http.api.ContentEncoding.GZIP;
 
 /**
  * {@link Request} implementation that uses standard JDK facilities to
@@ -30,16 +33,14 @@ final class SimpleBufferingRequest implements Request {
 
     private final HttpURLConnection connection;
     private final Headers headers;
-    private final boolean compressEntity;
+    private final ContentEncoding contentEncoding;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    SimpleBufferingRequest(HttpURLConnection connection, boolean enableContentCompression) {
+    SimpleBufferingRequest(HttpURLConnection connection, ContentEncoding contentEncoding) {
         this.connection = connection;
         this.headers = new HeadersImpl();
-        this.compressEntity = enableContentCompression &&
-                this.connection.getRequestProperty("Content-Encoding") == null &&
-                this.connection.getDoOutput();
+        this.contentEncoding = contentEncoding;
     }
 
     @Override
@@ -109,8 +110,8 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.compressEntity) {
-                connection.setRequestProperty("Content-Encoding", "gzip");
+            if (this.connection.getDoOutput() && GZIP.equals(this.contentEncoding)) {
+                this.connection.setRequestProperty("Content-Encoding", this.contentEncoding.getEncoding());
                 return new GZIPOutputStream(this.bufferedOutput);
             }
         }

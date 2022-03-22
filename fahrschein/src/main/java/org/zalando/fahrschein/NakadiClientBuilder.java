@@ -9,8 +9,6 @@ import java.net.URI;
 import static org.zalando.fahrschein.Preconditions.checkNotNull;
 
 public final class NakadiClientBuilder {
-    public static final int DEFAULT_CONNECT_TIMEOUT = 500;
-    public static final int DEFAULT_READ_TIMEOUT = 60 * 1000;
 
     private final URI baseUri;
     @Nullable
@@ -22,8 +20,8 @@ public final class NakadiClientBuilder {
     @Nullable
     private final CursorManager cursorManager;
 
-    NakadiClientBuilder(final URI baseUri) {
-        this(baseUri, DefaultObjectMapper.INSTANCE, null, null, null);
+    NakadiClientBuilder(final URI baseUri, RequestFactory requestFactory) {
+        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null);
     }
 
     private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider, @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
@@ -46,19 +44,8 @@ public final class NakadiClientBuilder {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
     }
 
-    public NakadiClientBuilder withRequestFactory(RequestFactory clientHttpRequestFactory) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
-    }
-
     public NakadiClientBuilder withCursorManager(CursorManager cursorManager) {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
-    }
-
-    private RequestFactory defaultClientHttpRequestFactory() {
-        final SimpleRequestFactory clientHttpRequestFactory = new SimpleRequestFactory();
-        clientHttpRequestFactory.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT);
-        clientHttpRequestFactory.setReadTimeout(DEFAULT_READ_TIMEOUT);
-        return clientHttpRequestFactory;
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
@@ -71,7 +58,7 @@ public final class NakadiClientBuilder {
     }
 
     public NakadiClient build() {
-        final RequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory != null ? this.clientHttpRequestFactory : defaultClientHttpRequestFactory(), authorizationProvider);
+        final RequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory, authorizationProvider);
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
 

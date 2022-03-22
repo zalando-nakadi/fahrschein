@@ -31,7 +31,9 @@ import org.zalando.fahrschein.example.domain.OrderEventProcessor;
 import org.zalando.fahrschein.example.domain.SalesOrder;
 import org.zalando.fahrschein.example.domain.SalesOrderPlaced;
 import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
 import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
 import org.zalando.fahrschein.jdbc.JdbcCursorManager;
@@ -121,7 +123,7 @@ public class Main {
             }
         };
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
@@ -149,7 +151,7 @@ public class Main {
                 new Cursor("6", "000000000000109100", "sales-order-service.order-placed"),
                 new Cursor("7", "000000000000109146", "sales-order-service.order-placed"));
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
@@ -165,7 +167,7 @@ public class Main {
 
     private static void subscriptionListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
@@ -201,10 +203,9 @@ public class Main {
                 .setMaxConnPerRoute(2)
                 .build();
 
-        final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
+        final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient, ContentEncoding.IDENTITY);
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-                .withRequestFactory(requestFactory)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
@@ -231,10 +232,9 @@ public class Main {
                 .build();
 
         final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
-        final SpringRequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory);
+        final SpringRequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.IDENTITY);
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-                .withRequestFactory(requestFactory)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
@@ -252,7 +252,7 @@ public class Main {
     private static void simpleListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
         final InMemoryCursorManager cursorManager = new InMemoryCursorManager();
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .withCursorManager(cursorManager)
                 .build();
@@ -276,7 +276,7 @@ public class Main {
 
         final JdbcCursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .withCursorManager(cursorManager)
                 .build();
@@ -291,7 +291,7 @@ public class Main {
 
     private static void subscriptionCreateWithAuthorization(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
 
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withAccessTokenProvider(new ZignAccessTokenProvider())
                 .build();
 
@@ -328,7 +328,7 @@ public class Main {
             final JdbcPartitionManager partitionManager = new JdbcPartitionManager(dataSource, "fahrschein-demo");
             final JdbcCursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
 
-            final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+            final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                     .withAccessTokenProvider(accessTokenProvider)
                     .withCursorManager(cursorManager)
                     .build();

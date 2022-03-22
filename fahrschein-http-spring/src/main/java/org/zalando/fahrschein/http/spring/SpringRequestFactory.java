@@ -2,6 +2,7 @@ package org.zalando.fahrschein.http.spring;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
@@ -10,19 +11,15 @@ import java.net.URI;
 
 public class SpringRequestFactory implements RequestFactory {
     private final ClientHttpRequestFactory clientRequestFactory;
-    private boolean contentCompression = true;
+    private final ContentEncoding contentEncoding;
 
-    public SpringRequestFactory(ClientHttpRequestFactory clientRequestFactory) {
+    public SpringRequestFactory(ClientHttpRequestFactory clientRequestFactory, ContentEncoding contentEncoding) {
         this.clientRequestFactory = clientRequestFactory;
-    }
-
-    @Override
-    public void disableContentCompression() {
-        this.contentCompression = false;
+        this.contentEncoding = contentEncoding;
     }
 
     @Override
     public Request createRequest(URI uri, String method) throws IOException {
-        return new RequestAdapter(clientRequestFactory.createRequest(uri, HttpMethod.valueOf(method)), contentCompression);
+        return new RequestAdapter(clientRequestFactory.createRequest(uri, HttpMethod.valueOf(method)), contentEncoding);
     }
 }

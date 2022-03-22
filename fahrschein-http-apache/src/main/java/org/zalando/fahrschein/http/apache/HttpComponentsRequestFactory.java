@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpTrace;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
@@ -35,14 +36,16 @@ import java.net.URI;
 public class HttpComponentsRequestFactory implements RequestFactory {
 
     private final HttpClient httpClient;
-    private boolean contentCompression = true;
+    private final ContentEncoding contentEncoding;
 
     /**
      * Create a new instance of the {@code HttpComponentsRequestFactory}
      * with the given {@link HttpClient} instance.
      * @param httpClient the HttpClient instance to use for this request factory
+     * @param contentEncoding content encoding for request payloads.
      */
-    public HttpComponentsRequestFactory(HttpClient httpClient) {
+    public HttpComponentsRequestFactory(HttpClient httpClient, ContentEncoding contentEncoding) {
+        this.contentEncoding = contentEncoding;
         if (httpClient == null) {
             throw new IllegalArgumentException("HttpClient must not be null");
         }
@@ -50,15 +53,10 @@ public class HttpComponentsRequestFactory implements RequestFactory {
     }
 
     @Override
-    public void disableContentCompression() {
-        this.contentCompression = false;
-    }
-
-    @Override
     public Request createRequest(URI uri, String httpMethod) throws IOException {
         final HttpUriRequest httpRequest = createHttpUriRequest(httpMethod, uri);
 
-        return new HttpComponentsRequest(httpClient, httpRequest, contentCompression);
+        return new HttpComponentsRequest(httpClient, httpRequest, contentEncoding);
     }
 
     /**

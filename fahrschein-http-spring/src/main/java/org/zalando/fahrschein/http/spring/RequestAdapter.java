@@ -2,6 +2,7 @@ package org.zalando.fahrschein.http.spring;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.Response;
@@ -15,16 +16,13 @@ import java.util.zip.GZIPOutputStream;
 
 class RequestAdapter implements Request {
     private final ClientHttpRequest clientHttpRequest;
-    private final boolean compressEntity;
+    private final ContentEncoding contentEncoding;
 
-    private static final List<HttpMethod> writeMethods = Arrays.asList(HttpMethod.POST, HttpMethod.PATCH, HttpMethod.PUT);
+    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
 
-    RequestAdapter(ClientHttpRequest clientHttpRequest, Boolean contentCompression) {
+    RequestAdapter(ClientHttpRequest clientHttpRequest, ContentEncoding contentEncoding) {
         this.clientHttpRequest = clientHttpRequest;
-        // only compress request if
-        this.compressEntity = contentCompression &&
-                !clientHttpRequest.getHeaders().containsKey("Content-Encoding") &&
-                writeMethods.contains(clientHttpRequest.getMethod());
+        this.contentEncoding = contentEncoding;
     }
 
     @Override
@@ -44,8 +42,8 @@ class RequestAdapter implements Request {
 
     @Override
     public OutputStream getBody() throws IOException {
-        if (compressEntity) {
-            clientHttpRequest.getHeaders().set("Content-Encoding", "gzip");
+        if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(contentEncoding)) {
+            clientHttpRequest.getHeaders().set("Content-Encoding", contentEncoding.getEncoding());
             return new GZIPOutputStream(clientHttpRequest.getBody());
         }
         return clientHttpRequest.getBody();

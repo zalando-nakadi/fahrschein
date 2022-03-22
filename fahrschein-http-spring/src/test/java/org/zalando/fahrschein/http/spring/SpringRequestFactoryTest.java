@@ -13,6 +13,7 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -62,8 +63,7 @@ public class SpringRequestFactoryTest {
         server.createContext("/gzipped", spy);
 
         // when
-        final RequestFactory f = defaultRequestFactory();
-        f.disableContentCompression();
+        final RequestFactory f = defaultRequestFactory(ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/gzipped"), "GET");
         Response executed = r.execute();
         String actualResponse = readStream(executed.getBody());
@@ -92,7 +92,7 @@ public class SpringRequestFactoryTest {
                 .readTimeout(1, TimeUnit.MILLISECONDS)
                 .build();
         OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
-        SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory);
+        SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");
         r.execute();
     }
@@ -106,7 +106,7 @@ public class SpringRequestFactoryTest {
         server.createContext("/gzipped-post", spy);
 
         // when
-        final RequestFactory f = defaultRequestFactory();
+        final RequestFactory f = defaultRequestFactory(ContentEncoding.GZIP);
         Request r = f.createRequest(serverAddress.resolve("/gzipped-post"), "POST");
         r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
         try (final OutputStream body = r.getBody()) {
@@ -126,11 +126,11 @@ public class SpringRequestFactoryTest {
     }
 
     @NotNull
-    private RequestFactory defaultRequestFactory() {
+    private RequestFactory defaultRequestFactory(ContentEncoding contentEncoding) {
         final OkHttpClient client = new OkHttpClient.Builder()
                 .build();
         final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
-        final SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory);
+        final SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory, contentEncoding);
         return f;
     }
 
