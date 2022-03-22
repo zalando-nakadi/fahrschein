@@ -20,7 +20,7 @@
     - No required base classes for events
  - Support for both high-level (subscription) and low-level APIs
  - Pluggable HTTP client implementations
- - Gzip encoding for publishing and consuming events, enabled by default
+ - Gzip encoding support for publishing and consuming events
 
 ## Installation
 
@@ -46,8 +46,9 @@ final Listener<SalesOrderPlaced> listener = events -> {
     }
 };
 
-// Configure client, defaults to using the high level api with ManagedCursorManger and SimpleRequestFactory
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+// Configure client, defaults to using the high level api with ManagedCursorManger, 
+// using the SimpleRequestFactory without compression
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
 
@@ -99,7 +100,7 @@ final DataSource dataSource = new HikariDataSource(hikariConfig);
 
 final CursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .withCursorManager(cursorManager)
         .build();
@@ -214,10 +215,9 @@ final CloseableHttpClient httpClient = HttpClients.custom()
                                                   .setMaxConnPerRoute(2)
                                                   .build();
 
-final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient);
+final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-        .withRequestFactory(requestFactory)
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
 ```
@@ -237,10 +237,9 @@ Example using OkHttp 3.x:
 ```java
 
 final ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory();
-final RequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory);
+final RequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.GZIP);
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI)
-        .withRequestFactory(requestFactory)
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
         .withAccessTokenProvider(new ZignAccessTokenProvider())
         .build();
 
@@ -254,14 +253,14 @@ Fahrschein handles content compression transparently to the API consumer, and mo
 
 ### Consuming
 
-For event consumption the underlying HTTP client implementations send `Accept-Encoding` headers indicating the supported compression algorithm. At the time of writing, the default settings for all tested client implementations support `gzip` compression.
-
-If this is undesired, please add the following header to your request: `Accept-Encoding: identity`.
+For event consumption the underlying HTTP client implementations send `Accept-Encoding` headers, indicating their supported compression algorithms.
+At the time of writing, all tested client implementations default to `gzip` compression.
 
 ### Publishing
 
-For event publishing, the `Request` body gets gzip-encoded by Fahrschein. To disable compression of the POST body, you need to call `disableContentCompression()` on your `RequestFactory`.
-
+For event publishing, the `Request` body can also get gzip-encoded by Fahrschein, if enabled when building the RequestFactory.
+For this, you need to pass `ContentEncoding.GZIP`, or if compression is undesired, pass `ContentEncoding.IDENTITY`.
+In the future, we may support other encoding formats, like Zstandard.
 
 ## Fahrschein compared to other Nakadi client libraries
 

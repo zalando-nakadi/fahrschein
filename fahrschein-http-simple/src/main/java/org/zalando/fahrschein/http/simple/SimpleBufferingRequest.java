@@ -15,8 +15,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
-import static org.zalando.fahrschein.http.api.ContentEncoding.GZIP;
-
 /**
  * {@link Request} implementation that uses standard JDK facilities to
  * execute buffered requests. Created via the {@link SimpleRequestFactory}.
@@ -110,7 +108,7 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.connection.getDoOutput() && GZIP.equals(this.contentEncoding)) {
+            if (this.connection.getDoOutput() && ContentEncoding.GZIP.equals(this.contentEncoding)) {
                 this.connection.setRequestProperty("Content-Encoding", this.contentEncoding.getEncoding());
                 return new GZIPOutputStream(this.bufferedOutput);
             }
