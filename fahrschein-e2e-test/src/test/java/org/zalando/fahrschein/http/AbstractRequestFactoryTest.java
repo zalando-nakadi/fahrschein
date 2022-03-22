@@ -26,6 +26,9 @@ import java.util.stream.IntStream;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
+/*
+ * Enable wire-debug by running with -Djdk.httpclient.HttpClient.log=requests
+ */
 public abstract class AbstractRequestFactoryTest extends NakadiTestWithDockerCompose {
 
     private static ObjectMapper objectMapper = new ObjectMapper();

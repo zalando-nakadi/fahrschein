@@ -92,6 +92,7 @@
         <module>fahrschein-typeresolver</module>
         <module>fahrschein-http-api</module>
         <module>fahrschein-http-simple</module>
+        <module>fahrschein-http-jdk11</module>
         <module>fahrschein-http-apache</module>
         <module>fahrschein-http-spring</module>
         <module>fahrschein-e2e-test</module>
