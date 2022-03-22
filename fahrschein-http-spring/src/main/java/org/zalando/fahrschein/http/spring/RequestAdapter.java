@@ -43,7 +43,7 @@ class RequestAdapter implements Request {
     @Override
     public OutputStream getBody() throws IOException {
         if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(contentEncoding)) {
-            clientHttpRequest.getHeaders().set(HttpHeaders.CONTENT_ENCODING, contentEncoding.getEncoding());
+            clientHttpRequest.getHeaders().set(HttpHeaders.CONTENT_ENCODING, contentEncoding.value());
             return new GZIPOutputStream(clientHttpRequest.getBody());
         }
         return clientHttpRequest.getBody();

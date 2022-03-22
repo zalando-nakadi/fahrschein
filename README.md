@@ -254,7 +254,8 @@ Fahrschein handles content compression transparently to the API consumer, and mo
 ### Consuming
 
 For event consumption the underlying HTTP client implementations send `Accept-Encoding` headers, indicating their supported compression algorithms.
-At the time of writing, all tested client implementations default to `gzip` compression.
+At the time of writing, all tested client implementations default to `gzip` compression. If this is undesired, wrap your 
+RequestFactory into a `IdentityAcceptEncodingRequestFactory`, which sets the `Accept-Encoding` header to `identity`.
 
 ### Publishing
 
