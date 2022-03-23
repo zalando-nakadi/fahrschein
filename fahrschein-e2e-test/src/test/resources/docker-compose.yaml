@@ -1,7 +1,7 @@
 version: '3'
 services:
   nakadi-ui:
-    image: nakadi/nakadi-ui:latest
+    image: nakadi/nakadi-ui:master-292
     ports:
       - 3000
     depends_on:
@@ -10,7 +10,7 @@ services:
       - NAKADI_API_URL=http://nakadi:8080
 
   nakadi:
-    image: adyach/nakadi-docker:latest
+    image: adyach/nakadi-docker:3.3.8
     ports:
       - 8080:8080
       - 7979
@@ -25,7 +25,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://nakadi_postgres:5432/local_nakadi_db
 
   nakadi_postgres:
-    image: adyach/nakadi-postgres:latest
+    image: adyach/nakadi-postgres:3.2.4
     ports:
       - 5432
     environment:
