@@ -249,7 +249,9 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactor
 
 ## Content-Compression
 
-Fahrschein handles content compression transparently to the API consumer, and mostly independently of the actual HTTP client implementation. Since version `0.20.0` it is enabled by default, to both compress HTTP POST bodies for event-publishing, as well as requesting compression from the server when consuming events.
+Fahrschein handles content compression transparently to the API consumer, and mostly independently of the actual HTTP
+client implementation. Since version `0.20.0` it can be enabled to both compress HTTP POST bodies when event
+publishing, and requesting payload compression from Nakadi when consuming events.
 
 ### Consuming
 

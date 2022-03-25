@@ -1,13 +1,13 @@
 version: '3'
 services:
-  nakadi-ui:
-    image: nakadi/nakadi-ui:master-292
-    ports:
-      - 3000
-    depends_on:
-      - nakadi
-    environment:
-      - NAKADI_API_URL=http://nakadi:8080
+#  nakadi-ui:
+#    image: nakadi/nakadi-ui:master-292
+#    ports:
+#      - 3000
+#    depends_on:
+#      - nakadi
+#    environment:
+#      - NAKADI_API_URL=http://nakadi:8080
 
   nakadi:
     image: adyach/nakadi-docker:3.3.8

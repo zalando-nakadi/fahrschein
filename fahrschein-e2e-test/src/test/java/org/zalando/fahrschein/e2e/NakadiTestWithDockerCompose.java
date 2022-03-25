@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -42,7 +44,8 @@ public abstract class NakadiTestWithDockerCompose {
                             .withExposedService("nakadi_postgres_1", 5432)
                             .withExposedService("zookeeper_1", 2181)
                             .withExposedService("kafka_1", 9092)
-                            .withExposedService("nakadi_1", 8080)
+                            .withExposedService("nakadi_1", 8080,
+                                    Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(180)))
                             .withLogConsumer("nakadi_1", LOG_CONSUMER);
             compose.start();
         }
