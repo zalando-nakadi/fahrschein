@@ -9,14 +9,20 @@
     </Appenders>
 
     <Loggers>
+
+        <Logger name="org.testcontainers" level="info"/>
+        <Logger name="com.github.dockerjava" level="warn"/>
+
         <!-- Apache HTTP debugging -->
+        <!--
         <Logger name="org.apache.http.headers" level="debug"/>
         <Logger name="org.apache.http.wire" level="warn"/>
-
+        -->
         <!-- OKHTTP debugging -->
+        <!--
         <Logger name="okhttp3.wire" level="debug"/>
-
-        <Logger name="org.zalando.fahrschein" level="debug"/>
+        -->
+        <Logger name="org.zalando.fahrschein" level="info"/>
 
         <Root level="warn">
             <AppenderRef ref="stdout"/>
