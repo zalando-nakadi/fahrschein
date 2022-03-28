@@ -10,7 +10,7 @@ services:
 #      - NAKADI_API_URL=http://nakadi:8080
 
   nakadi:
-    image: adyach/nakadi-docker:3.3.8
+    image: ghcr.io/adyach/nakadi-docker/nakadi:3.4
     ports:
       - 8080:8080
       - 7979
@@ -25,7 +25,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://nakadi_postgres:5432/local_nakadi_db
 
   nakadi_postgres:
-    image: adyach/nakadi-postgres:3.2.4
+    image: ghcr.io/adyach/nakadi-docker/postgres:13.6
     ports:
       - 5432
     environment:
@@ -34,12 +34,12 @@ services:
       POSTGRES_DB: local_nakadi_db
 
   zookeeper:
-    image: wurstmeister/zookeeper:3.4.6
+    image: ghcr.io/adyach/nakadi-docker/zookeeper:3.6.3
     ports:
       - 2181
 
   kafka:
-    image: wurstmeister/kafka:2.12-2.5.0
+    image: ghcr.io/adyach/kafka-docker/kafka-docker:2.7.0
     ports:
       - 9092
     depends_on:
