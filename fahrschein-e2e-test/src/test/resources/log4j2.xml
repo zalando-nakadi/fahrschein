@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn">
+
+    <Appenders>
+        <Console name="stdout" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%date {%level} [%thread] [%logger] %message%n"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+
+        <Logger name="org.testcontainers" level="info"/>
+        <Logger name="com.github.dockerjava" level="warn"/>
+
+        <!-- Apache HTTP debugging -->
+        <!--
+        <Logger name="org.apache.http.headers" level="debug"/>
+        <Logger name="org.apache.http.wire" level="warn"/>
+        -->
+        <!-- OKHTTP debugging -->
+        <!--
+        <Logger name="okhttp3.wire" level="debug"/>
+        -->
+        <Logger name="org.zalando.fahrschein" level="info"/>
+
+        <Root level="warn">
+            <AppenderRef ref="stdout"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

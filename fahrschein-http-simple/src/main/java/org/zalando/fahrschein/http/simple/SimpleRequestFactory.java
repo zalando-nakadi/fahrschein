@@ -1,5 +1,6 @@
 package org.zalando.fahrschein.http.simple;
 
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
@@ -12,6 +13,9 @@ import java.net.URLConnection;
 /**
  * {@link RequestFactory} implementation that uses standard JDK facilities.
  *
+ * See original
+ * <a href="https://github.com/spring-projects/spring-framework/blob/main/spring-web/src/main/java/org/springframework/http/client/SimpleClientHttpRequestFactory.java">code from Spring Framework</a>
+ *
  * @author Arjen Poutsma
  * @author Juergen Hoeller
  * @author Joern Horstmann
@@ -19,8 +23,16 @@ import java.net.URLConnection;
  */
 public class SimpleRequestFactory implements RequestFactory {
 
-    private int connectTimeout = -1;
-    private int readTimeout = -1;
+    private static final int DEFAULT_CONNECT_TIMEOUT = 500;
+    private static final int DEFAULT_READ_TIMEOUT = 60 * 1000;
+
+    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+    private int readTimeout = DEFAULT_READ_TIMEOUT;
+    private final ContentEncoding contentEncoding;
+
+    public SimpleRequestFactory(ContentEncoding contentEncoding) {
+        this.contentEncoding = contentEncoding;
+    }
 
     /**
      * Set the underlying URLConnection's connect timeout (in milliseconds).
@@ -49,20 +61,21 @@ public class SimpleRequestFactory implements RequestFactory {
         HttpURLConnection connection = openConnection(uri.toURL());
         prepareConnection(connection, method);
 
-        return new SimpleBufferingRequest(connection);
+        return new SimpleBufferingRequest(connection, contentEncoding);
     }
 
     /**
      * Opens and returns a connection to the given URL.
      *
-     * @param url   the URL to open a connection to
+     * @param url  the URL to open a connection to
      * @return the opened connection
      * @throws IOException in case of I/O errors
+     * @throws IllegalArgumentException in case {{@link java.net.URL#openConnection()}} does not lead to a HttpURLConnection
      */
     private HttpURLConnection openConnection(URL url) throws IOException {
         URLConnection urlConnection = url.openConnection();
         if (!(urlConnection instanceof HttpURLConnection)) {
-            throw new IllegalStateException("Connection should be an HttpURLConnection");
+            throw new IllegalArgumentException("Connection should be an HttpURLConnection");
         }
         return (HttpURLConnection) urlConnection;
     }

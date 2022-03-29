@@ -38,8 +38,8 @@ public class NakadiClient {
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
 
-    public static NakadiClientBuilder builder(URI baseUri) {
-        return new NakadiClientBuilder(baseUri);
+    public static NakadiClientBuilder builder(URI baseUri, RequestFactory clientHttpRequestFactory) {
+        return new NakadiClientBuilder(baseUri, clientHttpRequestFactory);
     }
 
     NakadiClient(URI baseUri, RequestFactory clientHttpRequestFactory, ObjectMapper objectMapper, CursorManager cursorManager) {

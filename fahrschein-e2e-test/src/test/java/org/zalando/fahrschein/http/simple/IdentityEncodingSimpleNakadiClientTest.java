@@ -1,12 +1,13 @@
 package org.zalando.fahrschein.http.simple;
 
+import org.zalando.fahrschein.IdentityAcceptEncodingRequestFactory;
 import org.zalando.fahrschein.http.AbstractRequestFactoryTest;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
-public class SimpleNakadiClientTest extends AbstractRequestFactoryTest {
+public class IdentityEncodingSimpleNakadiClientTest extends AbstractRequestFactoryTest {
     @Override
     protected RequestFactory getRequestFactory() {
-        return new SimpleRequestFactory(ContentEncoding.GZIP);
+        return new IdentityAcceptEncodingRequestFactory(new SimpleRequestFactory(ContentEncoding.IDENTITY));
     }
 }

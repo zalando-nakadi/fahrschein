@@ -7,10 +7,14 @@ import org.zalando.fahrschein.http.api.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.zip.GZIPInputStream;
 
 /**
  * {@link Response} implementation that uses standard JDK facilities.
  * Obtained via {@link SimpleBufferingRequest#execute()}.
+ *
+ * See original
+ * <a href="https://github.com/spring-projects/spring-framework/blob/main/spring-web/src/main/java/org/springframework/http/client/SimpleClientHttpResponse.java">code from Spring Framework</a>.
  *
  * @author Arjen Poutsma
  * @author Brian Clozel
@@ -65,6 +69,9 @@ final class SimpleResponse implements Response {
         if (this.responseStream == null) {
             final InputStream errorStream = connection.getErrorStream();
             this.responseStream = (errorStream != null ? errorStream : connection.getInputStream());
+            if (this.getHeaders().get("Content-Encoding").contains("gzip")) {
+                this.responseStream = new GZIPInputStream(this.responseStream);
+            }
         }
         return this.responseStream;
     }
@@ -80,5 +87,4 @@ final class SimpleResponse implements Response {
             }
         }
     }
-
 }

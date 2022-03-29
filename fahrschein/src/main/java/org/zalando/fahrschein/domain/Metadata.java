@@ -15,6 +15,7 @@ public final class Metadata {
     private final String eid;
     private final String partition;
     private final String version;
+    private final String publishedBy;
     private final OffsetDateTime occurredAt;
     private final OffsetDateTime receivedAt;
     private final String flowId;
@@ -22,27 +23,28 @@ public final class Metadata {
 
     @JsonCreator
     @Deprecated
-    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("partition") String partition, @JsonProperty("version") String version, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId, @JsonProperty("span_ctx") Map<String, String> spanCtx) {
-        this(eventType, eid, occurredAt == null ? null : OffsetDateTime.parse(occurredAt), partition, version, receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId, spanCtx);
+    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("partition") String partition, @JsonProperty("version") String version, @JsonProperty("published_by") String publishedBy, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId, @JsonProperty("span_ctx") Map<String, String> spanCtx) {
+        this(eventType, eid, occurredAt == null ? null : OffsetDateTime.parse(occurredAt), partition, version, publishedBy, receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId, spanCtx);
     }
 
-    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, String partition, String version,  OffsetDateTime receivedAt, String flowId) {
-        this(eventType, eid, occurredAt, partition, version, receivedAt, flowId, null);
+    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, String partition, String version, String publishedBy, OffsetDateTime receivedAt, String flowId) {
+        this(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, null);
     }
 
-    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, String partition, String version, OffsetDateTime receivedAt, String flowId, Map<String, String> spanCtx) {
+    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, String partition, String version, String publishedBy, OffsetDateTime receivedAt, String flowId, Map<String, String> spanCtx) {
         this.eventType = eventType;
         this.eid = eid;
         this.occurredAt = occurredAt;
         this.partition = partition;
         this.version = version;
+        this.publishedBy = publishedBy;
         this.receivedAt = receivedAt;
         this.flowId = flowId;
         this.spanCtx = spanCtx == null ? Collections.emptyMap() : Collections.unmodifiableMap(new LinkedHashMap<>(spanCtx));
     }
 
     public Metadata(String eid, OffsetDateTime occurredAt) {
-        this(null, eid, occurredAt, null, null, null, null, null);
+        this(null, eid, occurredAt, null, null,  null, null, null, null);
     }
 
     public String getEventType() {
@@ -73,6 +75,10 @@ public final class Metadata {
         return spanCtx;
     }
 
+    public String getPublishedBy() {
+        return publishedBy;
+    }
+
     @Override
     public String toString() {
         return "Metadata{" +
@@ -81,6 +87,7 @@ public final class Metadata {
                 ", occurredAt=" + occurredAt +
                 ", partition='" + partition + '\'' +
                 ", version='" + version + '\'' +
+                ", publishedBy='" + publishedBy + '\'' +
                 ", receivedAt=" + receivedAt +
                 ", flowId='" + flowId + '\'' +
                 '}';

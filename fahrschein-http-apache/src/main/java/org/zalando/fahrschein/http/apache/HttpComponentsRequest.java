@@ -2,11 +2,13 @@ package org.zalando.fahrschein.http.apache;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.protocol.HTTP;
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Request;
@@ -16,7 +18,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * {@link Request} implementation based on Apache HttpComponents HttpClient.
@@ -33,14 +37,18 @@ final class HttpComponentsRequest implements Request {
 
     private final HttpClient httpClient;
     private final HttpUriRequest httpRequest;
+    private final ContentEncoding contentEncoding;
 
     private final Headers headers;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    HttpComponentsRequest(HttpClient client, HttpUriRequest request) {
+    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
+
+    HttpComponentsRequest(HttpClient client, HttpUriRequest request, ContentEncoding contentEncoding) {
         this.httpClient = client;
         this.httpRequest = request;
+        this.contentEncoding = contentEncoding;
         this.headers = new HeadersImpl();
     }
 
@@ -93,6 +101,10 @@ final class HttpComponentsRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
+            if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
+                this.httpRequest.setHeader(HttpHeaders.CONTENT_ENCODING, this.contentEncoding.value());
+                return new GZIPOutputStream(this.bufferedOutput);
+            }
         }
         return this.bufferedOutput;
     }

@@ -8,6 +8,7 @@ import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.http.api.ContentType;
+import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -50,8 +51,7 @@ public class NakadiClientTest {
 
         final CursorManager cursorManager = mock(CursorManager.class);
 
-        final NakadiClient nakadiClient = NakadiClient.builder(URI.create("http://example.com/"))
-                .withRequestFactory(clientHttpRequestFactory)
+        final NakadiClient nakadiClient = NakadiClient.builder(URI.create("http://example.com/"), clientHttpRequestFactory)
                 .withCursorManager(cursorManager)
                 .build();
 

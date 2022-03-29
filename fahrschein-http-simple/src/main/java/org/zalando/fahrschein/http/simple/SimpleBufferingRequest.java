@@ -1,5 +1,6 @@
 package org.zalando.fahrschein.http.simple;
 
+import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Request;
@@ -12,10 +13,14 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * {@link Request} implementation that uses standard JDK facilities to
  * execute buffered requests. Created via the {@link SimpleRequestFactory}.
+ *
+ * See original
+ * <a href="https://github.com/spring-projects/spring-framework/blob/main/spring-web/src/main/java/org/springframework/http/client/SimpleBufferingClientHttpRequest.java">code from Spring Framework</a>.
  *
  * @author Arjen Poutsma
  * @author Juergen Hoeller
@@ -26,12 +31,14 @@ final class SimpleBufferingRequest implements Request {
 
     private final HttpURLConnection connection;
     private final Headers headers;
+    private final ContentEncoding contentEncoding;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    SimpleBufferingRequest(HttpURLConnection connection) {
+    SimpleBufferingRequest(HttpURLConnection connection, ContentEncoding contentEncoding) {
         this.connection = connection;
         this.headers = new HeadersImpl();
+        this.contentEncoding = contentEncoding;
     }
 
     @Override
@@ -52,7 +59,6 @@ final class SimpleBufferingRequest implements Request {
         final int size = this.bufferedOutput != null ? this.bufferedOutput.size() : 0;
 
         final long contentLength = this.headers.getContentLength();
-
         if (contentLength >= 0 && contentLength != size) {
             throw new IllegalStateException("Invalid Content-Length header [" + contentLength + "], request size is [" + size + "]");
         }
@@ -65,6 +71,11 @@ final class SimpleBufferingRequest implements Request {
                     connection.addRequestProperty(headerName, actualHeaderValue);
                 }
             }
+        }
+
+        // allow gzip-compression from server response
+        if (connection.getRequestProperty("Accept-Encoding") == null) {
+            connection.setRequestProperty("Accept-Encoding", "gzip");
         }
 
         if (this.connection.getDoOutput()) {
@@ -97,6 +108,10 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
+            if (this.connection.getDoOutput() && ContentEncoding.GZIP.equals(this.contentEncoding)) {
+                this.connection.setRequestProperty("Content-Encoding", this.contentEncoding.value());
+                return new GZIPOutputStream(this.bufferedOutput);
+            }
         }
         return this.bufferedOutput;
     }
