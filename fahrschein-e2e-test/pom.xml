@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>org.zalando</groupId>
-        <version>0.20.0-SNAPSHOT</version>
+        <version>0.20.0</version>
         <artifactId>fahrschein-parent</artifactId>
         <relativePath>../pom.xml</relativePath>
     </parent>
