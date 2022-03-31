@@ -10,14 +10,10 @@ import org.zalando.fahrschein.http.api.Response;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
 
 class RequestAdapter implements Request {
     private final ClientHttpRequest clientHttpRequest;
     private final ContentEncoding contentEncoding;
-
-    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
 
     RequestAdapter(ClientHttpRequest clientHttpRequest, ContentEncoding contentEncoding) {
         this.clientHttpRequest = clientHttpRequest;
@@ -41,7 +37,7 @@ class RequestAdapter implements Request {
 
     @Override
     public OutputStream getBody() throws IOException {
-        if (writeMethods.contains(getMethod())) {
+        if (this.contentEncoding.isSupported(getMethod())) {
             // probably premature optimization, but we're omitting the unnecessary
             // "Content-Encoding: identity" header
             if (ContentEncoding.IDENTITY != this.contentEncoding) {

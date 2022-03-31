@@ -4,6 +4,9 @@ import com.github.luben.zstd.ZstdOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
 public enum ContentEncoding {
@@ -13,6 +16,12 @@ public enum ContentEncoding {
 
     ContentEncoding(String value) {
         this.value = value;
+    }
+
+    private static final Set<String> HTTP_METHODS_WITH_COMPRESSION_SUPPORT = new HashSet<>(Arrays.asList("POST"));
+
+    public boolean isSupported(String httpMethod) {
+       return HTTP_METHODS_WITH_COMPRESSION_SUPPORT.contains(httpMethod);
     }
 
     public String value() {

@@ -43,8 +43,6 @@ final class HttpComponentsRequest implements Request {
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
-
     HttpComponentsRequest(HttpClient client, HttpUriRequest request, ContentEncoding contentEncoding) {
         this.httpClient = client;
         this.httpRequest = request;
@@ -101,7 +99,7 @@ final class HttpComponentsRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (writeMethods.contains(getMethod())) {
+            if (this.contentEncoding.isSupported(getMethod())) {
                 // probably premature optimization, but we're omitting the unnecessary
                 // "Content-Encoding: identity" header
                 if (ContentEncoding.IDENTITY != this.contentEncoding) {

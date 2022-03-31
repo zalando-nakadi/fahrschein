@@ -13,7 +13,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * {@link Request} implementation that uses standard JDK facilities to
@@ -108,7 +107,7 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.connection.getDoOutput()) {
+            if (this.contentEncoding.isSupported(getMethod())) {
                 // probably premature optimization, but we're omitting the unnecessary
                 // "Content-Encoding: identity" header
                 if (ContentEncoding.IDENTITY != this.contentEncoding) {
