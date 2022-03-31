@@ -20,7 +20,8 @@
     - No required base classes for events
  - Support for both high-level (subscription) and low-level APIs
  - Pluggable HTTP client implementations
- - Gzip encoding support for publishing and consuming events
+ - Gzip compression support for publishing and consuming events
+ - ZStandard compression support for publishing events
 
 ## Installation
 
@@ -30,6 +31,31 @@ Fahrschein is available in maven central, so you only have to add the following 
 <dependency>
     <groupId>org.zalando</groupId>
     <artifactId>fahrschein</artifactId>
+    <version>${fahrschein.version}</version>
+</dependency>
+```
+
+Next, choose one of the following HTTP Client implementations. Since `0.21.0` fahrschein does not come with the `fahrschein-http-simple` bundled anymore.
+
+```xml
+<-- Simple Implementation without external dependencies -->
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http-simple</artifactId>
+    <version>${fahrschein.version}</version>
+</dependency>
+
+<-- Implementation using Apache HTTPComponents -->
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http-apache</artifactId>
+    <version>${fahrschein.version}</version>
+</dependency>
+
+<-- Implementation using the Spring adapter -->
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http-spring</artifactId>
     <version>${fahrschein.version}</version>
 </dependency>
 ```
@@ -272,9 +298,9 @@ RequestFactory into a `IdentityAcceptEncodingRequestFactory`, which sets the `Ac
 
 ### Publishing
 
-For event publishing, the `Request` body can also get gzip-encoded by Fahrschein, if enabled when building the RequestFactory.
-For this, you need to pass `ContentEncoding.GZIP`, or if compression is undesired, pass `ContentEncoding.IDENTITY`.
-In the future, we may support other encoding formats, like Zstandard.
+For event publishing, the `Request` body can also get compressed by Fahrschein, if enabled when building the RequestFactory.
+For this, you need to pass either `ContentEncoding.GZIP`, `ContentEncoding.ZSTD`, or if compression is undesired, pass `ContentEncoding.IDENTITY`.
+Zstandard compression was added in version `0.21.0`.
 
 ## Fahrschein compared to other Nakadi client libraries
 
