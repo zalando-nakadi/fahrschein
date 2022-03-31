@@ -38,6 +38,11 @@
         </dependency>
         <dependency>
             <groupId>org.zalando</groupId>
+            <artifactId>fahrschein-http-simple</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.zalando</groupId>
             <artifactId>fahrschein-http-apache</artifactId>
             <version>${project.version}</version>
         </dependency>
