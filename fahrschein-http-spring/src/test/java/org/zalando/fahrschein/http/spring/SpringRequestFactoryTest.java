@@ -1,110 +1,30 @@
 package org.zalando.fahrschein.http.spring;
 
-import com.github.luben.zstd.ZstdInputStream;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
 import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.zalando.fahrschein.http.api.ContentEncoding;
-import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
-import org.zalando.fahrschein.http.api.Response;
+import org.zalando.fahrschein.test.AbstractRequestFactoryTest;
 
-import java.io.*;
-import java.net.InetSocketAddress;
+import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SpringRequestFactoryTest {
+public class SpringRequestFactoryTest extends AbstractRequestFactoryTest {
 
-    static HttpServer server;
-    static URI serverAddress;
-
-    @BeforeClass
-    public static void startServer() throws IOException {
-        server = HttpServer.create(new InetSocketAddress("localhost", 0), 1);
-        serverAddress = URI.create("http://localhost:" + server.getAddress().getPort());
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        server.setExecutor(executor);
-        server.start();
-    }
-
-    @Captor
-    public ArgumentCaptor<HttpExchange> exchangeCaptor;
-
-    @Test
-    public void testGzippedResponseBody() throws IOException {
-        // given
-        String expectedResponse = "{}";
-        HttpHandler spy = Mockito.spy(new GzippedResponseContentHandler(expectedResponse));
-        server.createContext("/gzipped", spy);
-
-        // when
-        final RequestFactory f = defaultRequestFactory(ContentEncoding.IDENTITY);
-        Request r = f.createRequest(serverAddress.resolve("/gzipped"), "GET");
-        Response executed = r.execute();
-        String actualResponse = readStream(executed.getBody());
-
-        // then
-        Mockito.verify(spy).handle(exchangeCaptor.capture());
-        HttpExchange capturedArgument = exchangeCaptor.getValue();
-        assertThat("accept-encoding header", capturedArgument.getRequestHeaders().get("accept-encoding"), equalTo(Arrays.asList("gzip")));
-        assertThat("no content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), nullValue());
-        assertEquals(URI.create("/gzipped"), capturedArgument.getRequestURI());
-        assertEquals(expectedResponse, actualResponse);
-    }
-
-    @Test
-    public void testZStandardRequestBody() throws IOException {
-        // given
-        String requestBody = "{}";
-        String responseBody = "{}";
-        SimpleRequestResponseContentHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(responseBody));
-        server.createContext("/zstd-post", spy);
-
-        // when
-        RequestFactory f = defaultRequestFactory(ContentEncoding.ZSTD);
-
-        Request r = f.createRequest(serverAddress.resolve("/zstd-post"), "POST");
-        r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
-        try (final OutputStream body = r.getBody()) {
-            body.write(requestBody.getBytes());
-        }
-        Response executed = r.execute();
-        String actualResponse = readStream(executed.getBody());
-
-        // then
-        Mockito.verify(spy).handle(exchangeCaptor.capture());
-        HttpExchange capturedArgument = exchangeCaptor.getValue();
-        assertEquals("POST", capturedArgument.getRequestMethod());
-        assertEquals(URI.create("/zstd-post"), capturedArgument.getRequestURI());
-        assertThat("content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), equalTo(Arrays.asList("zstd")));
-        assertEquals(requestBody, spy.getRequestBody());
-        assertEquals(responseBody, actualResponse);
+    @NotNull
+    public RequestFactory defaultRequestFactory(ContentEncoding contentEncoding) {
+        final OkHttpClient client = new OkHttpClient.Builder()
+                .build();
+        final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
+        final SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory, contentEncoding);
+        return f;
     }
 
     @Test(expected = SocketTimeoutException.class)
@@ -127,107 +47,5 @@ public class SpringRequestFactoryTest {
         r.execute();
     }
 
-    @Test
-    public void testGzippedRequestBody() throws IOException {
-        // given
-        String requestBody = "{}";
-        String responseBody = "{}";
-        SimpleRequestResponseContentHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(responseBody));
-        server.createContext("/gzipped-post", spy);
 
-        // when
-        final RequestFactory f = defaultRequestFactory(ContentEncoding.GZIP);
-        Request r = f.createRequest(serverAddress.resolve("/gzipped-post"), "POST");
-        r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
-        try (final OutputStream body = r.getBody()) {
-            body.write(requestBody.getBytes());
-        }
-        Response executed = r.execute();
-        String actualResponse = readStream(executed.getBody());
-
-        // then
-        Mockito.verify(spy).handle(exchangeCaptor.capture());
-        HttpExchange capturedArgument = exchangeCaptor.getValue();
-        assertEquals("POST", capturedArgument.getRequestMethod());
-        assertEquals(URI.create("/gzipped-post"), capturedArgument.getRequestURI());
-        assertThat("content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), equalTo(Arrays.asList("gzip")));
-        assertEquals(requestBody, spy.getRequestBody());
-        assertEquals(responseBody, actualResponse);
-    }
-
-    @NotNull
-    private RequestFactory defaultRequestFactory(ContentEncoding contentEncoding) {
-        final OkHttpClient client = new OkHttpClient.Builder()
-                .build();
-        final OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
-        final SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory, contentEncoding);
-        return f;
-    }
-
-    static String readStream(InputStream stream) throws IOException {
-        String res = new BufferedReader(
-                new InputStreamReader(stream, UTF_8))
-                .lines()
-                .collect(Collectors.joining("\n"));
-        stream.close();
-        return res;
-    }
-
-    private static class SimpleRequestResponseContentHandler implements HttpHandler {
-
-        private String requestBody;
-        private final String responseBody;
-
-        SimpleRequestResponseContentHandler(String responseBody) {
-            this.responseBody = responseBody;
-        }
-
-        public String getRequestBody() {
-            return requestBody;
-        }
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            try {
-                if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("gzip")) {
-                    requestBody = readStream(new GZIPInputStream(exchange.getRequestBody()));
-                } else if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("zstd")) {
-                    requestBody = readStream(new ZstdInputStream(exchange.getRequestBody()));
-                } else {
-                    requestBody = readStream(exchange.getRequestBody());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            byte[] bytes = responseBody.getBytes(UTF_8);
-            exchange.sendResponseHeaders(200, bytes.length);
-            OutputStream responseBody = exchange.getResponseBody();
-            responseBody.write(bytes);
-            responseBody.close();
-        }
-    }
-
-    private static class GzippedResponseContentHandler implements HttpHandler {
-
-        private final byte[] rawResponse;
-
-        GzippedResponseContentHandler(String response) throws IOException {
-            byte[] stringResponse = response.getBytes(UTF_8);
-            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-            GZIPOutputStream zipStream = new GZIPOutputStream(byteStream);
-            zipStream.write(stringResponse);
-            zipStream.close();
-            this.rawResponse = byteStream.toByteArray();
-        }
-
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            exchange.getResponseHeaders().set("Content-Encoding", "gzip");
-            exchange.sendResponseHeaders(200, rawResponse.length);
-            OutputStream responseBody = exchange.getResponseBody();
-            responseBody.write(rawResponse);
-            responseBody.close();
-        }
-    }
 }

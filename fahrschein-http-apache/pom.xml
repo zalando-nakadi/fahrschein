@@ -37,6 +37,12 @@
             <version>${version.junit}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.zalando</groupId>
+            <artifactId>fahrschein-test-support</artifactId>
+            <version>0.20.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
