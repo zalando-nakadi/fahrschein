@@ -70,14 +70,14 @@ By default nakadi will start streaming from the most recent offset. The initial 
 ```java
 final List<Partition> partitions = nakadiClient.getPartitions(eventName);
 
-// The cursor manager can be configured to start reading from the oldest available offset in each partition
-cursorManager.fromOldestAvailableOffset(eventName, partitions);
+// NakadiClient can be configured to start reading from the oldest available offset in each partition
+nakadiClient.stream(eventName).readFromBegin(partitions);
 
 // Or from the newest available offset, but this is the same as the default
-cursorManager.fromNewestAvailableOffsets(eventName, partitions);
+nakadiClient.stream(eventName).readFromNewestAvailableOffset(partitions);
 
 // Or (for a persistent cursor manager) we can start reading from the last offset that we processed if it's still available, and from the oldest available offset otherwise
-cursorManager.updatePartitions(eventName, partitions);
+nakadiClient.stream(eventName).skipUnavailableOffsets(partitions);
 ```
 
 ## Using Nakadi's Low-level API
