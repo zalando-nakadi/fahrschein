@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.util.Formatter;
 import java.util.Locale;
 
-@SuppressWarnings("serial")
+/**
+ * Thrown in case the client wasn't able to publish the given Event to Nakadi.
+ */
 public class EventPublishingException extends IOException {
     private final BatchItemResponse[] responses;
 
