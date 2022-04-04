@@ -26,6 +26,9 @@ import java.util.Set;
 import static org.zalando.fahrschein.Preconditions.checkArgument;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
+/**
+ * General implementation of the Nakadi Client used within this Library.
+ */
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
 
@@ -38,6 +41,14 @@ public class NakadiClient {
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
 
+    /**
+     * Returns a new Builder that will make use of the given request Factory and tries to connect to the give
+     * address.
+     *
+     * @param baseUri that we try to connect to
+     * @param clientHttpRequestFactory that we use for the execution of our HTTP Requests.
+     * @return A builder to initialize the client. Can be further modified later.
+     */
     public static NakadiClientBuilder builder(URI baseUri, RequestFactory clientHttpRequestFactory) {
         return new NakadiClientBuilder(baseUri, clientHttpRequestFactory);
     }
@@ -50,6 +61,12 @@ public class NakadiClient {
         this.cursorManager = cursorManager;
     }
 
+    /**
+     * Resolves a list of partitions for the given eventName.
+     * @param eventName that we want to resolve the partitions for.
+     * @return {@code List<Partition>} or {@code null} in
+     * @throws IOException in case of network issues.
+     */
     public List<Partition> getPartitions(String eventName) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/partitions", eventName));
         final Request request = clientHttpRequestFactory.createRequest(uri, "GET");
@@ -60,7 +77,14 @@ public class NakadiClient {
         }
     }
 
-    public <T> void publish(String eventName, List<T> events) throws EventPublishingException, IOException {
+    /**
+     * Writes the given Events to the endpoint provided by the eventName.
+     * @param eventName where the event should be written to
+     * @param events that should be written
+     * @param <T> Type of the Event
+     * @throws IOException in case we fail reaching Nakadi or we are unable to write the event.
+     */
+    public <T> void publish(String eventName, List<T> events) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events", eventName));
         final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
 
