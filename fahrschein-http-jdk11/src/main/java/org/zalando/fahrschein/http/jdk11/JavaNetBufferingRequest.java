@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -25,19 +26,19 @@ final class JavaNetBufferingRequest implements Request {
     private final HttpClient client;
     private final URI uri;
     private final String method;
-    private final HttpRequestBuilderAdapter adapter;
     private final ContentEncoding contentEncoding;
+    private final Duration timeout;
     private boolean executed;
     private ByteArrayOutputStream bufferedOutput;
 
     private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
 
-    JavaNetBufferingRequest(URI uri, String method, HttpClient client, HttpRequestBuilderAdapter adapter, ContentEncoding contentEncoding) {
+    JavaNetBufferingRequest(URI uri, String method, HttpClient client, Duration timeout, ContentEncoding contentEncoding) {
         this.uri = uri;
         this.method = method;
         this.request = HttpRequest.newBuilder().header("Accept-Encoding", "gzip");
-        this.adapter = adapter;
         this.client = client;
+        this.timeout = timeout;
         this.contentEncoding = contentEncoding;
     }
 
@@ -117,13 +118,13 @@ final class JavaNetBufferingRequest implements Request {
     public Response execute() throws IOException {
         try {
             HttpResponse<InputStream> response = client.send(
-                    adapter.apply(request
+                    request
                             .uri(this.uri)
+                            .timeout(this.timeout)
                             .method(this.method,
                                     this.bufferedOutput == null
                                             ? HttpRequest.BodyPublishers.noBody()
                                             : HttpRequest.BodyPublishers.ofByteArray(this.bufferedOutput.toByteArray()))
-                    )
                             .build(),
                     HttpResponse.BodyHandlers.ofInputStream());
             this.executed = true;

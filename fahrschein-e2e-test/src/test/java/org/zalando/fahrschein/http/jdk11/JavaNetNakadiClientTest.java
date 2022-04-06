@@ -10,6 +10,6 @@ import java.time.Duration;
 public class JavaNetNakadiClientTest extends AbstractRequestFactoryTest {
     @Override
     protected RequestFactory getRequestFactory() {
-        return new JavaNetRequestFactory(HttpClient.newBuilder().build(), rb -> rb.timeout(Duration.ofSeconds(1)), ContentEncoding.GZIP);
+        return new JavaNetRequestFactory(HttpClient.newBuilder().build(), Duration.ofSeconds(1), ContentEncoding.GZIP);
     }
 }

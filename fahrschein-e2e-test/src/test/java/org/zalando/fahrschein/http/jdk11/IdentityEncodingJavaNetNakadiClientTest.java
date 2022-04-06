@@ -11,6 +11,6 @@ import java.time.Duration;
 public class IdentityEncodingJavaNetNakadiClientTest extends AbstractRequestFactoryTest {
     @Override
     protected RequestFactory getRequestFactory() {
-        return new IdentityAcceptEncodingRequestFactory(new JavaNetRequestFactory(HttpClient.newBuilder().build(), rb -> rb.timeout(Duration.ofSeconds(1)), ContentEncoding.IDENTITY));
+        return new IdentityAcceptEncodingRequestFactory(new JavaNetRequestFactory(HttpClient.newBuilder().build(), Duration.ofSeconds(1), ContentEncoding.IDENTITY));
     }
 }
