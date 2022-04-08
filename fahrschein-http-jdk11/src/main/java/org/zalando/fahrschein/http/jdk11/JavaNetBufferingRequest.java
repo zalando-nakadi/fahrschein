@@ -17,6 +17,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
@@ -27,18 +28,18 @@ final class JavaNetBufferingRequest implements Request {
     private final URI uri;
     private final String method;
     private final ContentEncoding contentEncoding;
-    private final Duration timeout;
+    private final Optional<Duration> requestTimeout;
     private boolean executed;
     private ByteArrayOutputStream bufferedOutput;
 
     private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
 
-    JavaNetBufferingRequest(URI uri, String method, HttpClient client, Duration timeout, ContentEncoding contentEncoding) {
+    JavaNetBufferingRequest(URI uri, String method, HttpClient client, Optional<Duration> requestTimeout, ContentEncoding contentEncoding) {
         this.uri = uri;
         this.method = method;
         this.request = HttpRequest.newBuilder().header("Accept-Encoding", "gzip");
         this.client = client;
-        this.timeout = timeout;
+        this.requestTimeout = requestTimeout;
         this.contentEncoding = contentEncoding;
     }
 
@@ -117,10 +118,10 @@ final class JavaNetBufferingRequest implements Request {
     @Override
     public Response execute() throws IOException {
         try {
+            requestTimeout.ifPresent(t -> request.timeout(t));
             HttpResponse<InputStream> response = client.send(
                     request
                             .uri(this.uri)
-                            .timeout(this.timeout)
                             .method(this.method,
                                     this.bufferedOutput == null
                                             ? HttpRequest.BodyPublishers.noBody()

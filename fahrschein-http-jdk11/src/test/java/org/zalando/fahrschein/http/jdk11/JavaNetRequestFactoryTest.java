@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -139,7 +140,7 @@ public class JavaNetRequestFactoryTest {
         });
 
         // when
-        RequestFactory f = new JavaNetRequestFactory(HttpClient.newBuilder().build(), Duration.ofMillis(1), ContentEncoding.IDENTITY);
+        RequestFactory f = new JavaNetRequestFactory(HttpClient.newBuilder().build(), Optional.of(Duration.ofMillis(1)), ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");
         r.execute();
     }
@@ -173,7 +174,7 @@ public class JavaNetRequestFactoryTest {
     }
 
     private RequestFactory getRequestFactory(ContentEncoding contentEncoding) {
-        return new JavaNetRequestFactory(HttpClient.newHttpClient(), Duration.ofSeconds(1), contentEncoding);
+        return new JavaNetRequestFactory(HttpClient.newHttpClient(), Optional.of(Duration.ofSeconds(1)), contentEncoding);
     }
 
     static String readStream(InputStream stream) throws IOException {
