@@ -188,6 +188,17 @@ nakadiClient.stream(eventName)
 
 Fahrschein uses it's own http abstraction which is very similar to spring framework's [`ClientHttpRequestFactory`](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/client/ClientHttpRequestFactory.html) interface. By default it uses the `SimpleRequestFactory` which uses a `HttpURLConnection` internally and has no further dependencies.
 
+
+There is a version using java.net HttpClient (JDK11+) named `JavaNetRequestFactory` in the `fahrschein-http-jdk11` artifact.
+
+```xml
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http-jdk11</artifactId>
+    <version>${fahrschein.version}</version>
+</dependency>
+```
+
 There is also a version using apache http components named `HttpComponentsRequestFactory` in the `fahrschein-http-apache` artifact.
 
 ```xml
