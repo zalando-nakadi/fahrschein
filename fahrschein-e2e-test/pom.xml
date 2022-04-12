@@ -29,13 +29,7 @@
     <dependencies>
         <dependency>
             <groupId>org.zalando</groupId>
-            <artifactId>fahrschein</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.zalando</groupId>
-            <artifactId>fahrschein-http-api</artifactId>
+            <artifactId>fahrschein-core</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -103,12 +97,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>4.3.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${version.slf4j}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

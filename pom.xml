@@ -83,6 +83,7 @@
 
     <modules>
         <module>fahrschein</module>
+        <module>fahrschein-core</module>
         <module>fahrschein-jdbc</module>
         <module>fahrschein-redis</module>
         <module>fahrschein-inmemory</module>
