@@ -107,9 +107,9 @@ final class JavaNetBufferingRequest implements Request {
     public OutputStream getBody() throws IOException {
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
+            if (this.contentEncoding.isSupported(getMethod())) {
                 request.setHeader("Content-Encoding", this.contentEncoding.value());
-                return new GZIPOutputStream(this.bufferedOutput);
+                return this.contentEncoding.wrap(this.bufferedOutput);
             }
         }
         return this.bufferedOutput;
