@@ -26,20 +26,23 @@ import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.jdk11.JavaNetRequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
 import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 
 import java.io.IOException;
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static org.junit.runners.Parameterized.*;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -53,6 +56,7 @@ public class RequestFactoryTest extends NakadiTestWithDockerCompose {
 
     private static final Logger logger = LoggerFactory.getLogger("okhttp3.wire");
     private static final HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(logger::debug);
+
     static {
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.HEADERS);
     }
@@ -89,7 +93,11 @@ public class RequestFactoryTest extends NakadiTestWithDockerCompose {
     @Parameters
     public static Collection<Object[]> getRequestFactories() {
         List<Function<RequestFactory, RequestFactory>> wrappers = List.of(a -> a, a -> new IdentityAcceptEncodingRequestFactory(a));
-        List<Function<ContentEncoding, RequestFactory>> factoryProviders = List.of(RequestFactoryTest::apache, RequestFactoryTest::spring, RequestFactoryTest::simple);
+        List<Function<ContentEncoding, RequestFactory>> factoryProviders = List.of(
+                RequestFactoryTest::apache,
+                RequestFactoryTest::spring,
+                RequestFactoryTest::simple,
+                RequestFactoryTest::jdk11);
         List<Object[]> parameters = new ArrayList<>();
         for (ContentEncoding e : ContentEncoding.values()) {
             wrappers.forEach(wrapper ->
@@ -99,6 +107,10 @@ public class RequestFactoryTest extends NakadiTestWithDockerCompose {
             );
         }
         return parameters;
+    }
+
+    private static RequestFactory jdk11(ContentEncoding contentEncoding) {
+        return new JavaNetRequestFactory(HttpClient.newHttpClient(), Optional.empty(), contentEncoding);
     }
 
     private static RequestFactory apache(ContentEncoding encoding) {
