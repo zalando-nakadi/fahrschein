@@ -1,12 +1,5 @@
 package org.zalando.fahrschein.e2e;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -17,6 +10,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +31,7 @@ public abstract class NakadiTestWithDockerCompose {
 
     public static DockerComposeContainer<?> compose;
 
-    private static CloseableHttpClient httpClient = HttpClients.createDefault();
+    private static HttpClient httpClient = HttpClient.newHttpClient();
 
     static {
         if (!COMPOSE_PROVIDED) {
@@ -65,12 +61,11 @@ public abstract class NakadiTestWithDockerCompose {
                     .filter(file -> !Files.isDirectory(file))
                     .forEach((Path file) -> {
                         try {
-                            postJson(new StringEntity(f(file)), nakadiUri);
-                        } catch (HttpResponseException e) {
-                            if (e.getStatusCode() != 409) {
-                                throw new RuntimeException(e);
-                            }
-                        } catch (IOException e) {
+                            postJson(HttpRequest.newBuilder()
+                                    .header("Content-Type", "application/json")
+                                    .uri(nakadiUri)
+                                    .POST(HttpRequest.BodyPublishers.ofFile(file)).build());
+                        } catch (IOException | InterruptedException e) {
                             throw new RuntimeException(e);
                         }
                     });
@@ -82,11 +77,8 @@ public abstract class NakadiTestWithDockerCompose {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private String postJson(HttpEntity e, URI uri) throws IOException {
-        HttpPost post = new HttpPost(uri);
-        post.setEntity(e);
-        post.setHeader("Content-Type", "application/json");
-        return httpClient.execute(post, new BasicResponseHandler());
+    private String postJson(HttpRequest r) throws IOException, InterruptedException {
+        return httpClient.send(r, HttpResponse.BodyHandlers.ofString()).body();
     }
 
 }

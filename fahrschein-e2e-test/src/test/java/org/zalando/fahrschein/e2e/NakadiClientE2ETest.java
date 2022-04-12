@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.http;
+package org.zalando.fahrschein.e2e;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -11,18 +11,23 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
-import org.zalando.fahrschein.e2e.NakadiTestWithDockerCompose;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.zalando.fahrschein.*;
+import org.zalando.fahrschein.EventAlreadyProcessedException;
+import org.zalando.fahrschein.IdentityAcceptEncodingRequestFactory;
+import org.zalando.fahrschein.Listener;
+import org.zalando.fahrschein.NakadiClient;
+import org.zalando.fahrschein.StreamBuilder;
+import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.domain.Metadata;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.http.OrderEvent;
 import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -32,7 +37,6 @@ import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,15 +48,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.runners.Parameterized.*;
+import static org.junit.runners.Parameterized.Parameters;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.timeout;
 
 /*
  * Enable wire-debug by running with -Djdk.httpclient.HttpClient.log=requests
  */
 @RunWith(Parameterized.class)
-public class RequestFactoryTest extends NakadiTestWithDockerCompose {
+public class NakadiClientE2ETest extends NakadiTestWithDockerCompose {
 
     private static final Logger logger = LoggerFactory.getLogger("okhttp3.wire");
     private static final HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(logger::debug);
@@ -78,7 +82,7 @@ public class RequestFactoryTest extends NakadiTestWithDockerCompose {
 
     private NakadiClient nakadiClient;
 
-    public RequestFactoryTest(RequestFactory requestFactory) {
+    public NakadiClientE2ETest(RequestFactory requestFactory) {
         this.requestFactory = requestFactory;
     }
 
@@ -92,12 +96,12 @@ public class RequestFactoryTest extends NakadiTestWithDockerCompose {
 
     @Parameters
     public static Collection<Object[]> getRequestFactories() {
-        List<Function<RequestFactory, RequestFactory>> wrappers = List.of(a -> a, a -> new IdentityAcceptEncodingRequestFactory(a));
+        List<Function<RequestFactory, RequestFactory>> wrappers = List.of(Function.identity(), a -> new IdentityAcceptEncodingRequestFactory(a));
         List<Function<ContentEncoding, RequestFactory>> factoryProviders = List.of(
-                RequestFactoryTest::apache,
-                RequestFactoryTest::spring,
-                RequestFactoryTest::simple,
-                RequestFactoryTest::jdk11);
+                NakadiClientE2ETest::apache,
+                NakadiClientE2ETest::spring,
+                NakadiClientE2ETest::simple,
+                NakadiClientE2ETest::jdk11);
         List<Object[]> parameters = new ArrayList<>();
         for (ContentEncoding e : ContentEncoding.values()) {
             wrappers.forEach(wrapper ->

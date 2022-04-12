@@ -15,11 +15,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.zip.GZIPOutputStream;
 
 final class JavaNetBufferingRequest implements Request {
 
@@ -31,8 +29,6 @@ final class JavaNetBufferingRequest implements Request {
     private final Optional<Duration> requestTimeout;
     private boolean executed;
     private ByteArrayOutputStream bufferedOutput;
-
-    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
 
     JavaNetBufferingRequest(URI uri, String method, HttpClient client, Optional<Duration> requestTimeout, ContentEncoding contentEncoding) {
         this.uri = uri;
@@ -108,7 +104,11 @@ final class JavaNetBufferingRequest implements Request {
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
             if (this.contentEncoding.isSupported(getMethod())) {
-                request.setHeader("Content-Encoding", this.contentEncoding.value());
+                // probably premature optimization, but we're omitting the unnecessary
+                // "Content-Encoding: identity" header
+                if (ContentEncoding.IDENTITY != this.contentEncoding) {
+                    request.setHeader("Content-Encoding", this.contentEncoding.value());
+                }
                 return this.contentEncoding.wrap(this.bufferedOutput);
             }
         }

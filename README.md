@@ -35,16 +35,9 @@ Fahrschein is available in maven central, so you only have to add the following 
 </dependency>
 ```
 
-Next, choose one of the following HTTP Client implementations. Since `0.21.0` fahrschein does not come with the `fahrschein-http-simple` bundled anymore.
+Fahrschein comes with a simple zero-dependency HTTP client bundled, but you can also choose one of the following alternative HTTP client integrations:
 
 ```xml
-<-- Simple Implementation without external dependencies -->
-<dependency>
-    <groupId>org.zalando</groupId>
-    <artifactId>fahrschein-http-simple</artifactId>
-    <version>${fahrschein.version}</version>
-</dependency>
-
 <-- Implementation using Apache HTTPComponents -->
 <dependency>
     <groupId>org.zalando</groupId>
@@ -56,6 +49,13 @@ Next, choose one of the following HTTP Client implementations. Since `0.21.0` fa
 <dependency>
     <groupId>org.zalando</groupId>
     <artifactId>fahrschein-http-spring</artifactId>
+    <version>${fahrschein.version}</version>
+</dependency>
+
+<-- Zero-Dependency implementation using the JDK11+ Java.Net HTTP client -->
+<dependency>
+    <groupId>org.zalando</groupId>
+    <artifactId>fahrschein-http-jdk11</artifactId>
     <version>${fahrschein.version}</version>
 </dependency>
 ```
