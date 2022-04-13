@@ -1,5 +1,6 @@
 package org.zalando.fahrschein.http.test;
 
+import com.github.luben.zstd.ZstdInputStream;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -103,6 +104,35 @@ public abstract class AbstractRequestFactoryTest {
         assertEquals(responseBody, actualResponse);
     }
 
+    @Test
+    public void testZStandardRequestBody() throws IOException {
+        // given
+        String requestBody = "{}";
+        String responseBody = "{}";
+        SimpleRequestResponseContentHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(responseBody));
+        server.createContext("/zstd-post", spy);
+
+        // when
+        RequestFactory f = defaultRequestFactory(ContentEncoding.ZSTD);
+
+        Request r = f.createRequest(serverAddress.resolve("/zstd-post"), "POST");
+        r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
+        try (final OutputStream body = r.getBody()) {
+            body.write(requestBody.getBytes());
+        }
+        Response executed = r.execute();
+        String actualResponse = readStream(executed.getBody());
+
+        // then
+        Mockito.verify(spy).handle(exchangeCaptor.capture());
+        HttpExchange capturedArgument = exchangeCaptor.getValue();
+        assertEquals("POST", capturedArgument.getRequestMethod());
+        assertEquals(URI.create("/zstd-post"), capturedArgument.getRequestURI());
+        assertThat("content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), equalTo(Arrays.asList("zstd")));
+        assertEquals(requestBody, spy.getRequestBody());
+        assertEquals(responseBody, actualResponse);
+    }
+
     static String readStream(InputStream stream) throws IOException {
         String res = new BufferedReader(
                 new InputStreamReader(stream, UTF_8))
@@ -130,6 +160,8 @@ public abstract class AbstractRequestFactoryTest {
             try {
                 if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("gzip")) {
                     requestBody = readStream(new GZIPInputStream(exchange.getRequestBody()));
+                } else if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("zstd")) {
+                    requestBody = readStream(new ZstdInputStream(exchange.getRequestBody()));
                 } else {
                     requestBody = readStream(exchange.getRequestBody());
                 }

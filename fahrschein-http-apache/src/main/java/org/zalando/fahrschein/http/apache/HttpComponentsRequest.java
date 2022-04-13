@@ -43,8 +43,6 @@ final class HttpComponentsRequest implements Request {
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
-
     HttpComponentsRequest(HttpClient client, HttpUriRequest request, ContentEncoding contentEncoding) {
         this.httpClient = client;
         this.httpRequest = request;
@@ -101,9 +99,13 @@ final class HttpComponentsRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
-                this.httpRequest.setHeader(HttpHeaders.CONTENT_ENCODING, this.contentEncoding.value());
-                return new GZIPOutputStream(this.bufferedOutput);
+            if (this.contentEncoding.isSupported(getMethod())) {
+                // probably premature optimization, but we're omitting the unnecessary
+                // "Content-Encoding: identity" header
+                if (ContentEncoding.IDENTITY != this.contentEncoding) {
+                    this.httpRequest.setHeader(HttpHeaders.CONTENT_ENCODING, this.contentEncoding.value());
+                }
+                return this.contentEncoding.wrap(this.bufferedOutput);
             }
         }
         return this.bufferedOutput;

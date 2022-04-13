@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.zip.GZIPOutputStream;
 
 final class JavaNetBufferingRequest implements Request {
 
@@ -31,8 +30,6 @@ final class JavaNetBufferingRequest implements Request {
     private final Optional<Duration> requestTimeout;
     private boolean executed;
     private ByteArrayOutputStream bufferedOutput;
-
-    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
 
     JavaNetBufferingRequest(URI uri, String method, HttpClient client, Optional<Duration> requestTimeout, ContentEncoding contentEncoding) {
         this.uri = uri;
@@ -107,10 +104,12 @@ final class JavaNetBufferingRequest implements Request {
     public OutputStream getBody() throws IOException {
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
+            // probably premature optimization, but we're omitting the unnecessary
+            // "Content-Encoding: identity" header
+            if (ContentEncoding.IDENTITY != this.contentEncoding) {
                 request.setHeader("Content-Encoding", this.contentEncoding.value());
-                return new GZIPOutputStream(this.bufferedOutput);
             }
+            return this.contentEncoding.wrap(this.bufferedOutput);
         }
         return this.bufferedOutput;
     }
