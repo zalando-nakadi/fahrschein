@@ -2,6 +2,7 @@ package org.zalando.fahrschein.redis;
 
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.zalando.fahrschein.CursorManager;
@@ -26,9 +27,9 @@ public class RedisCursorManagerIT {
     @Test
     public void connectToRedisAndUseCursorManager() throws IOException {
 
-        final JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory();
-        jedisConnectionFactory.setUsePool(true);
-        jedisConnectionFactory.setShardInfo(new JedisShardInfo(redis.getHost(), redis.getFirstMappedPort()));
+        final JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(
+                new RedisStandaloneConfiguration(redis.getHost(), redis.getFirstMappedPort()));
+        jedisConnectionFactory.afterPropertiesSet();
         final CursorManager cursorManager = new RedisCursorManager(jedisConnectionFactory, "fahrschein_redis_test");
 
         Collection<Cursor> cursors;
