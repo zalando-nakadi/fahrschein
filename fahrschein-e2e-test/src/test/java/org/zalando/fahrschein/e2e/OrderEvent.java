@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.http;
+package org.zalando.fahrschein.e2e;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

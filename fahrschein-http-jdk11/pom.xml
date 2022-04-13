@@ -44,5 +44,11 @@
             <version>${version.mockito}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.zalando</groupId>
+            <artifactId>fahrschein-http-test-support</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
