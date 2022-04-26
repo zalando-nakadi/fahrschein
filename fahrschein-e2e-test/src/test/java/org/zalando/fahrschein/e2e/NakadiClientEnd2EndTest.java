@@ -47,8 +47,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.runners.Parameterized.Parameters;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
 
 /*
@@ -140,25 +141,29 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
         return new SimpleRequestFactory(contentEncoding);
     }
 
-    @Before
-    public void createEventTypes() throws IOException {
-        createEventTypes("/eventtypes");
-    }
-
     @Test
     public void testPublish() throws IOException {
-        nakadiClient.publish("fahrschein.e2e-test.ordernumber",
-                IntStream.range(0, 10)
-                        .mapToObj(
-                                i -> new OrderEvent(new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now()), "ABC-" + i))
-                        .collect(Collectors.toList()));
+        publish(UUID.randomUUID().toString());
+    }
+
+    private List<OrderEvent> publish(String testId) throws IOException {
+        createEventTypes("/eventtypes", testId);
+        List<OrderEvent> events = IntStream.range(0, 10)
+            .mapToObj(
+                    i -> new OrderEvent(new Metadata(testId, OffsetDateTime.now()), testId))
+            .collect(Collectors.toList());
+        nakadiClient.publish("fahrschein.e2e-test.ordernumber" + testId, events);
+        return events;
     }
 
     @Test
     public void testSubscribe() throws IOException, EventAlreadyProcessedException {
+        String testId = UUID.randomUUID().toString();
+        createEventTypes("/eventtypes", testId);
         final Listener<OrderEvent> listener = subscriptionListener();
-        final Subscription subscription = nakadiClient.subscription("fahrschein-demo", "fahrschein.e2e-test.ordernumber")
-                .withConsumerGroup(UUID.randomUUID().toString())
+        final Subscription subscription = nakadiClient
+                .subscription("fahrschein-demo", "fahrschein.e2e-test.ordernumber" + testId)
+                .withConsumerGroup(testId)
                 .readFromBegin()
                 .subscribe();
         StreamBuilder b = nakadiClient.stream(subscription)
@@ -168,16 +173,21 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
                         .withStreamLimit(1)
                 );
         Executors.newSingleThreadExecutor().submit(
-                (() -> {
-                    try {
-                        b.listen(OrderEvent.class, listener);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return;
-                }));
-        testPublish();
-        Mockito.verify(listener, timeout(10000).atLeastOnce()).accept(anyList());
+            (() -> {
+                try {
+                    b.listen(OrderEvent.class, listener);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return;
+            }));;
+        List<String> eventOrderNumbers = publish(testId).stream().map(e -> e.orderNumber).collect(toList());
+        // verifies that every order number that was published got consumed
+        for (String on: eventOrderNumbers) {
+            Mockito.verify(listener, timeout(10000).atLeastOnce()).accept(
+                argThat(streamedEvents -> 
+                    streamedEvents.stream().map(e -> e.orderNumber).collect(toList()).contains(on)));
+        }
     }
 
     public Listener<OrderEvent> subscriptionListener() {

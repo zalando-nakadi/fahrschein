@@ -57,7 +57,11 @@ public abstract class NakadiTestWithDockerCompose {
                         compose.getServicePort("nakadi_1", 8080)));
     }
 
-    protected void createEventTypes(String baseDir) throws IOException {
+    /**
+     * @param suffix appended to the end of the event type names, to ensure tests are independent from each other.
+     * Placeholder must be present in the schema definition file, e.g.: "name": "fahrschein.e2e-test.ordernumber${SUFFIX}"
+     */
+    protected void createEventTypes(String baseDir, String suffix) throws IOException {
         URI nakadiUri = getNakadiUrl().resolve("/event-types");
         Path dir = Paths.get(this.getClass().getResource(baseDir).getPath());
         try (Stream<Path> stream = Files.list(dir)) {
@@ -65,7 +69,8 @@ public abstract class NakadiTestWithDockerCompose {
                     .filter(file -> !Files.isDirectory(file))
                     .forEach((Path file) -> {
                         try {
-                            postJson(new StringEntity(f(file)), nakadiUri);
+                            String schema = f(file).replaceAll("\\$\\{SUFFIX\\}", suffix);
+                            postJson(new StringEntity(schema), nakadiUri);
                         } catch (HttpResponseException e) {
                             if (e.getStatusCode() != 409) {
                                 throw new RuntimeException(e);

@@ -1,5 +1,5 @@
 {
-  "name": "fahrschein.e2e-test.ordernumber",
+  "name": "fahrschein.e2e-test.ordernumber${SUFFIX}",
   "owning_application": "acme-order-service",
   "category": "business",
   "partition_strategy": "hash",
