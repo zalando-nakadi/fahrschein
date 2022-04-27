@@ -88,6 +88,7 @@
         <module>fahrschein-inmemory</module>
         <module>fahrschein-metrics-dropwizard</module>
         <module>fahrschein-example</module>
+        <module>fahrschein-http-test-support</module>
         <module>fahrschein-test-support</module>
         <module>fahrschein-typeresolver</module>
         <module>fahrschein-http-api</module>
