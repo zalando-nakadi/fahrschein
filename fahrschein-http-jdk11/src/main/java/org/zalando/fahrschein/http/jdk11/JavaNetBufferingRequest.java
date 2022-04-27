@@ -53,9 +53,12 @@ final class JavaNetBufferingRequest implements Request {
     @Override
     public Headers getHeaders() {
         return new Headers() {
+
+            private static final String HEADER_IMPLEMENTATION_IS_WRITE_ONLY = "Header implementation is write-only";
+
             @Override
             public List<String> get(String headerName) {
-                return List.of();
+                throw new UnsupportedOperationException(HEADER_IMPLEMENTATION_IS_WRITE_ONLY);
             }
 
             @Override
@@ -70,27 +73,27 @@ final class JavaNetBufferingRequest implements Request {
 
             @Override
             public String getFirst(String headerName) {
-                return "";
+                throw new UnsupportedOperationException(HEADER_IMPLEMENTATION_IS_WRITE_ONLY);
             }
 
             @Override
             public Set<String> headerNames() {
-                return Set.of();
+                throw new UnsupportedOperationException(HEADER_IMPLEMENTATION_IS_WRITE_ONLY);
             }
 
             @Override
             public long getContentLength() {
-                return 0;
+                throw new UnsupportedOperationException(HEADER_IMPLEMENTATION_IS_WRITE_ONLY);
             }
 
             @Override
             public void setContentLength(long contentLength) {
-                // NO-OP.
+                throw new UnsupportedOperationException("Content-Length to be set by underlying framework");
             }
 
             @Override
             public ContentType getContentType() {
-                return ContentType.APPLICATION_JSON;
+                throw new UnsupportedOperationException(HEADER_IMPLEMENTATION_IS_WRITE_ONLY);
             }
 
             @Override
