@@ -11,6 +11,7 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.ContentType;
+import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.api.Response;
@@ -71,51 +72,29 @@ public abstract class AbstractRequestFactoryTest {
         Mockito.verify(spy).handle(exchangeCaptor.capture());
         HttpExchange capturedArgument = exchangeCaptor.getValue();
         assertThat("accept-encoding header", capturedArgument.getRequestHeaders().getFirst("accept-encoding"), containsString("gzip"));
-        assertThat("no content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), nullValue());
+        assertThat("no content-encoding header", capturedArgument.getRequestHeaders().get(Headers.CONTENT_ENCODING), nullValue());
         assertEquals(URI.create("/gzipped"), capturedArgument.getRequestURI());
         assertEquals(expectedResponse, actualResponse);
     }
 
     @Test
-    public void testGzippedRequestBody() throws IOException {
-        // given
-        String requestBody = "{}";
-        String responseBody = "{}";
-        SimpleRequestResponseContentHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(responseBody));
-        server.createContext("/gzipped-post", spy);
-
-        // when
-        final RequestFactory f = defaultRequestFactory(ContentEncoding.GZIP);
-        Request r = f.createRequest(serverAddress.resolve("/gzipped-post"), "POST");
-        r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
-        try (final OutputStream body = r.getBody()) {
-            body.write(requestBody.getBytes());
+    public void testEncodedRequestBody() throws IOException {
+        for(ContentEncoding encoding : ContentEncoding.values()) {
+            doTestEncodedRequestBody(encoding);
         }
-        Response executed = r.execute();
-        String actualResponse = readStream(executed.getBody());
-
-        // then
-        Mockito.verify(spy).handle(exchangeCaptor.capture());
-        HttpExchange capturedArgument = exchangeCaptor.getValue();
-        assertEquals("POST", capturedArgument.getRequestMethod());
-        assertEquals(URI.create("/gzipped-post"), capturedArgument.getRequestURI());
-        assertThat("content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), equalTo(Arrays.asList("gzip")));
-        assertEquals(requestBody, spy.getRequestBody());
-        assertEquals(responseBody, actualResponse);
     }
 
-    @Test
-    public void testZStandardRequestBody() throws IOException {
+    void doTestEncodedRequestBody(ContentEncoding encoding) throws IOException {
         // given
         String requestBody = "{}";
         String responseBody = "{}";
         SimpleRequestResponseContentHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(responseBody));
-        server.createContext("/zstd-post", spy);
+        String requestPath = "/post-" + encoding.value();
+        server.createContext(requestPath, spy);
 
         // when
-        RequestFactory f = defaultRequestFactory(ContentEncoding.ZSTD);
-
-        Request r = f.createRequest(serverAddress.resolve("/zstd-post"), "POST");
+        final RequestFactory f = defaultRequestFactory(encoding);
+        Request r = f.createRequest(serverAddress.resolve(requestPath), "POST");
         r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
         try (final OutputStream body = r.getBody()) {
             body.write(requestBody.getBytes());
@@ -127,8 +106,12 @@ public abstract class AbstractRequestFactoryTest {
         Mockito.verify(spy).handle(exchangeCaptor.capture());
         HttpExchange capturedArgument = exchangeCaptor.getValue();
         assertEquals("POST", capturedArgument.getRequestMethod());
-        assertEquals(URI.create("/zstd-post"), capturedArgument.getRequestURI());
-        assertThat("content-encoding header", capturedArgument.getRequestHeaders().get("content-encoding"), equalTo(Arrays.asList("zstd")));
+        assertEquals(URI.create(requestPath), capturedArgument.getRequestURI());
+        if (encoding == ContentEncoding.IDENTITY) {
+            assertThat("no content-encoding header", capturedArgument.getRequestHeaders().get(Headers.CONTENT_ENCODING), is(nullValue()));
+        } else {
+            assertThat("content-encoding header", capturedArgument.getRequestHeaders().get(Headers.CONTENT_ENCODING), equalTo(Arrays.asList(encoding.value())));
+        }
         assertEquals(requestBody, spy.getRequestBody());
         assertEquals(responseBody, actualResponse);
     }
@@ -158,9 +141,9 @@ public abstract class AbstractRequestFactoryTest {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             try {
-                if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("gzip")) {
+                if (exchange.getRequestHeaders().containsKey(Headers.CONTENT_ENCODING) && exchange.getRequestHeaders().get(Headers.CONTENT_ENCODING).contains("gzip")) {
                     requestBody = readStream(new GZIPInputStream(exchange.getRequestBody()));
-                } else if (exchange.getRequestHeaders().containsKey("Content-Encoding") && exchange.getRequestHeaders().get("Content-Encoding").contains("zstd")) {
+                } else if (exchange.getRequestHeaders().containsKey(Headers.CONTENT_ENCODING) && exchange.getRequestHeaders().get(Headers.CONTENT_ENCODING).contains("zstd")) {
                     requestBody = readStream(new ZstdInputStream(exchange.getRequestBody()));
                 } else {
                     requestBody = readStream(exchange.getRequestBody());
@@ -192,7 +175,7 @@ public abstract class AbstractRequestFactoryTest {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            exchange.getResponseHeaders().set("Content-Encoding", "gzip");
+            exchange.getResponseHeaders().set(Headers.CONTENT_ENCODING, "gzip");
             exchange.sendResponseHeaders(200, rawResponse.length);
             OutputStream responseBody = exchange.getResponseBody();
             responseBody.write(rawResponse);

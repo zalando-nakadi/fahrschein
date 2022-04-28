@@ -69,7 +69,7 @@ final class SimpleResponse implements Response {
         if (this.responseStream == null) {
             final InputStream errorStream = connection.getErrorStream();
             this.responseStream = (errorStream != null ? errorStream : connection.getInputStream());
-            if (this.getHeaders().get("Content-Encoding").contains("gzip")) {
+            if (this.getHeaders().get(Headers.CONTENT_ENCODING).contains("gzip")) {
                 this.responseStream = new GZIPInputStream(this.responseStream);
             }
         }

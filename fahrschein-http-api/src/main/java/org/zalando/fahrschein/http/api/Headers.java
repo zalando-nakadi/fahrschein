@@ -9,8 +9,8 @@ public interface Headers {
     String AUTHORIZATION = "Authorization";
     String CONTENT_LENGTH = "Content-Length";
     String CONTENT_TYPE = "Content-Type";
-    String COOKIE = "Cookie";
-
+    String CONTENT_ENCODING = "Content-Encoding";
+    String ACCEPT_ENCODING = "Accept-Encoding";
 
     List<String> get(String headerName);
 

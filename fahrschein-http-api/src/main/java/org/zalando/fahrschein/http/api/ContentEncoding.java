@@ -34,8 +34,10 @@ public enum ContentEncoding {
                 return new GZIPOutputStream(out);
             case ZSTD:
                 return new ZstdOutputStream(out);
-            default:
+            case IDENTITY:
                 return out;
+            default:
+                throw new UnsupportedOperationException(String.format("No output stream-wrapping defined for ContentEncoding: %s", out));
         }
 
     }

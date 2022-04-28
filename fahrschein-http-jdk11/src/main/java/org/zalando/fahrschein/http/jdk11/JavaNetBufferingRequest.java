@@ -34,7 +34,7 @@ final class JavaNetBufferingRequest implements Request {
     JavaNetBufferingRequest(URI uri, String method, HttpClient client, Optional<Duration> requestTimeout, ContentEncoding contentEncoding) {
         this.uri = uri;
         this.method = method;
-        this.request = HttpRequest.newBuilder().header("Accept-Encoding", "gzip");
+        this.request = HttpRequest.newBuilder().header(Headers.ACCEPT_ENCODING, "gzip");
         this.client = client;
         this.requestTimeout = requestTimeout;
         this.contentEncoding = contentEncoding;
@@ -95,7 +95,7 @@ final class JavaNetBufferingRequest implements Request {
 
             @Override
             public void setContentType(ContentType contentType) {
-                request.header("Content-Type", contentType.getValue());
+                request.header(Headers.CONTENT_TYPE, contentType.getValue());
             }
         };
     }
@@ -107,7 +107,7 @@ final class JavaNetBufferingRequest implements Request {
             // probably premature optimization, but we're omitting the unnecessary
             // "Content-Encoding: identity" header
             if (ContentEncoding.IDENTITY != this.contentEncoding) {
-                request.setHeader("Content-Encoding", this.contentEncoding.value());
+                request.setHeader(Headers.CONTENT_ENCODING, this.contentEncoding.value());
             }
             return this.contentEncoding.wrap(this.bufferedOutput);
         }
