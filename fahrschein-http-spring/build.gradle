@@ -1,0 +1,13 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+}
+
+dependencies {
+    api project(':fahrschein-http-api')
+    api "org.springframework:spring-web:${property('springV')}"
+    testImplementation "com.squareup.okhttp3:okhttp:${property('okHttpV')}"
+    testImplementation(testFixtures(project(':fahrschein-http-test-support')))
+}
+
+publishing.publications.maven.pom.description = 'Fahrschein HTTP Spring Adapter'

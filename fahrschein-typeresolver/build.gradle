@@ -1,0 +1,13 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+}
+
+dependencies {
+    api project(':fahrschein')
+    api "com.fasterxml.jackson.core:jackson-core:${property('jacksonV')}"
+    api "com.fasterxml.jackson.core:jackson-annotations:${property('jacksonV')}"
+    api "com.fasterxml.jackson.core:jackson-databind:${property('jacksonV')}"
+}
+
+publishing.publications.maven.pom.description = 'Fahrschein Type Resolver'

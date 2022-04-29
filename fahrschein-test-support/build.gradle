@@ -1,0 +1,10 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id "java-test-fixtures"
+}
+
+dependencies {
+    testFixturesApi project(':fahrschein')
+    testFixturesImplementation "junit:junit:${property('junitV')}"
+    testFixturesImplementation "org.springframework:spring-tx:${property('springV')}"
+}

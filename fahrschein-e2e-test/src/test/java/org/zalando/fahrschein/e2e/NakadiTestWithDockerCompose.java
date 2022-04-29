@@ -29,7 +29,7 @@ import static java.lang.String.format;
 
 public abstract class NakadiTestWithDockerCompose {
 
-    private static final boolean COMPOSE_PROVIDED = System.getProperty("COMPOSE_PROVIDED") != null;
+    private static final boolean COMPOSE_PROVIDED = Boolean.parseBoolean(System.getProperty("COMPOSE_PROVIDED"));
     private static final Logger LOG = LoggerFactory.getLogger("docker-compose");
     private static final Consumer<OutputFrame> LOG_CONSUMER = new Slf4jLogConsumer(LOG);
 

@@ -1,0 +1,11 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+}
+
+dependencies {
+    api project(':fahrschein')
+    testImplementation(testFixtures(project(':fahrschein-test-support')))
+}
+
+publishing.publications.maven.pom.description = 'Fahrschein In-Memory Cursor Management'

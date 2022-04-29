@@ -1,0 +1,85 @@
+plugins {
+    id 'maven-publish'
+    id 'signing'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from(components.java)
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                url = 'http://github.com/zalando-nakadi/fahrschein'
+                inceptionYear = '2006'
+                licenses {
+                    license {
+                        name = 'Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'Othon Crelier'
+                        email = 'othon.crelier@zalando.de'
+                        organization = 'Zalando SE'
+                        organizationUrl = 'https://tech.zalando.com/'
+                    }
+                    developer {
+                        name = 'Malte Pickhan'
+                        email = 'malte.pickhan@zalando.de'
+                        organization = 'Zalando Payments GmbH'
+                        organizationUrl = 'https://tech.zalando.com/'
+                    }
+                    developer {
+                        name = 'Oliver Trosien'
+                        email = 'oliver.trosien@zalando.de'
+                        organization = 'Zalando SE'
+                        organizationUrl = 'https://tech.zalando.com/'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git@github.com:zalando-nakadi/fahrschein.git'
+                    developerConnection = 'scm:git:git@github.com:zalando-nakadi/fahrschein.git'
+                    url = 'https://github.com/zalando-nakadi/fahrschein'
+                }
+            }
+            repositories {
+                maven {
+                    def snapshotsRepo = 'https://oss.sonatype.org/content/repositories/snapshots/'
+                    def releasesRepo ='https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+                    url = version.endsWith('SNAPSHOT') ? snapshotsRepo : releasesRepo
+                    credentials {
+                        username = System.getenv("NEXUS_USERNAME")
+                        password = System.getenv("NEXUS_PASSWORD")
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+signing {
+    def signingKey = System.getenv("GPG_KEY")
+    def signingPassword = System.getenv("GPG_PASSPHRASE")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.maven
+}
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+}

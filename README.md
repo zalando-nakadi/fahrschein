@@ -284,21 +284,61 @@ If you have questions, concerns, bug reports, etc, please file an issue in this 
 
 ## Local development
 
-For local development, Fahrschein requires:
+Fahrschein is a gradle-based project. For local development, Fahrschein requires:
 
-* A local installation of JDK8
-* Any recent version of Maven
+* A local installation of JDK11
 * A local Docker installation for running integration tests
 
-When developing, make sure to run unit and integration tests with `mvn verify`.
+When developing, make sure to run unit and integration tests with `./gradlew test`.
+
+### Understanding the build
+
+We use Gradle [convention plugins](https://docs.gradle.org/current/samples/sample_convention_plugins.html) to share common build logic across multiple subprojects. These are [fahrschein.java-conventions.gradle](./buildSrc/src/main/groovy/fahrschein.java-conventions.gradle) for common java properties, and [fahrschein.maven-publishing-conventions.gradle](./buildSrc/src/main/groovy/fahrschein.maven-publishing-conventions.gradle) for subprojects that are released as maven artefacts.
+
+### Bumping dependency versions
+
+Most dependencies are defined on a per-subproject level, only the versions for the most-used shared dependencies are controlled centrally, in the [gradle.properties](./gradle.properties) file. This also allows you testing your build with a different version by specifying the property on the command-line.
+
+```sh
+./gradlew test -PjacksonV=2.9.0
+```
+
+The [integration tests](.github/workflows/ci.yaml) include running the build with our supported baseline dependency as well as the latest micro release of Jackson, Apache HttpClient and Spring.
+
+### End-to-End tests
 
 The `fahrschein-e2e-test` module has end-to-end tests using `docker-compose`. If you wish to leave the Docker containers running between tests, you can also bring up docker-compose manually using its [docker-compose.yaml](fahrschein-e2e-test/src/test/resources/docker-compose.yaml), before running the tests. In either case, you will need the port `8080` to be available for Nakadi to run.
 
 ```sh
 docker-compose -f fahrschein-e2e-test/src/test/resources/docker-compose.yaml up -d
-mvn verify -DCOMPOSE_PROVIDED
+./gradlew :fahrschein-e2e:test -Pe2e.composeProvided
 ```
 
+If you want to skip end-to-end tests completely, run 
+```sh
+./gradlew test -Pe2e.skip
+```
+
+### CVE scanning
+
+The project integrates CVE scanning to check for vulnerable dependencies. In case of build failure, this can be caused by a high-risk vulnerability in a dependency being identified. You can run the reporting locally:
+
+```
+./gradlew dependencyCheckAggregate
+open build/reports/dependency-check-report.html
+```
+
+### Releasing
+
+Fahrschein uses Github Workflows to [build](.github/workflows/ci.yaml) and [publish releases](.github/workflows/maven-publish.yaml). This happens automatically whenever a new release is created in Github.
+
+If needed, you can preview the signed release artifacts in your local maven repository.
+
+```sh
+env "GPG_KEY=$(cat ~/.gnupg/private-key.pgp)" \
+"GPG_PASSPHRASE=$(read -s password ; echo $password)" \
+./gradlew publishToMavenLocal
+```
 
 ## Getting involved
 

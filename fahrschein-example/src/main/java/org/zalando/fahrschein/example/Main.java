@@ -12,14 +12,16 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import okhttp3.CertificatePinner;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
-import org.zalando.fahrschein.*;
+import org.zalando.fahrschein.EqualJitterBackoffStrategy;
+import org.zalando.fahrschein.EventProcessingException;
+import org.zalando.fahrschein.Listener;
+import org.zalando.fahrschein.NakadiClient;
+import org.zalando.fahrschein.ZignAccessTokenProvider;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
@@ -169,26 +171,8 @@ public class Main {
     }
 
     private static void subscriptionListenHttpComponents(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
-        final RequestConfig requestConfig = RequestConfig.custom()
-                .setSocketTimeout(60000)
-                .setConnectTimeout(2000)
-                .setConnectionRequestTimeout(8000)
-                .setContentCompressionEnabled(false)
-                .build();
 
-        final ConnectionConfig connectionConfig = ConnectionConfig.custom()
-                .setBufferSize(512)
-                .build();
-
-        final CloseableHttpClient httpClient = HttpClients.custom()
-                .setDefaultRequestConfig(requestConfig)
-                .setDefaultConnectionConfig(connectionConfig)
-                .setConnectionTimeToLive(30, TimeUnit.SECONDS)
-                .disableAutomaticRetries()
-                .disableRedirectHandling()
-                .setMaxConnTotal(8)
-                .setMaxConnPerRoute(2)
-                .build();
+        final CloseableHttpClient httpClient = HttpClients.createDefault();
 
         final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient, ContentEncoding.IDENTITY);
 

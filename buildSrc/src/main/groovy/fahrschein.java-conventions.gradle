@@ -1,0 +1,60 @@
+plugins {
+    id 'java-library'
+    id 'jacoco'
+    id 'org.owasp.dependencycheck'
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = 'org.zalando'
+version = '0.22.0' + (project.hasProperty('release') ? '' : '-SNAPSHOT')
+java.sourceCompatibility = JavaVersion.VERSION_1_8
+java.targetCompatibility = JavaVersion.VERSION_1_8
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-parameters'
+    options.compilerArgs << '-Xlint:all'
+}
+
+dependencies {
+    implementation("org.slf4j:slf4j-api:${property('slf4jV')}") {
+        because "we want slf4j-api to be available everywhere"
+    }
+    testRuntimeOnly("org.slf4j:slf4j-simple:${property('slf4jV')}") {
+        because "we want the slf4j-simple logger implementation available at test runtime"
+    }
+    testImplementation("org.mockito:mockito-core:${property('mockitoV')}") {
+        because "we want mockito to be used in tests"
+    }
+    testImplementation("junit:junit:${property('junitV')}") {
+        because "we want a common version JUnit across all projects"
+    }
+    testImplementation('org.hamcrest:hamcrest:2.2') {
+        because "we want to have hamcrest available for all testing"
+    }
+    compileOnly('com.google.code.findbugs:jsr305:2.0.1') {
+        because "we want to have annotations like @Deprecated available at compilation time"
+    }
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        substitute(platform(module('commons-logging:commons-logging'))).
+                using module("org.slf4j:jcl-over-slf4j:${property('slf4jV')}")
+        substitute(platform(module('org.hamcrest:hamcrest-core'))).
+                using module("org.hamcrest:hamcrest:2.2")
+    }
+}
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

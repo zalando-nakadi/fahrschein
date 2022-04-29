@@ -1,0 +1,12 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id "java-test-fixtures"
+}
+
+dependencies {
+    testFixturesApi project(':fahrschein-http-api')
+    testFixturesImplementation "com.github.luben:zstd-jni:1.5.2-2"
+    testFixturesImplementation "org.mockito:mockito-core:${property('mockitoV')}"
+    testFixturesImplementation "junit:junit:${property('junitV')}"
+
+}
