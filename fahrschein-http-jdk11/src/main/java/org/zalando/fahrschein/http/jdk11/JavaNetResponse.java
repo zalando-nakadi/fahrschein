@@ -87,7 +87,7 @@ final class JavaNetResponse implements Response {
 
     @Override
     public InputStream getBody() throws IOException {
-        if (this.getHeaders().get("Content-Encoding").contains("gzip")) {
+        if (this.getHeaders().get(Headers.CONTENT_ENCODING).contains("gzip")) {
             return new GZIPInputStream(r.body());
         }
         return r.body();

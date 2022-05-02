@@ -29,20 +29,20 @@ public class IdentityAcceptEncodingRequestFactoryTest {
         IdentityAcceptEncodingRequestFactory SUT = new IdentityAcceptEncodingRequestFactory(delegate);
         SUT.createRequest(URI.create("any://uri"), "GET");
 
-        assertEquals(Arrays.asList("identity"), headers.get("Accept-Encoding"));
+        assertEquals(Arrays.asList("identity"), headers.get(Headers.ACCEPT_ENCODING));
     }
 
     @Test
     public void shouldOverrideExistingAcceptEncodingHeader() throws IOException {
         final Headers headers = new HeadersImpl();
-        headers.put("Accept-Encoding", "gzip");
+        headers.put(Headers.ACCEPT_ENCODING, "gzip");
         when(request.getHeaders()).thenReturn(headers);
         when(delegate.createRequest(any(URI.class), any(String.class))).thenReturn(request);
 
         IdentityAcceptEncodingRequestFactory SUT = new IdentityAcceptEncodingRequestFactory(delegate);
         SUT.createRequest(URI.create("any://uri"), "GET");
 
-        assertEquals(Arrays.asList("identity"), headers.get("Accept-Encoding"));
+        assertEquals(Arrays.asList("identity"), headers.get(Headers.ACCEPT_ENCODING));
     }
 
 }

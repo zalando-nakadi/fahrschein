@@ -74,8 +74,8 @@ final class SimpleBufferingRequest implements Request {
         }
 
         // allow gzip-compression from server response
-        if (connection.getRequestProperty("Accept-Encoding") == null) {
-            connection.setRequestProperty("Accept-Encoding", "gzip");
+        if (connection.getRequestProperty(Headers.ACCEPT_ENCODING) == null) {
+            connection.setRequestProperty(Headers.ACCEPT_ENCODING, "gzip");
         }
 
         if (this.connection.getDoOutput()) {
@@ -108,9 +108,13 @@ final class SimpleBufferingRequest implements Request {
         assertNotExecuted();
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (this.connection.getDoOutput() && ContentEncoding.GZIP.equals(this.contentEncoding)) {
-                this.connection.setRequestProperty("Content-Encoding", this.contentEncoding.value());
-                return new GZIPOutputStream(this.bufferedOutput);
+            if (this.contentEncoding.isSupported(getMethod())) {
+                // probably premature optimization, but we're omitting the unnecessary
+                // "Content-Encoding: identity" header
+                if (ContentEncoding.IDENTITY != this.contentEncoding) {
+                    this.connection.setRequestProperty(Headers.CONTENT_ENCODING, this.contentEncoding.value());
+                }
+                return this.contentEncoding.wrap(this.bufferedOutput);
             }
         }
         return this.bufferedOutput;

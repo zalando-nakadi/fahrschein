@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 
@@ -17,7 +18,7 @@ public class IdentityAcceptEncodingRequestFactory implements RequestFactory {
     @Override
     public Request createRequest(URI uri, String method) throws IOException {
         Request request = delegate.createRequest(uri, method);
-        request.getHeaders().put("Accept-Encoding", "identity");
+        request.getHeaders().put(Headers.ACCEPT_ENCODING, "identity");
         return request;
     }
 }

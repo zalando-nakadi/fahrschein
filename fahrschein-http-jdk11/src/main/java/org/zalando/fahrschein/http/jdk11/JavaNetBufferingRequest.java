@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.zip.GZIPOutputStream;
 
 final class JavaNetBufferingRequest implements Request {
 
@@ -32,12 +31,10 @@ final class JavaNetBufferingRequest implements Request {
     private boolean executed;
     private ByteArrayOutputStream bufferedOutput;
 
-    private static final List<String> writeMethods = Arrays.asList("POST", "PATCH", "PUT");
-
     JavaNetBufferingRequest(URI uri, String method, HttpClient client, Optional<Duration> requestTimeout, ContentEncoding contentEncoding) {
         this.uri = uri;
         this.method = method;
-        this.request = HttpRequest.newBuilder().header("Accept-Encoding", "gzip");
+        this.request = HttpRequest.newBuilder().header(Headers.ACCEPT_ENCODING, "gzip");
         this.client = client;
         this.requestTimeout = requestTimeout;
         this.contentEncoding = contentEncoding;
@@ -98,7 +95,7 @@ final class JavaNetBufferingRequest implements Request {
 
             @Override
             public void setContentType(ContentType contentType) {
-                request.header("Content-Type", contentType.getValue());
+                request.header(Headers.CONTENT_TYPE, contentType.getValue());
             }
         };
     }
@@ -107,10 +104,12 @@ final class JavaNetBufferingRequest implements Request {
     public OutputStream getBody() throws IOException {
         if (this.bufferedOutput == null) {
             this.bufferedOutput = new ByteArrayOutputStream(1024);
-            if (writeMethods.contains(getMethod()) && ContentEncoding.GZIP.equals(this.contentEncoding)) {
-                request.setHeader("Content-Encoding", this.contentEncoding.value());
-                return new GZIPOutputStream(this.bufferedOutput);
+            // probably premature optimization, but we're omitting the unnecessary
+            // "Content-Encoding: identity" header
+            if (ContentEncoding.IDENTITY != this.contentEncoding) {
+                request.setHeader(Headers.CONTENT_ENCODING, this.contentEncoding.value());
             }
+            return this.contentEncoding.wrap(this.bufferedOutput);
         }
         return this.bufferedOutput;
     }

@@ -21,6 +21,7 @@
  - Support for both high-level (subscription) and low-level APIs
  - Pluggable HTTP client implementations
  - Gzip encoding support for publishing and consuming events
+ - ZStandard compression support for publishing events
 
 ## Installation
 
@@ -272,9 +273,9 @@ RequestFactory into a `IdentityAcceptEncodingRequestFactory`, which sets the `Ac
 
 ### Publishing
 
-For event publishing, the `Request` body can also get gzip-encoded by Fahrschein, if enabled when building the RequestFactory.
-For this, you need to pass `ContentEncoding.GZIP`, or if compression is undesired, pass `ContentEncoding.IDENTITY`.
-In the future, we may support other encoding formats, like Zstandard.
+For event publishing, the `Request` body can also get compressed by Fahrschein, if enabled when building the RequestFactory.
+For this, you need to pass either `ContentEncoding.GZIP`, `ContentEncoding.ZSTD`, or if compression is undesired, pass `ContentEncoding.IDENTITY`.
+Zstandard compression was added in version `0.21.0`.
 
 ## Fahrschein compared to other Nakadi client libraries
 
