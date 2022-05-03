@@ -36,7 +36,7 @@ public class NakadiClient {
     };
 
     private final URI baseUri;
-    private final RequestFactory clientHttpRequestFactory;
+    private final RequestFactory requestFactory;
     private final ObjectMapper internalObjectMapper;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
@@ -46,16 +46,16 @@ public class NakadiClient {
      * address.
      *
      * @param baseUri that we try to connect to
-     * @param clientHttpRequestFactory that we use for the execution of our HTTP Requests.
+     * @param requestFactory that we use for the execution of our HTTP Requests.
      * @return A builder to initialize the client. Can be further modified later.
      */
-    public static NakadiClientBuilder builder(URI baseUri, RequestFactory clientHttpRequestFactory) {
-        return new NakadiClientBuilder(baseUri, clientHttpRequestFactory);
+    public static NakadiClientBuilder builder(URI baseUri, RequestFactory requestFactory) {
+        return new NakadiClientBuilder(baseUri, requestFactory);
     }
 
-    NakadiClient(URI baseUri, RequestFactory clientHttpRequestFactory, ObjectMapper objectMapper, CursorManager cursorManager) {
+    NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager) {
         this.baseUri = baseUri;
-        this.clientHttpRequestFactory = clientHttpRequestFactory;
+        this.requestFactory = requestFactory;
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
@@ -69,7 +69,7 @@ public class NakadiClient {
      */
     public List<Partition> getPartitions(String eventName) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/partitions", eventName));
-        final Request request = clientHttpRequestFactory.createRequest(uri, "GET");
+        final Request request = requestFactory.createRequest(uri, "GET");
         try (final Response response = request.execute()) {
             try (final InputStream is = response.getBody()) {
                 return internalObjectMapper.readValue(is, LIST_OF_PARTITIONS);
@@ -86,7 +86,7 @@ public class NakadiClient {
      */
     public <T> void publish(String eventName, List<T> events) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events", eventName));
-        final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
+        final Request request = requestFactory.createRequest(uri, "POST");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
@@ -130,7 +130,7 @@ public class NakadiClient {
         checkArgument(!subscriptionId.isEmpty(), "Subscription ID cannot be empty.");
 
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s", subscriptionId));
-        final Request request = clientHttpRequestFactory.createRequest(uri, "DELETE");
+        final Request request = requestFactory.createRequest(uri, "DELETE");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
@@ -151,7 +151,7 @@ public class NakadiClient {
         final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors, authorization);
 
         final URI uri = baseUri.resolve("/subscriptions");
-        final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
+        final Request request = requestFactory.createRequest(uri, "POST");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
@@ -172,11 +172,11 @@ public class NakadiClient {
     public StreamBuilder.SubscriptionStreamBuilder stream(Subscription subscription) {
         checkState(cursorManager instanceof ManagedCursorManager, "Subscription api requires a ManagedCursorManager");
 
-        return new StreamBuilders.SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, subscription);
+        return new StreamBuilders.SubscriptionStreamBuilderImpl(baseUri, requestFactory, cursorManager, objectMapper, subscription);
     }
 
     public StreamBuilder.LowLevelStreamBuilder stream(String eventName) {
-        return new StreamBuilders.LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, eventName);
+        return new StreamBuilders.LowLevelStreamBuilderImpl(baseUri, requestFactory, cursorManager, objectMapper, eventName);
     }
 
 }
