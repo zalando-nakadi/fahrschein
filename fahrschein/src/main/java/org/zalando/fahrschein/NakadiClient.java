@@ -42,9 +42,9 @@ public class NakadiClient {
     private final CursorManager cursorManager;
 
     /**
-     * Returns a new Builder that will make use of the given request Factory.
+     * Returns a new Builder that will make use of the given {@code RequestFactory}.
      *
-     * @param baseUri that we will connect to
+     * @param baseUri that we will send requests to
      * @param requestFactory that we use for the execution of our HTTP Requests.
      * @return A builder to initialize the client. Can be further modified later.
      */
