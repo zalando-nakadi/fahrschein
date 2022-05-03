@@ -54,7 +54,7 @@ final class JavaNetHeadersDelegate implements Headers {
 
     @Override
     public ContentType getContentType() {
-        return headers.firstValue("Content-Type").map(v -> ContentType.valueOf(v)).orElse(null);
+        return headers.firstValue(Headers.CONTENT_TYPE).map(v -> ContentType.valueOf(v)).orElse(null);
     }
 
     @Override

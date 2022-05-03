@@ -25,7 +25,7 @@ public class JavaNetHeadersDelegateTest {
     public void shouldBeCaseInsensitive() {
         final Headers headers = new JavaNetHeadersDelegate(HttpRequest.newBuilder()
                 .uri(URI.create("http://bla"))
-                .setHeader("Content-type", "text/plain").build().headers());
+                .setHeader(Headers.CONTENT_TYPE, "text/plain").build().headers());
 
         assertEquals(singletonList("text/plain"), headers.get("content-type"));
         assertEquals("text/plain", headers.getFirst("CONTENT-TYPE"));
@@ -36,8 +36,8 @@ public class JavaNetHeadersDelegateTest {
     @Test
     public void shouldReturnHeaderNames() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder()
-                .setHeader("Content-Type", "text/plain")
-                .setHeader("Content-Encoding", "gzip").build().headers());
+                .setHeader(Headers.CONTENT_TYPE, "text/plain")
+                .setHeader(Headers.CONTENT_ENCODING, "gzip").build().headers());
 
         assertEquals(new HashSet<>(asList("Content-Type", "Content-Encoding")), headers.headerNames());
     }
@@ -51,28 +51,28 @@ public class JavaNetHeadersDelegateTest {
     @Test
     public void shouldReturnEmptyListForUnknownHeaders() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder().build().headers());
-        assertEquals(emptyList(), headers.get("Content-Type"));
+        assertEquals(emptyList(), headers.get(Headers.CONTENT_TYPE));
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void readOnlyViewShouldNotSupportAdd() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder().build().headers());
-        headers.add("Content-Type", "application/json");
+        headers.add(Headers.CONTENT_TYPE, "application/json");
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void readOnlyViewShouldNotSupportPut() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder()
-                .setHeader("Content-Type", "text/plain")
-                .setHeader("Content-Encoding", "gzip").build().headers());
+                .setHeader(Headers.CONTENT_TYPE, "text/plain")
+                .setHeader(Headers.CONTENT_ENCODING, "gzip").build().headers());
 
-        headers.put("Content-Type", "application/json");
+        headers.put(Headers.CONTENT_TYPE, "application/json");
     }
 
     @Test
     public void shouldGetContentType() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder()
-                .setHeader("Content-Type", "text/plain").build().headers());
+                .setHeader(Headers.CONTENT_TYPE, "text/plain").build().headers());
 
         final ContentType contentType = headers.getContentType();
         assertNotNull(contentType);
