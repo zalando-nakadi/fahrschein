@@ -42,7 +42,7 @@ public class NakadiClient {
     private final CursorManager cursorManager;
 
     /**
-     * Returns a new Builder that will make use of the given request Factory and tries to connect to the give
+     * Returns a new Builder that will make use of the given {@code RequestFactory} and tries to connect to the given
      * address.
      *
      * @param baseUri that we try to connect to
