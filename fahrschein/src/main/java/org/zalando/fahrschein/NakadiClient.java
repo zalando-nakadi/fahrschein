@@ -78,7 +78,7 @@ public class NakadiClient {
     }
 
     /**
-     * Writes the given Events to the endpoint provided by the eventName.
+     * Writes the given events to the endpoint provided by the eventName.
      * @param eventName where the event should be written to
      * @param events that should be written
      * @param <T> Type of the Event
