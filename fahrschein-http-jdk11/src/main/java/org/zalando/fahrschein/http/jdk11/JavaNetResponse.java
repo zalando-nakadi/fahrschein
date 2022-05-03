@@ -28,12 +28,12 @@ final class JavaNetResponse implements Response {
             case (200): return "OK";
             case (201): return "Created";
             case (202): return "Accepted";
-            case (203): return "Non Authoritative Information";
+            case (203): return "Non-Authoritative Information";
             case (204): return "No Content";
             case (205): return "Reset Content";
             case (206): return "Partial Content";
             case (207): return "Partial Update OK";
-            case (300): return "Mutliple Choices";
+            case (300): return "Multiple Choices";
             case (301): return "Moved Permanently";
             case (302): return "Moved Temporarily";
             case (303): return "See Other";
@@ -76,13 +76,7 @@ final class JavaNetResponse implements Response {
 
     @Override
     public Headers getHeaders() {
-        Headers h = new HeadersImpl();
-        this.r.headers().map().forEach((k, vs) -> {
-            vs.stream().forEach(v -> {
-                h.add(k, v);
-            });
-        });
-        return h;
+        return new JavaNetHeadersDelegate(this.r.headers());
     }
 
     @Override
