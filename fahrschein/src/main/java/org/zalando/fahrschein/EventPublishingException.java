@@ -7,7 +7,9 @@ import java.util.Formatter;
 import java.util.Locale;
 
 /**
- * Thrown in case the client wasn't able to publish the given event to Nakadi.
+ * Thrown in case the client wasn't able to publish the given batch of events to Nakadi.
+ *
+ * The response will contain an array of {@code BatchItemResponse}.
  */
 public class EventPublishingException extends IOException {
     private final BatchItemResponse[] responses;
