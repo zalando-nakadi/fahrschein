@@ -26,6 +26,9 @@ import java.util.Set;
 import static org.zalando.fahrschein.Preconditions.checkArgument;
 import static org.zalando.fahrschein.Preconditions.checkState;
 
+/**
+ * General implementation of the Nakadi Client used within this Library.
+ */
 public class NakadiClient {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
 
@@ -33,26 +36,39 @@ public class NakadiClient {
     };
 
     private final URI baseUri;
-    private final RequestFactory clientHttpRequestFactory;
+    private final RequestFactory requestFactory;
     private final ObjectMapper internalObjectMapper;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
 
-    public static NakadiClientBuilder builder(URI baseUri, RequestFactory clientHttpRequestFactory) {
-        return new NakadiClientBuilder(baseUri, clientHttpRequestFactory);
+    /**
+     * Returns a new Builder that will make use of the given {@code RequestFactory}.
+     *
+     * @param baseUri that we will send requests to
+     * @param requestFactory that we use for the execution of our HTTP Requests.
+     * @return A builder to initialize the client. Can be further modified later.
+     */
+    public static NakadiClientBuilder builder(URI baseUri, RequestFactory requestFactory) {
+        return new NakadiClientBuilder(baseUri, requestFactory);
     }
 
-    NakadiClient(URI baseUri, RequestFactory clientHttpRequestFactory, ObjectMapper objectMapper, CursorManager cursorManager) {
+    NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager) {
         this.baseUri = baseUri;
-        this.clientHttpRequestFactory = clientHttpRequestFactory;
+        this.requestFactory = requestFactory;
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
     }
 
+    /**
+     * Resolves a list of partitions for the given eventName.
+     * @param eventName that we want to resolve the partitions for.
+     * @return {@code List<Partition>} or {@code null} in
+     * @throws IOException in case of network issues.
+     */
     public List<Partition> getPartitions(String eventName) throws IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/partitions", eventName));
-        final Request request = clientHttpRequestFactory.createRequest(uri, "GET");
+        final Request request = requestFactory.createRequest(uri, "GET");
         try (final Response response = request.execute()) {
             try (final InputStream is = response.getBody()) {
                 return internalObjectMapper.readValue(is, LIST_OF_PARTITIONS);
@@ -60,9 +76,17 @@ public class NakadiClient {
         }
     }
 
+    /**
+     * Writes the given events to the endpoint provided by the eventName.
+     * @param eventName where the event should be written to
+     * @param events that should be written
+     * @param <T> Type of the Event
+     * @throws IOException in case we fail to reach Nakadi
+     * @throws EventPublishingException In case Nakadi returns an Erroneous response
+     */
     public <T> void publish(String eventName, List<T> events) throws EventPublishingException, IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events", eventName));
-        final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
+        final Request request = requestFactory.createRequest(uri, "POST");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
@@ -106,7 +130,7 @@ public class NakadiClient {
         checkArgument(!subscriptionId.isEmpty(), "Subscription ID cannot be empty.");
 
         final URI uri = baseUri.resolve(String.format("/subscriptions/%s", subscriptionId));
-        final Request request = clientHttpRequestFactory.createRequest(uri, "DELETE");
+        final Request request = requestFactory.createRequest(uri, "DELETE");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
@@ -127,7 +151,7 @@ public class NakadiClient {
         final SubscriptionRequest subscription = new SubscriptionRequest(applicationName, eventNames, consumerGroup, readFrom, initialCursors, authorization);
 
         final URI uri = baseUri.resolve("/subscriptions");
-        final Request request = clientHttpRequestFactory.createRequest(uri, "POST");
+        final Request request = requestFactory.createRequest(uri, "POST");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
@@ -148,11 +172,11 @@ public class NakadiClient {
     public StreamBuilder.SubscriptionStreamBuilder stream(Subscription subscription) {
         checkState(cursorManager instanceof ManagedCursorManager, "Subscription api requires a ManagedCursorManager");
 
-        return new StreamBuilders.SubscriptionStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, subscription);
+        return new StreamBuilders.SubscriptionStreamBuilderImpl(baseUri, requestFactory, cursorManager, objectMapper, subscription);
     }
 
     public StreamBuilder.LowLevelStreamBuilder stream(String eventName) {
-        return new StreamBuilders.LowLevelStreamBuilderImpl(baseUri, clientHttpRequestFactory, cursorManager, objectMapper, eventName);
+        return new StreamBuilders.LowLevelStreamBuilderImpl(baseUri, requestFactory, cursorManager, objectMapper, eventName);
     }
 
 }
