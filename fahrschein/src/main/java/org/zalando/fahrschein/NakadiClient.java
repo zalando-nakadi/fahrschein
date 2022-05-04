@@ -81,8 +81,8 @@ public class NakadiClient {
      * @param eventName where the event should be written to
      * @param events that should be written
      * @param <T> Type of the Event
-     * @throws IOException in case we fail reaching Nakadi or we are unable to write the event.
-     * @throws EventPublishingException in case we fail reaching Nakadi or we are unable to write the event.
+     * @throws IOException in case we fail to reach Nakadi
+     * @throws EventPublishingException In case Nakadi returns an Erroneous response
      */
     public <T> void publish(String eventName, List<T> events) throws EventPublishingException, IOException {
         final URI uri = baseUri.resolve(String.format("/event-types/%s/events", eventName));
