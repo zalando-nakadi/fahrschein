@@ -4,7 +4,7 @@ Fahrschein is released as maven artifacts in the `org.zalando` organisation. Fol
 
 * Create a branch and bump the version in `pom.xml` to the release version:
 
-`NEW_VERSION=0.21.0; mvn scm:check-local-modification versions:set -DnewVersion=$NEW_VERSION scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Release $NEW_VERSION"` 
+`NEW_VERSION=0.22.0; mvn scm:check-local-modification versions:set -DnewVersion=$NEW_VERSION scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Release $NEW_VERSION"` 
 
 * Create and merge the PR.
 
@@ -14,5 +14,5 @@ Fahrschein is released as maven artifacts in the `org.zalando` organisation. Fol
 
 * Create and merge another PR bumping the version string back to `-SNAPSHOT`.
 
-`NEW_VERSION=0.22.0-SNAPSHOT; mvn scm:check-local-modification versions:set -DnewVersion=$NEW_VERSION scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Start develpment of $NEW_VERSION"`
+`NEW_VERSION=0.23.0-SNAPSHOT; mvn scm:check-local-modification versions:set -DnewVersion=$NEW_VERSION scm:add -Dincludes="**/pom.xml" scm:checkin -Dmessage="Start development of $NEW_VERSION"`
 
