@@ -86,7 +86,7 @@ nakadiClient.stream(eventName).skipUnavailableOffsets(partitions);
 *Please do not use the Low-level API, as it is deprecated by Nakadi.*
 
 The Low-level API requires local persistence of partition offsets.
-There is one `CursorManager` implementation left: InMemory. Postgres and Redis
+There is one `CursorManager` implementation left: InMemory.
 Postgres and Redis cursor managers have been DEPRECATED and removed in version 0.22.0 of Fahrschein.
 
 ```java
