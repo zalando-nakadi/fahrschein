@@ -83,8 +83,6 @@
 
     <modules>
         <module>fahrschein</module>
-        <module>fahrschein-jdbc</module>
-        <module>fahrschein-redis</module>
         <module>fahrschein-inmemory</module>
         <module>fahrschein-metrics-dropwizard</module>
         <module>fahrschein-example</module>

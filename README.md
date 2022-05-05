@@ -86,20 +86,11 @@ nakadiClient.stream(eventName).skipUnavailableOffsets(partitions);
 *Please do not use the Low-level API, as it is deprecated by Nakadi.*
 
 The Low-level API requires local persistence of partition offsets.
-There are currently three persistent `CursorManager` implementations: InMemory, Postgres and Redis.
-
-!!! warning
-    Postgres and Redis cursor managers are DEPRECATED and will be
-    removed in an upcoming version of Fahrschein.
+There is one `CursorManager` implementation left: InMemory. Postgres and Redis
+Postgres and Redis cursor managers have been DEPRECATED and removed in version 0.22.0 of Fahrschein.
 
 ```java
-final HikariConfig hikariConfig = new HikariConfig();
-hikariConfig.setJdbcUrl("jdbc:postgresql://localhost:5432/local_nakadi_cursor_db");
-hikariConfig.setUsername("postgres");
-hikariConfig.setPassword("postgres");
-final DataSource dataSource = new HikariDataSource(hikariConfig);
-
-final CursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
+final CursorManager cursorManager = new InMemoryCursorManager();
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
         .withAccessTokenProvider(new ZignAccessTokenProvider())
@@ -110,16 +101,11 @@ nakadiClient.stream(eventName)
         .listen(SalesOrderPlaced.class, listener);
 ```
 
-### Fahrschein-JDBC Schema migration
-
-Fahrschein-JDBC provides Flyway schema migrations in the `fahrschein-db` resource folder. You can
-point Flyway to it using the [`resources`](https://flywaydb.org/documentation/configuration/parameters/locations) configuration parameter.
-
 ## Using multiple partitions and multiple consumers
 
 With the `PartitionManager` api it is possible to coordinate between multiple nodes of one application, so that only one node is consuming events from a partition at the same time.
 
-Partitions are locked by one node for a certain time. This requires that every node has an unique name or other identifier.
+Partitions are locked by one node for a certain time. This requires that every node has a unique name or other identifier.
 
 ```java
 @Scheduled(fixedDelay = 60*1000L)
