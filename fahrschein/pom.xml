@@ -19,7 +19,6 @@
             <groupId>org.zalando</groupId>
             <artifactId>fahrschein-http-simple</artifactId>
             <version>${project.version}</version>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.zalando</groupId>
