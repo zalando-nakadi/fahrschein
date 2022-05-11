@@ -268,8 +268,8 @@ Zstandard compression was added in version `0.21.0`.
 |                      | Fahrschein                                                        | Nakadi-Klients        | Reactive-Nakadi         | Straw               |
 | -------------------- | ----------------------------------------------------------------- | --------------------- | ----------------------- | ------------------- |
 | Dependencies         | Jackson                                                           | Scala, Akka, Jackson  | Scala, Akka             | None                |
-| Cursor Management    | In-Memory / Persistent (Postgres or Redis)                        | In-Memory             | Persistent (Dynamo)     |                     |
-| Partition Management | In-Memory / Persistent (Postgres)                                 |                       | Persistent (Dynamo) (?) |                     |
+| Cursor Management (for low-level API)    | In-Memory                                                         | In-Memory             | Persistent (Dynamo)     |                     |
+| Partition Management (for low-level API) | In-Memory                                                         |                       | Persistent (Dynamo) (?) |                     |
 | Error Handling       | Automatic reconnect with exponential backoff                      | Automatic reconnect   | (?)                     | No error handling   |
 
 ## Getting help
