@@ -9,7 +9,7 @@ import java.util.List;
  * Allows wrapping {@link Listener#accept(List)} and {@link CursorManager#onSuccess(String, Cursor)} inside one transaction,
  * with automatic rollback if cursor commit fails.
  *
- * This is mainly useful when cursors are persisted in the same transactional datasource that the listener is using, for example {@link JdbcCursorManager}.
+ * This is mainly useful when cursors are persisted in the same transactional datasource that the listener is using.
  *
  * Be careful when using this with a {@link ManagedCursorManager}, as it is possible that the response from a successful commit gets lost by the network.
  * When the actions of the {@link Listener} are now rolled back, those events won't be received again.

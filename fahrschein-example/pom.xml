@@ -58,11 +58,6 @@
         </dependency>
         <dependency>
             <groupId>org.zalando</groupId>
-            <artifactId>fahrschein-jdbc</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.zalando</groupId>
             <artifactId>fahrschein-typeresolver</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -105,17 +100,6 @@
             <groupId>org.slf4j</groupId>
             <artifactId>jcl-over-slf4j</artifactId>
             <version>${version.slf4j}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.3.3</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-            <version>5.0.0</version>
         </dependency>
 
     </dependencies>

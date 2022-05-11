@@ -9,8 +9,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import okhttp3.CertificatePinner;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
@@ -23,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.zalando.fahrschein.*;
 import org.zalando.fahrschein.domain.Cursor;
-import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.example.domain.OrderEvent;
@@ -36,21 +33,14 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
 import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
-import org.zalando.fahrschein.jdbc.JdbcCursorManager;
-import org.zalando.fahrschein.jdbc.JdbcPartitionManager;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Arrays.asList;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
@@ -266,29 +256,6 @@ public class Main {
                 .listen(SalesOrderPlaced.class, listener);
     }
 
-    private static void persistentListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
-        final HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(JDBC_URL);
-        hikariConfig.setUsername(JDBC_USERNAME);
-        hikariConfig.setPassword(JDBC_PASSWORD);
-
-        final DataSource dataSource = new HikariDataSource(hikariConfig);
-
-        final JdbcCursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
-
-        final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-                .withAccessTokenProvider(new ZignAccessTokenProvider())
-                .withCursorManager(cursorManager)
-                .build();
-
-        final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
-
-        nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
-                .readFromBegin(partitions)
-                .withObjectMapper(objectMapper)
-                .listen(SalesOrderPlaced.class, listener);
-    }
-
     private static void subscriptionCreateWithAuthorization(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
 
         final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
@@ -310,61 +277,4 @@ public class Main {
                 .listen(SalesOrderPlaced.class, listener);
     }
 
-    private static void multiInstanceListen(ObjectMapper objectMapper, Listener<SalesOrderPlaced> listener) throws IOException {
-        final HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(JDBC_URL);
-        hikariConfig.setUsername(JDBC_USERNAME);
-        hikariConfig.setPassword(JDBC_PASSWORD);
-
-        final DataSource dataSource = new HikariDataSource(hikariConfig);
-
-        final ZignAccessTokenProvider accessTokenProvider = new ZignAccessTokenProvider();
-
-        final AtomicInteger name = new AtomicInteger();
-        final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(16);
-
-        for (int i = 0; i < 12; i++) {
-            final String instanceName = "consumer-" + name.getAndIncrement();
-            final JdbcPartitionManager partitionManager = new JdbcPartitionManager(dataSource, "fahrschein-demo");
-            final JdbcCursorManager cursorManager = new JdbcCursorManager(dataSource, "fahrschein-demo");
-
-            final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-                    .withAccessTokenProvider(accessTokenProvider)
-                    .withCursorManager(cursorManager)
-                    .build();
-
-            final List<Partition> partitions = nakadiClient.getPartitions(SALES_ORDER_SERVICE_ORDER_PLACED);
-
-            final IORunnable instance = () -> {
-
-                final IORunnable runnable = () -> {
-                    final Optional<Lock> optionalLock = partitionManager.lockPartitions(SALES_ORDER_SERVICE_ORDER_PLACED, partitions, instanceName);
-
-                    if (optionalLock.isPresent()) {
-                        final Lock lock = optionalLock.get();
-                        try {
-                            nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
-                                    .withLock(lock)
-                                    .withObjectMapper(objectMapper)
-                                    .withStreamParameters(new StreamParameters().withStreamLimit(10))
-                                    .withBackoffStrategy(new NoBackoffStrategy())
-                                    .listen(SalesOrderPlaced.class, listener);
-                        } finally {
-                            partitionManager.unlockPartitions(lock);
-                        }
-                    }
-                };
-
-                scheduledExecutorService.scheduleWithFixedDelay(runnable.unchecked(), 0, 1, TimeUnit.SECONDS);
-            };
-            scheduledExecutorService.submit(instance.unchecked());
-        }
-
-        try {
-            Thread.sleep(60L*1000);
-            scheduledExecutorService.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
 }
