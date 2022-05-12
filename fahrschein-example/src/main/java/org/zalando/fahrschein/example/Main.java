@@ -51,9 +51,6 @@ public class Main {
     private static final Logger LOG = LoggerFactory.getLogger(Main.class);
     private static final String SALES_ORDER_SERVICE_ORDER_PLACED = "sales-order-service.order-placed";
     private static final URI NAKADI_URI = URI.create("https://nakadi-staging.aruha-test.zalan.do");
-    private static final String JDBC_URL = "jdbc:postgresql://localhost:5432/local_nakadi_cursor_db";
-    private static final String JDBC_USERNAME = "postgres";
-    private static final String JDBC_PASSWORD = "postgres";
     public static final String ORDER_CREATED = "eventlog.e96001_order_created";
     public static final String ORDER_PAYMENT_STATUS_ACCEPTED = "eventlog.e62001_order_payment_status_accepted";
 
