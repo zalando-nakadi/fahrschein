@@ -8,15 +8,15 @@ dependencies {
     testImplementation project(':fahrschein-http-apache')
     testImplementation project(':fahrschein-http-spring')
     testImplementation project(':fahrschein-http-jdk11')
-    testImplementation "com.squareup.okhttp3:okhttp:${property('okHttpV')}"
-    testImplementation "com.squareup.okhttp3:logging-interceptor:${property('okHttpV')}"
+    testImplementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
+    testImplementation "com.squareup.okhttp3:logging-interceptor:${property('okhttp.version')}"
     testImplementation "org.testcontainers:testcontainers:${property('testContainersV')}"
-    testImplementation "com.fasterxml.jackson.core:jackson-core:${property('jacksonV')}"
-    testImplementation "com.fasterxml.jackson.core:jackson-annotations:${property('jacksonV')}"
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:${property('jacksonV')}"
-    testImplementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jacksonV')}"
-    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jacksonV')}"
-    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jacksonV')}"
+    testImplementation "com.fasterxml.jackson.core:jackson-core:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
 }
 
 test {

@@ -300,7 +300,7 @@ We use Gradle [convention plugins](https://docs.gradle.org/current/samples/sampl
 Most dependencies are defined on a per-subproject level, only the versions for the most-used shared dependencies are controlled centrally, in the [gradle.properties](./gradle.properties) file. This also allows you testing your build with a different version by specifying the property on the command-line.
 
 ```sh
-./gradlew test -PjacksonV=2.9.0
+./gradlew test -Pjackson.version=2.9.0
 ```
 
 The [integration tests](.github/workflows/ci.yaml) include running the build with our supported baseline dependency as well as the latest micro release of Jackson, Apache HttpClient and Spring.
@@ -330,7 +330,7 @@ open build/reports/dependency-check-report.html
 
 ### Releasing
 
-Fahrschein uses Github Workflows to [build](.github/workflows/ci.yaml) and [publish releases](.github/workflows/maven-publish.yaml). This happens automatically whenever a new release is created in Github.
+Fahrschein uses Github Workflows to [build](.github/workflows/ci.yaml) and [publish releases](.github/workflows/maven-publish.yaml). This happens automatically whenever a new release is created in Github. After creating a release, please bump the `project.version` property in [gradle.properties](./gradle.properties).
 
 If needed, you can preview the signed release artifacts in your local maven repository.
 
@@ -339,6 +339,8 @@ env "GPG_KEY=$(cat ~/.gnupg/private-key.pgp)" \
 "GPG_PASSPHRASE=$(read -s password ; echo $password)" \
 ./gradlew publishToMavenLocal
 ```
+
+
 
 ## Getting involved
 

@@ -5,9 +5,9 @@ plugins {
 
 dependencies {
     api project(':fahrschein')
-    api "com.fasterxml.jackson.core:jackson-core:${property('jacksonV')}"
-    api "com.fasterxml.jackson.core:jackson-annotations:${property('jacksonV')}"
-    api "com.fasterxml.jackson.core:jackson-databind:${property('jacksonV')}"
+    api "com.fasterxml.jackson.core:jackson-core:${property('jackson.version')}"
+    api "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
+    api "com.fasterxml.jackson.core:jackson-databind:${property('jackson.version')}"
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein Type Resolver'

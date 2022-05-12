@@ -9,7 +9,7 @@ repositories {
 }
 
 group = 'org.zalando'
-version = '0.22.0' + (project.hasProperty('release') ? '' : '-SNAPSHOT')
+version = project.property('project.version') + (project.hasProperty('release') ? '' : '-SNAPSHOT')
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 java.targetCompatibility = JavaVersion.VERSION_1_8
 
@@ -19,16 +19,16 @@ tasks.withType(JavaCompile) {
 }
 
 dependencies {
-    implementation("org.slf4j:slf4j-api:${property('slf4jV')}") {
+    implementation("org.slf4j:slf4j-api:${property('slf4j.version')}") {
         because "we want slf4j-api to be available everywhere"
     }
-    testRuntimeOnly("org.slf4j:slf4j-simple:${property('slf4jV')}") {
+    testRuntimeOnly("org.slf4j:slf4j-simple:${property('slf4j.version')}") {
         because "we want the slf4j-simple logger implementation available at test runtime"
     }
-    testImplementation("org.mockito:mockito-core:${property('mockitoV')}") {
+    testImplementation("org.mockito:mockito-core:${property('mockito.version')}") {
         because "we want mockito to be used in tests"
     }
-    testImplementation("junit:junit:${property('junitV')}") {
+    testImplementation("junit:junit:${property('junit.version')}") {
         because "we want a common version JUnit across all projects"
     }
     testImplementation('org.hamcrest:hamcrest:2.2') {
@@ -42,7 +42,7 @@ dependencies {
 configurations.all {
     resolutionStrategy.dependencySubstitution {
         substitute(platform(module('commons-logging:commons-logging'))).
-                using module("org.slf4j:jcl-over-slf4j:${property('slf4jV')}")
+                using module("org.slf4j:jcl-over-slf4j:${property('slf4j.version')}")
         substitute(platform(module('org.hamcrest:hamcrest-core'))).
                 using module("org.hamcrest:hamcrest:2.2")
     }
