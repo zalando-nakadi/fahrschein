@@ -11,4 +11,4 @@ dependencies {
 java.sourceCompatibility = JavaVersion.VERSION_11
 java.targetCompatibility = JavaVersion.VERSION_11
 
-publishing.publications.maven.pom.description = 'Fahrschein HTTP Client using JDK11\'s HttpClient'
+publishing.publications.maven.pom.description = "Fahrschein HTTP Client using JDK11's HttpClient"
