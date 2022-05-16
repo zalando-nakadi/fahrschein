@@ -21,7 +21,7 @@ publishing {
                 }
             }
             pom {
-                url = 'http://github.com/zalando-nakadi/fahrschein'
+                url = 'https://github.com/zalando-nakadi/fahrschein'
                 inceptionYear = '2006'
                 licenses {
                     license {
