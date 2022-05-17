@@ -209,8 +209,8 @@ final CloseableHttpClient httpClient = HttpClients.custom()
                                                   .disableAutomaticRetries()
                                                   .setDefaultRequestConfig(config)
                                                   .disableRedirectHandling()
-                                                  .setMaxConnTotal(8)
-                                                  .setMaxConnPerRoute(2)
+                                                  .setMaxConnTotal(20)
+                                                  .setMaxConnPerRoute(20)
                                                   .build();
 
 final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
@@ -244,6 +244,10 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactor
 ```
 
 **Note:** The implementations from the Spring framework don't handle closing of streams as expected. They will try to consume remaining data, which will usually time out when nakadi does not receive a commit.
+
+**Note:** Regarding sizing and reuse of HTTP client connection pools, make sure to have a connection pool 
+size bigger than the number of subscriptions you're making, because subscriptions use long-polling to
+retrieve events, each effectively blocking one connection.
 
 ## Content-Compression
 
