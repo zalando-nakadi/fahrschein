@@ -249,6 +249,17 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactor
 size bigger than the number of subscriptions you're making, because subscriptions use long-polling to
 retrieve events, each effectively blocking one connection.
 
+## Dependency compatibility
+
+Although Fahrschein is using fixed dependency versions, it is integration-tested against the following dependency matrix. We will inform in the release notes in case we bump the compatibility baseline. 
+
+| Dependency | Baseline | Latest |
+| ---- | ---- |
+| Jackson | 2.8.0 | 2.13.+ |
+| Spring Core | 4.3.0.RELEASE | 5.3.+ |
+| okHttp | 3.3.0 | 4.9.+ |
+| Apache HttpClient | 4.3 | 4.5.+ |
+
 ## Content-Compression
 
 Fahrschein handles content compression transparently to the API consumer, and mostly independently of the actual HTTP
@@ -307,7 +318,7 @@ Most dependencies are defined on a per-subproject level, only the versions for t
 ./gradlew test -Pjackson.version=2.9.0
 ```
 
-The [integration tests](.github/workflows/ci.yaml) include running the build with our supported baseline dependency as well as the latest micro release of Jackson, Apache HttpClient and Spring.
+The [integration tests](.github/workflows/ci.yaml) include running the build with our supported baseline dependency as well as the latest micro release of Jackson, Apache HttpClient and Spring. Please update the section in the README when bumping dependency baselines, and add this to the release notes.
 
 ### End-to-End tests
 
