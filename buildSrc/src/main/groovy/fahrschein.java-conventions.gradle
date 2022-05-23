@@ -13,9 +13,10 @@ version = project.property('project.version') + (project.hasProperty('release') 
 java.sourceCompatibility = JavaVersion.VERSION_1_8
 java.targetCompatibility = JavaVersion.VERSION_1_8
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-parameters'
     options.compilerArgs << '-Xlint:all'
+    options.encoding = 'UTF-8'
 }
 
 dependencies {
@@ -55,6 +56,3 @@ jacocoTestReport {
     dependsOn test // tests are required to run before generating the report
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-}
