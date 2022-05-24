@@ -1,10 +1,10 @@
 plugins {
-   id 'fahrschein.java-conventions'
-   id 'fahrschein.maven-publishing-conventions'
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
 }
 
 dependencies {
-   implementation "com.github.luben:zstd-jni:1.5.2-2"
+    implementation "com.github.luben:zstd-jni:1.5.2-2"
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein HTTP API'

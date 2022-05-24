@@ -10,7 +10,7 @@ dependencies {
     testImplementation project(':fahrschein-http-jdk11')
     testImplementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
     testImplementation "com.squareup.okhttp3:logging-interceptor:${property('okhttp.version')}"
-    testImplementation "org.testcontainers:testcontainers:${property('testContainersV')}"
+    testImplementation "org.testcontainers:testcontainers:1.17.2"
     testImplementation "com.fasterxml.jackson.core:jackson-core:${property('jackson.version')}"
     testImplementation "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
     testImplementation "com.fasterxml.jackson.core:jackson-databind:${property('jackson.version')}"
