@@ -25,5 +25,6 @@ test {
     systemProperty "COMPOSE_PROVIDED", project.hasProperty("e2e.composeProvided") ? "true" : "false"
 }
 
-java.sourceCompatibility = JavaVersion.VERSION_11
-java.targetCompatibility = JavaVersion.VERSION_11
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+}
