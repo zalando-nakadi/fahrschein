@@ -6,7 +6,7 @@
 
 *Image Source: Deutsches Bundesarchiv, Photographer: Ralph Hirschberger, Image License: [CC BY-SA 3.0 DE](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en)*
 
-[![Build Status](https://travis-ci.org/zalando-nakadi/fahrschein.svg?branch=master)](https://travis-ci.org/zalando-nakadi/fahrschein)
+![Build Status](https://github.com/zalando-nakadi/fahrschein/actions/workflows/ci.yml/badge.svg)
 [![Release](https://img.shields.io/github/release/zalando-nakadi/fahrschein.svg)](https://github.com/zalando-nakadi/fahrschein/releases)
 [![Maven Central](https://img.shields.io/maven-central/v/org.zalando/fahrschein.svg)](https://maven-badges.herokuapp.com/maven-central/org.zalando/fahrschein)
 
