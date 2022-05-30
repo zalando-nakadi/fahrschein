@@ -61,7 +61,7 @@ public class ManagedCursorManager implements CursorManager {
     static final class CursorWrapper {
         private final List<Cursor> items;
 
-        @JsonCreator
+        @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
         CursorWrapper(@JsonProperty("items") List<Cursor> items) {
             this.items = items;
         }

@@ -15,10 +15,12 @@ jobs:
         with:
           distribution: 'adopt-hotspot'
           java-version: '11'
-          cache: 'maven'
+      - uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: 7.4.1
       - name: Test Default
-        run: mvn clean verify
-      - name: Test Ancient Jackson
-        run: mvn -Dversion.jackson=2.6.7 -pl !fahrschein-typeresolver,!fahrschein-example,!fahrschein-e2e-test clean verify
-      - name: Test Oldest Jackson (with full feature support)
-        run: mvn -Dversion.jackson=2.8.0 clean verify
+        run: gradle build
+      - name: Test oldest supported library versions
+        run: gradle build -Pjackson.version=2.8.0 -Pspring.version=4.3.0.RELEASE -Pokhttp.version=3.3.0 -Papachehttp.version=4.3
+      - name: Test with latest library (micro) updates
+        run: gradle build -Pjackson.version=2.13.+ -Pspring.version=5.3.+ -Pokhttp.version=4.9.+ -Papachehttp.version=4.5.+

@@ -1,0 +1,24 @@
+plugins {
+    id 'fahrschein.java-conventions'
+}
+
+dependencies {
+    implementation project(':fahrschein')
+    implementation project(':fahrschein-http-simple')
+    implementation project(':fahrschein-http-apache')
+    implementation project(':fahrschein-http-spring')
+    implementation project(':fahrschein-inmemory')
+    implementation project(':fahrschein-typeresolver')
+    implementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
+    implementation "org.apache.httpcomponents:httpclient:${property("apachehttp.version")}"
+    implementation "org.springframework:spring-web:${property('spring.version')}"
+    implementation 'org.zalando:jackson-datatype-money:0.6.0'
+    implementation "com.fasterxml.jackson.core:jackson-core:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
+}
+
+description = 'Fahrschein Example'

@@ -1,0 +1,11 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+}
+
+dependencies {
+    api project(':fahrschein')
+    api 'io.dropwizard.metrics:metrics-core:3.1.2'
+}
+
+publishing.publications.maven.pom.description = 'Fahrschein Metrics using Dropwizard'

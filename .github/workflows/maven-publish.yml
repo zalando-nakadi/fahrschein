@@ -2,25 +2,25 @@ name: Publish package to the Maven Central Repository and GitHub Packages
 on:
   release:
     types: [created]
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
-
-      - name: Set up Java for publishing to Maven Central Repository
+      - name: Set up Java
         uses: actions/setup-java@v2
         with:
           java-version: '11'
           distribution: 'adopt'
-
-      - name: Release Maven package
-        uses: samuelmeuli/action-maven-publish@v1
+      - name: Publish package
+        uses: gradle/gradle-build-action@v2
         with:
-          gpg_private_key: ${{ secrets.GPG_KEY }}
-          gpg_passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          nexus_username: ${{ secrets.OSSRH_USERNAME }}
-          nexus_password: ${{ secrets.OSSRH_TOKEN }}
-          maven_profiles: release
-          maven_args: -DskipITs=true
+          gradle-version: 7.4.1
+          arguments: publish -Prelease
+        env:
+          NEXUS_USERNAME:  ${{ secrets.OSSRH_USERNAME }}
+          NEXUS_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

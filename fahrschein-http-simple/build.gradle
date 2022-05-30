@@ -1,0 +1,11 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+}
+
+dependencies {
+    api project(':fahrschein-http-api')
+    testImplementation(testFixtures(project(':fahrschein-http-test-support')))
+}
+
+publishing.publications.maven.pom.description = 'Fahrschein HTTP Client using HttpURLConnection'

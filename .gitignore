@@ -9,3 +9,7 @@ target/
 .settings/
 .vscode
 bin/
+
+#gradle
+.gradle/
+build/

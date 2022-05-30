@@ -1,0 +1,30 @@
+plugins {
+    id 'fahrschein.java-conventions'
+}
+
+dependencies {
+    testImplementation project(':fahrschein')
+    testImplementation project(':fahrschein-http-simple')
+    testImplementation project(':fahrschein-http-apache')
+    testImplementation project(':fahrschein-http-spring')
+    testImplementation project(':fahrschein-http-jdk11')
+    testImplementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
+    testImplementation "com.squareup.okhttp3:logging-interceptor:${property('okhttp.version')}"
+    testImplementation "org.testcontainers:testcontainers:1.17.2"
+    testImplementation "com.fasterxml.jackson.core:jackson-core:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
+}
+
+test {
+    onlyIf { ! project.hasProperty('e2e.skip') }
+    maxParallelForks = 1
+    systemProperty "COMPOSE_PROVIDED", project.hasProperty("e2e.composeProvided") ? "true" : "false"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+}
