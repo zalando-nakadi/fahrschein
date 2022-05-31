@@ -18,7 +18,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 7.4.1
-          arguments: publish -Prelease
+          arguments: publish --info -Prelease
         env:
           NEXUS_USERNAME:  ${{ secrets.OSSRH_USERNAME }}
           NEXUS_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
