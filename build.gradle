@@ -7,7 +7,7 @@ plugins {
 
 
 // CVE vulnerability scanning
-// run: ./gradlew dependencyCheckAggregate
+// run: ./gradlew :dependencyCheckAggregate
 
 dependencyCheck {
     failBuildOnCVSS = 5

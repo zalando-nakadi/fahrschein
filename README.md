@@ -339,7 +339,7 @@ If you want to skip end-to-end tests completely, run
 The project integrates CVE scanning to check for vulnerable dependencies. In case of build failure, this can be caused by a high-risk vulnerability in a dependency being identified. You can run the reporting locally:
 
 ```
-./gradlew dependencyCheckAggregate
+./gradlew :dependencyCheckAggregate
 open build/reports/dependency-check-report.html
 ```
 
