@@ -262,7 +262,7 @@ retrieve events, each effectively blocking one connection.
 Although Fahrschein is using fixed dependency versions, it is integration-tested against the following dependency matrix. We will inform in the release notes in case we bump the compatibility baseline. 
 
 | Dependency | Baseline | Latest |
-| ---- | ---- |
+| ---------- | -------- | ------ |
 | Jackson | 2.8.0 | 2.13.+ |
 | Spring Core | 4.3.0.RELEASE | 5.3.+ |
 | okHttp | 3.3.0 | 4.9.+ |
