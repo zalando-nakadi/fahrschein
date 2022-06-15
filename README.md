@@ -139,6 +139,14 @@ Exception handling while streaming events follows some simple rules
  Library code itself will not throw `RuntimeException`s.
  - Exceptions in other client methods are not automatically retried
 
+## Backoff Strategies
+
+Fahrschein supports different exponential backoff strategies when streaming events. All backoff values are configurable when passing your own instance in `StreamBuilder#withBackoffStrategy(BackoffStrategy)`.
+
+* `ExponentialBackoffStrategy` - Base implementation for exponential backoff without jitter. Initial delay is 500ms, backoff factor 1.5, maximum delay 10min, with no limit on the maximum number of retries.
+* `EqualJitterBackoffStrategy` (default) - extends `ExponentialBackoffStrategy` with the same defaults. For each delay it takes half of the delay value and adds the other half multiplied by a random factor [0..1).
+* `FullJitterBackoffStrategy` - extends `ExponentialBackoffStrategy` with the same defaults and multiplies each delay by a random factor [0..1).
+
 ## Stopping and resuming streams
 
 The stream implementation gracefully handles thread interruption, so it is possible to stop a running thread and resume consuming events by re-submitting the `Runnable`:
