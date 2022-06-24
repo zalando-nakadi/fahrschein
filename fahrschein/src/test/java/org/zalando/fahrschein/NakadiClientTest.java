@@ -1,6 +1,5 @@
 package org.zalando.fahrschein;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.domain.Partition;
@@ -23,6 +22,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
 
@@ -118,7 +118,7 @@ public class NakadiClientTest {
         Set<String> expectedRows = new HashSet<String>();
         expectedRows.add("foo1");
         expectedRows.add("foo2");
-        subscription.getEventTypes().stream().filter(eventType -> !expectedRows.contains(eventType)).forEach(eventType -> Assertions.fail());
+        subscription.getEventTypes().stream().filter(eventType -> !expectedRows.contains(eventType)).forEach(eventType -> fail());
         assertEquals(2, subscription.getEventTypes().size());
         assertEquals("bar", subscription.getConsumerGroup());
         assertNotNull(subscription.getCreatedAt());
