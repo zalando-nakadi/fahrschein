@@ -1,11 +1,12 @@
 package org.zalando.fahrschein.domain;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MetadataTest {
 
@@ -22,13 +23,13 @@ public class MetadataTest {
 
         final Metadata metadata = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, Collections.emptyMap());
 
-        Assert.assertTrue(metadata.toString().contains(metadata.getEventType()));
-        Assert.assertTrue(metadata.toString().contains(metadata.getEid()));
-        Assert.assertTrue(metadata.toString().contains(metadata.getOccurredAt().toString()));
-        Assert.assertTrue(metadata.toString().contains(metadata.getPartition()));
-        Assert.assertTrue(metadata.toString().contains(metadata.getVersion()));
-        Assert.assertTrue(metadata.toString().contains(metadata.getPublishedBy()));
-        Assert.assertTrue(metadata.toString().contains(metadata.getReceivedAt().toString()));
-        Assert.assertTrue(metadata.toString().contains(metadata.getFlowId()));
+        assertTrue(metadata.toString().contains(metadata.getEventType()));
+        assertTrue(metadata.toString().contains(metadata.getEid()));
+        assertTrue(metadata.toString().contains(metadata.getOccurredAt().toString()));
+        assertTrue(metadata.toString().contains(metadata.getPartition()));
+        assertTrue(metadata.toString().contains(metadata.getVersion()));
+        assertTrue(metadata.toString().contains(metadata.getPublishedBy()));
+        assertTrue(metadata.toString().contains(metadata.getReceivedAt().toString()));
+        assertTrue(metadata.toString().contains(metadata.getFlowId()));
     }
 }

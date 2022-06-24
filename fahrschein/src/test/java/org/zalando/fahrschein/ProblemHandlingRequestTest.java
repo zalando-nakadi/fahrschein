@@ -1,8 +1,6 @@
 package org.zalando.fahrschein;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Headers;
@@ -16,15 +14,14 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hobsoft.hamcrest.compose.ComposeMatchers.hasFeature;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
 public class ProblemHandlingRequestTest {
-
-    @Rule
-    public final ExpectedException expectedException = ExpectedException.none();
 
     private final Request request = Mockito.mock(Request.class);
     private final Response response = Mockito.mock(Response.class);
@@ -42,13 +39,14 @@ public class ProblemHandlingRequestTest {
 
         when(request.execute()).thenReturn(response);
 
-        expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(422)));
-        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("Unprocessable Entity")));
-        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Session with stream id not found"))));
+        IOProblem expectedException = assertThrows(IOProblem.class, () -> {
+            problemHandlingRequest.execute();
+        });
 
-        problemHandlingRequest.execute();
+        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(422)));
+        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
+        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("Unprocessable Entity")));
+        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Session with stream id not found"))));
     }
 
     @Test
@@ -62,13 +60,14 @@ public class ProblemHandlingRequestTest {
 
         when(request.execute()).thenReturn(response);
 
-        expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(409)));
-        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("conflict")));
-        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.<String>empty())));
+        IOProblem expectedException = assertThrows(IOProblem.class, () -> {
+            problemHandlingRequest.execute();
+        });
 
-        problemHandlingRequest.execute();
+        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(409)));
+        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
+        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("conflict")));
+        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.<String>empty())));
     }
 
     @Test
@@ -83,13 +82,15 @@ public class ProblemHandlingRequestTest {
 
         when(request.execute()).thenReturn(response);
 
-        expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(404)));
-        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("http://httpstatus.es/404"))));
-        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("Not Found")));
-        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("EventType does not exist."))));
+        IOProblem expectedException = assertThrows(IOProblem.class, () -> {
+            problemHandlingRequest.execute();
+        });
 
-        problemHandlingRequest.execute();
+        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(404)));
+        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("http://httpstatus.es/404"))));
+        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("Not Found")));
+        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("EventType does not exist."))));
+
     }
 
     @Test
@@ -104,13 +105,13 @@ public class ProblemHandlingRequestTest {
 
         when(request.execute()).thenReturn(response);
 
-        expectedException.expect(instanceOf(IOProblem.class));
-        expectedException.expect(hasFeature("status code", IOProblem::getStatusCode, equalTo(400)));
-        expectedException.expect(hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        expectedException.expect(hasFeature("title", IOProblem::getTitle, equalTo("invalid_request")));
-        expectedException.expect(hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Access Token not valid"))));
-
-        problemHandlingRequest.execute();
+        IOProblem expectedException = assertThrows(IOProblem.class, () -> {
+            problemHandlingRequest.execute();
+        });
+        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(400)));
+        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
+        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("invalid_request")));
+        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Access Token not valid"))));
     }
 
 
@@ -126,9 +127,9 @@ public class ProblemHandlingRequestTest {
 
         when(request.execute()).thenReturn(response);
 
-        expectedException.expect(instanceOf(EventPublishingException.class));
-
-        problemHandlingRequest.execute();
+        assertThrows(EventPublishingException.class, () -> {
+            problemHandlingRequest.execute();
+        });
     }
 
 }

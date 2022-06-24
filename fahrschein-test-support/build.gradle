@@ -5,6 +5,6 @@ plugins {
 
 dependencies {
     testFixturesApi project(':fahrschein')
-    testFixturesImplementation "junit:junit:${property('junit.version')}"
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter:${property('junit.version')}")
     testFixturesImplementation "org.springframework:spring-tx:${property('spring.version')}"
 }

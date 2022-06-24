@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.domain.AbstractDataChangeEvent;
 import org.zalando.fahrschein.domain.DataChangeEvent;
 import org.zalando.fahrschein.domain.DataOperation;

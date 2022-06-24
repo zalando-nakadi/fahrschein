@@ -1,6 +1,6 @@
 package org.zalando.fahrschein;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -17,6 +17,11 @@ java {
     }
 }
 
+test {
+    useJUnitPlatform()
+}
+
+
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-parameters'
     options.compilerArgs << '-Xlint:all'
@@ -34,9 +39,15 @@ dependencies {
     testImplementation("org.mockito:mockito-core:${property('mockito.version')}") {
         because "we want mockito to be used in tests"
     }
-    testImplementation("junit:junit:${property('junit.version')}") {
+
+    testImplementation("org.junit.jupiter:junit-jupiter:${property('junit.version')}") {
         because "we want a common version JUnit across all projects"
     }
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${property('junit.version')}") {
+        because "we are migrating from JUnit4"
+    }
+    testImplementation("org.mockito:mockito-junit-jupiter:${property('mockito.version')}")
+
     testImplementation('org.hamcrest:hamcrest:2.2') {
         because "we want to have hamcrest available for all testing"
     }

@@ -1,19 +1,23 @@
 package org.zalando.fahrschein.http.jdk11;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.test.AbstractRequestFactoryTest;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.io.IOException;
 import java.net.http.HttpClient;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.Optional;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class JavaNetRequestFactoryTest extends AbstractRequestFactoryTest {
 
     @Override
@@ -21,7 +25,7 @@ public class JavaNetRequestFactoryTest extends AbstractRequestFactoryTest {
         return new JavaNetRequestFactory(HttpClient.newHttpClient(), Optional.empty(), contentEncoding);
     }
 
-    @Test(expected = java.net.http.HttpTimeoutException.class)
+    @Test
     public void testTimeout() throws IOException {
         // given
         server.createContext("/timeout", exchange -> {
@@ -34,7 +38,7 @@ public class JavaNetRequestFactoryTest extends AbstractRequestFactoryTest {
         // when
         RequestFactory f = new JavaNetRequestFactory(HttpClient.newBuilder().build(), Optional.of(Duration.ofMillis(1)), ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");
-        r.execute();
+        assertThrows(HttpTimeoutException.class, () -> r.execute());
     }
 
 }

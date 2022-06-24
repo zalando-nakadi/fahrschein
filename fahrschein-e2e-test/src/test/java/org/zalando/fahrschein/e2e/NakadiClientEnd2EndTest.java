@@ -11,10 +11,10 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +29,7 @@ import org.zalando.fahrschein.domain.Metadata;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
 import org.zalando.fahrschein.http.api.ContentEncoding;
+import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.jdk11.JavaNetRequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
@@ -55,7 +56,6 @@ import static org.mockito.Mockito.timeout;
 /*
  * Enable wire-debug by running with -Djdk.httpclient.HttpClient.log=requests
  */
-@RunWith(Parameterized.class)
 public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
 
     private static final Logger logger = LoggerFactory.getLogger("okhttp3.wire");
@@ -78,17 +78,8 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    public final RequestFactory requestFactory;
-
-    private NakadiClient nakadiClient;
-
-    public NakadiClientEnd2EndTest(RequestFactory requestFactory, String testName) {
-        this.requestFactory = requestFactory;
-    }
-
-    @Before
-    public void setUpNakadiClient() {
-        nakadiClient = NakadiClient
+    private NakadiClient setUpNakadiClient(RequestFactory requestFactory) {
+        return NakadiClient
                 .builder(getNakadiUrl(), requestFactory)
                 .withObjectMapper(objectMapper)
                 .build();
@@ -141,12 +132,14 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
         return new SimpleRequestFactory(contentEncoding);
     }
 
-    @Test
-    public void testPublish() throws IOException {
-        publish(UUID.randomUUID().toString());
+    @ParameterizedTest
+    @MethodSource("getRequestFactories")
+    public void testPublish(RequestFactory requestFactory) throws IOException {
+        NakadiClient nakadiClient = setUpNakadiClient(requestFactory);
+        publish(nakadiClient, UUID.randomUUID().toString());
     }
 
-    private List<OrderEvent> publish(String testId) throws IOException {
+    private List<OrderEvent> publish(NakadiClient nakadiClient, String testId) throws IOException {
         createEventTypes("/eventtypes", testId);
         List<OrderEvent> events = IntStream.range(0, 10)
             .mapToObj(
@@ -156,8 +149,10 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
         return events;
     }
 
-    @Test
-    public void testSubscribe() throws IOException, EventAlreadyProcessedException {
+    @ParameterizedTest
+    @MethodSource("getRequestFactories")
+    public void testSubscribe(RequestFactory requestFactory) throws IOException, EventAlreadyProcessedException {
+        NakadiClient nakadiClient = setUpNakadiClient(requestFactory);
         String testId = UUID.randomUUID().toString();
         createEventTypes("/eventtypes", testId);
         final Listener<OrderEvent> listener = subscriptionListener();
@@ -181,7 +176,7 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
                 }
                 return;
             }));;
-        List<String> eventOrderNumbers = publish(testId).stream().map(e -> e.orderNumber).collect(toList());
+        List<String> eventOrderNumbers = publish(nakadiClient, testId).stream().map(e -> e.orderNumber).collect(toList());
         // verifies that every order number that was published got consumed
         for (String on: eventOrderNumbers) {
             Mockito.verify(listener, timeout(10000).atLeastOnce()).accept(
