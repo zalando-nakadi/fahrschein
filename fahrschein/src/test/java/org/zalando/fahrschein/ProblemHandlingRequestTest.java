@@ -16,8 +16,6 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hobsoft.hamcrest.compose.ComposeMatchers.hasFeature;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -43,10 +41,10 @@ public class ProblemHandlingRequestTest {
             problemHandlingRequest.execute();
         });
 
-        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(422)));
-        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("Unprocessable Entity")));
-        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Session with stream id not found"))));
+        assertThat(expectedException.getStatusCode(), equalTo(422));
+        assertThat(expectedException.getType(), equalTo(URI.create("about:blank")));
+        assertThat(expectedException.getTitle(), equalTo("Unprocessable Entity"));
+        assertThat(expectedException.getDetail(), equalTo(Optional.of("Session with stream id not found")));
     }
 
     @Test
@@ -64,10 +62,10 @@ public class ProblemHandlingRequestTest {
             problemHandlingRequest.execute();
         });
 
-        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(409)));
-        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("conflict")));
-        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.<String>empty())));
+        assertThat(expectedException.getStatusCode(), equalTo(409));
+        assertThat(expectedException.getType(), equalTo(URI.create("about:blank")));
+        assertThat(expectedException.getTitle(), equalTo("conflict"));
+        assertThat(expectedException.getDetail(), equalTo(Optional.<String>empty()));
     }
 
     @Test
@@ -86,10 +84,10 @@ public class ProblemHandlingRequestTest {
             problemHandlingRequest.execute();
         });
 
-        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(404)));
-        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("http://httpstatus.es/404"))));
-        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("Not Found")));
-        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("EventType does not exist."))));
+        assertThat(expectedException.getStatusCode(), equalTo(404));
+        assertThat(expectedException.getType(), equalTo(URI.create("http://httpstatus.es/404")));
+        assertThat(expectedException.getTitle(), equalTo("Not Found"));
+        assertThat(expectedException.getDetail(), equalTo(Optional.of("EventType does not exist.")));
 
     }
 
@@ -108,10 +106,10 @@ public class ProblemHandlingRequestTest {
         IOProblem expectedException = assertThrows(IOProblem.class, () -> {
             problemHandlingRequest.execute();
         });
-        assertThat(expectedException, hasFeature("status code", IOProblem::getStatusCode, equalTo(400)));
-        assertThat(expectedException, hasFeature("type", IOProblem::getType, equalTo(URI.create("about:blank"))));
-        assertThat(expectedException, hasFeature("title", IOProblem::getTitle, equalTo("invalid_request")));
-        assertThat(expectedException, hasFeature("detail", IOProblem::getDetail, equalTo(Optional.of("Access Token not valid"))));
+        assertThat(expectedException.getStatusCode(), equalTo(400));
+        assertThat(expectedException.getType(), equalTo(URI.create("about:blank")));
+        assertThat(expectedException.getTitle(), equalTo("invalid_request"));
+        assertThat(expectedException.getDetail(), equalTo(Optional.of("Access Token not valid")));
     }
 
 
