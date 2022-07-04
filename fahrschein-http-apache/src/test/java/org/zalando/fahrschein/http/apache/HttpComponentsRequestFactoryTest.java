@@ -27,6 +27,7 @@ public class HttpComponentsRequestFactoryTest extends AbstractRequestFactoryTest
                 Thread.sleep(10l);
                 exchange.sendResponseHeaders(201, 0);
             } catch (InterruptedException e) {
+                fail("Unexpected Exception thrown");
             }
         });
 
