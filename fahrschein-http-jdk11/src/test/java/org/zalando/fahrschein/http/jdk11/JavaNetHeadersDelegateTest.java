@@ -1,6 +1,6 @@
 package org.zalando.fahrschein.http.jdk11;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Headers;
 
@@ -12,8 +12,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class JavaNetHeadersDelegateTest {
 
@@ -54,19 +55,23 @@ public class JavaNetHeadersDelegateTest {
         assertEquals(emptyList(), headers.get(Headers.CONTENT_TYPE));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void readOnlyViewShouldNotSupportAdd() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder().build().headers());
-        headers.add(Headers.CONTENT_TYPE, "application/json");
+        assertThrows(UnsupportedOperationException.class, () -> {
+            headers.add(Headers.CONTENT_TYPE, "application/json");
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void readOnlyViewShouldNotSupportPut() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder()
                 .setHeader(Headers.CONTENT_TYPE, "text/plain")
                 .setHeader(Headers.CONTENT_ENCODING, "gzip").build().headers());
 
-        headers.put(Headers.CONTENT_TYPE, "application/json");
+        assertThrows(UnsupportedOperationException.class, () -> {
+            headers.put(Headers.CONTENT_TYPE, "application/json");
+        });
     }
 
     @Test
@@ -80,22 +85,25 @@ public class JavaNetHeadersDelegateTest {
         assertEquals(ContentType.TEXT_PLAIN, contentType);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void shouldNotSetContentLength() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder().build().headers());
-        headers.setContentLength(2000L);
+        assertThrows(UnsupportedOperationException.class, () -> {
+            headers.setContentLength(2000L);
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void shouldNotSetContentType() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder().build().headers());
-        headers.setContentType(ContentType.TEXT_PLAIN);
+        assertThrows(UnsupportedOperationException.class, () -> {
+            headers.setContentType(ContentType.TEXT_PLAIN);
+        });
     }
 
     @Test
     public void shouldReturnMinusOneForUnknownContentLength() {
         final Headers headers = new JavaNetHeadersDelegate(requestBuilder().build().headers());
-
         assertEquals(-1L, headers.getContentLength());
     }
 }

@@ -1,7 +1,7 @@
 package org.zalando.fahrschein;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Request;
@@ -24,7 +24,7 @@ public class AuthorizedRequestFactoryTest {
     private final RequestFactory delegate = mock(RequestFactory.class);
     private final AuthorizedRequestFactory unit = new AuthorizedRequestFactory(delegate, () -> BEARER_TOKEN);
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         final Request request = mockRequest();
         when(delegate.createRequest(any(), anyString())).thenReturn(request);

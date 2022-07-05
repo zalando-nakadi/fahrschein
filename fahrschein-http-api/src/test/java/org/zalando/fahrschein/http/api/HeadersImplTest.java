@@ -1,6 +1,6 @@
 package org.zalando.fahrschein.http.api;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 
@@ -8,8 +8,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class HeadersImplTest {
     @Test
@@ -57,15 +58,17 @@ public class HeadersImplTest {
         assertEquals(new HashSet<>(asList("Content-Type", "Content-Length")), copy.headerNames());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void readOnlyViewShouldNotSupportAdd() {
 
         final HeadersImpl readOnlyHeaders = new HeadersImpl(new HeadersImpl(), true);
 
-        readOnlyHeaders.add("Content-Type", "application/json");
+        assertThrows(UnsupportedOperationException.class, () -> {
+            readOnlyHeaders.add("Content-Type", "application/json");
+        });
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void readOnlyViewShouldNotSupportPut() {
         final HeadersImpl headers = new HeadersImpl();
         headers.put("Content-Type", "text/plain");
@@ -74,7 +77,9 @@ public class HeadersImplTest {
         final HeadersImpl readOnlyHeaders = new HeadersImpl(headers, true);
 
         assertEquals("text/plain", readOnlyHeaders.getFirst("Content-Type"));
-        readOnlyHeaders.put("Content-Type", "application/json");
+        assertThrows(UnsupportedOperationException.class, () -> {
+            readOnlyHeaders.put("Content-Type", "application/json");
+        });
     }
 
     @Test

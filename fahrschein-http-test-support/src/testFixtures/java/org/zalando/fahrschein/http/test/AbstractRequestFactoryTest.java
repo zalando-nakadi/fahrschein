@@ -4,8 +4,8 @@ import com.github.luben.zstd.ZstdInputStream;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -34,7 +34,7 @@ import java.util.zip.GZIPOutputStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class AbstractRequestFactoryTest {
 
@@ -43,7 +43,7 @@ public abstract class AbstractRequestFactoryTest {
     protected static HttpServer server;
     protected static URI serverAddress;
 
-    @BeforeClass
+    @BeforeAll
     public static void startServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress("localhost", 0), 1);
         serverAddress = URI.create("http://localhost:" + server.getAddress().getPort());

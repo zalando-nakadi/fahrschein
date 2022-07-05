@@ -1,6 +1,6 @@
 package org.zalando.fahrschein.test;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
@@ -12,9 +12,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Transactional
 public abstract class AbstractCursorManagerTest {

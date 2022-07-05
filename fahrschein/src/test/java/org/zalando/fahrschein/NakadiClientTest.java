@@ -1,9 +1,7 @@
 package org.zalando.fahrschein;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
@@ -21,7 +19,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
 
@@ -38,13 +39,10 @@ public class NakadiClientTest {
         }
     }
 
-    @Rule
-    public final ExpectedException expectedException = ExpectedException.none();
-
     private MockServer server;
     private NakadiClient client;
 
-    @Before
+    @BeforeEach
     public void setup() {
         final MockServer clientHttpRequestFactory = new MockServer();
 
@@ -231,12 +229,14 @@ public class NakadiClientTest {
                         "  \"detail\": \"Subscription not found.\"\n" +
                         "}").setup();
 
-        expectedException.expect(IOProblem.class);
-        expectedException.expectMessage("Problem [http://httpstatus.es/404] with status [404]: [Not Found] [Subscription not found.]");
 
-        client.deleteSubscription("123");
 
+        IOProblem expectedException = assertThrows(IOProblem.class, () -> {
+            client.deleteSubscription("123");
+        });
         server.verify();
+
+        assertEquals("Problem [http://httpstatus.es/404] with status [404]: [Not Found] [Subscription not found.]", expectedException.getMessage());
     }
 
     @Test
@@ -249,12 +249,13 @@ public class NakadiClientTest {
                         "  \"detail\": \"Eventtype does not exist.\"\n" +
                         "}").setup();
 
-        expectedException.expect(IOProblem.class);
-        expectedException.expectMessage("Problem [http://httpstatus.es/422] with status [422]: [Unprocessable Entity] [Eventtype does not exist.]");
 
-        client.subscribe("nakadi-client-test", Collections.singleton("non-existing-event"), "nakadi-client-test-consumer", SubscriptionRequest.Position.BEGIN, null, null);
 
+        IOProblem expectedException = assertThrows(IOProblem.class, () -> {
+            client.subscribe("nakadi-client-test", Collections.singleton("non-existing-event"), "nakadi-client-test-consumer", SubscriptionRequest.Position.BEGIN, null, null);
+        });
         server.verify();
+        assertEquals("Problem [http://httpstatus.es/422] with status [422]: [Unprocessable Entity] [Eventtype does not exist.]", expectedException.getMessage());
     }
 
     @Test
@@ -273,15 +274,15 @@ public class NakadiClientTest {
         server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
-                .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
+                .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
-        expectedException.expect(EventPublishingException.class);
-        expectedException.expectMessage("returned status [failed] in step [validating] with detail [baz]");
-
-        client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
-
+        EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
+            client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+        });
         server.verify();
+
+        assertEquals("Event publishing of [event-one] returned status [failed] in step [validating] with detail [baz]", expectedException.getMessage());
     }
 
     @Test
@@ -302,15 +303,17 @@ public class NakadiClientTest {
         server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
-                .andRespondWith(422, ContentType.APPLICATION_JSON, "[{\"publishing_status\":\"aborted\",\"step\":\"publishing\",\"detail\":\"baz\"}]")
+                .andRespondWith(422, ContentType.APPLICATION_JSON, "[{\"eid\":\"some-event\",\"publishing_status\":\"aborted\",\"step\":\"publishing\",\"detail\":\"baz\"}]")
                 .setup();
 
-        expectedException.expect(EventPublishingException.class);
-        expectedException.expectMessage("returned status [aborted] in step [publishing] with detail [baz]");
 
-        client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+        Throwable expectedException = assertThrows(EventPublishingException.class, () -> {
+            client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+        });
 
         server.verify();
+        assertEquals("Event publishing of [some-event] returned status [aborted] in step [publishing] with detail [baz]", expectedException.getMessage());
+
     }
 
 }

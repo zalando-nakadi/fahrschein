@@ -1,17 +1,15 @@
 package org.zalando.fahrschein;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.collection.IsArrayWithSize.arrayWithSize;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StreamParametersTest {
-
-    @Rule
-    public ExpectedException expectedEx = ExpectedException.none();
 
     @Test
     public void createsAValidQueryParamString() throws IllegalArgumentException {
@@ -43,34 +41,36 @@ public class StreamParametersTest {
     @Test
     public void streamParametersWithStreamTimeoutFailure() throws IllegalArgumentException {
 
-        expectedEx.expect(IllegalArgumentException.class);
-        expectedEx.expectMessage("stream_timeout is lower than batch_flush_timeout.");
 
-        final StreamParameters streamParameters = new StreamParameters()
-                .withBatchFlushTimeout(100)
-                .withStreamTimeout(50);
+        IllegalArgumentException expectedException = assertThrows(IllegalArgumentException.class, () -> {
+            final StreamParameters streamParameters = new StreamParameters()
+                    .withBatchFlushTimeout(100)
+                    .withStreamTimeout(50);
+        });
+
+        assertThat(expectedException.getMessage(), is("stream_timeout is lower than batch_flush_timeout."));
     }
 
     @Test
-    public void streamParametersWithStreamLimitFailure() throws IllegalArgumentException {
+    public void streamParametersWithStreamLimitFailure() {
 
-        expectedEx.expect(IllegalArgumentException.class);
-        expectedEx.expectMessage("streamLimit is lower than batch_limit.");
-
-        final StreamParameters streamParameters = new StreamParameters()
-                .withBatchLimit(20)
-                .withStreamLimit(10);
+        IllegalArgumentException expectedException = assertThrows(IllegalArgumentException.class, () -> {
+            new StreamParameters()
+                    .withBatchLimit(20)
+                    .withStreamLimit(10);
+        });
+        assertThat(expectedException.getMessage(), is("streamLimit is lower than batch_limit."));
     }
 
     @Test
     public void streamParametersWithBatchLimitZero() throws IllegalArgumentException {
+        IllegalArgumentException expectedException = assertThrows(IllegalArgumentException.class, () -> {
+            new StreamParameters()
+                    .withBatchLimit(0)
+                    .withStreamLimit(10);
+        });
 
-        expectedEx.expect(IllegalArgumentException.class);
-        expectedEx.expectMessage("batch_limit can't be lower than 1.");
-
-        final StreamParameters streamParameters = new StreamParameters()
-                .withBatchLimit(0)
-                .withStreamLimit(10);
+        assertThat(expectedException.getMessage(), is("batch_limit can't be lower than 1."));
     }
 
 }

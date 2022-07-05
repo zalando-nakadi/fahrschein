@@ -17,6 +17,10 @@ java {
     }
 }
 
+test {
+    useJUnitPlatform()
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-parameters'
     options.compilerArgs << '-Xlint:all'
@@ -31,11 +35,13 @@ dependencies {
     testRuntimeOnly("org.slf4j:slf4j-simple:${property('slf4j.version')}") {
         because "we want the slf4j-simple logger implementation available at test runtime"
     }
+
+    // JUnit 5
+    testImplementation("org.junit.jupiter:junit-jupiter:${property('junit.version')}")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${property('junit.version')}")
+    testImplementation("org.mockito:mockito-junit-jupiter:${property('mockito.version')}")
     testImplementation("org.mockito:mockito-core:${property('mockito.version')}") {
-        because "we want mockito to be used in tests"
-    }
-    testImplementation("junit:junit:${property('junit.version')}") {
-        because "we want a common version JUnit across all projects"
+        because "We want Mockito to be used in tests"
     }
     testImplementation('org.hamcrest:hamcrest:2.2') {
         because "we want to have hamcrest available for all testing"
@@ -49,6 +55,7 @@ configurations.all {
     resolutionStrategy.dependencySubstitution {
         substitute(platform(module('commons-logging:commons-logging'))).
                 using module("org.slf4j:jcl-over-slf4j:${property('slf4j.version')}")
+        // hamcrest changed package coordinates. Make sure to only include the new one.
         substitute(platform(module('org.hamcrest:hamcrest-core'))).
                 using module("org.hamcrest:hamcrest:2.2")
     }
@@ -57,6 +64,7 @@ configurations.all {
 test {
     finalizedBy jacocoTestReport // report is always generated after tests run
 }
+
 jacocoTestReport {
     dependsOn test // tests are required to run before generating the report
 }

@@ -4,6 +4,7 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.mockito.Mockito;
 import org.zalando.fahrschein.http.api.ContentType;
@@ -22,9 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -137,7 +138,7 @@ class MockServer implements RequestFactory {
         }
 
         if (expectedContentType != null) {
-            assertEquals("requestContentType", requestHeaders.getContentType(), expectedContentType);
+            assertThat(requestHeaders.getContentType(), is(expectedContentType));
         }
 
         for (Map.Entry<String, Matcher<String>> entry : expectedHeaders.entrySet()) {

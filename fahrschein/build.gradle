@@ -15,7 +15,6 @@ dependencies {
     testImplementation ('com.jayway.jsonpath:json-path:2.7.0') {
         exclude group: "org.ow2.asm", module: "asm"
     }
-    testImplementation 'org.hobsoft.hamcrest:hamcrest-compose:0.3.0'
     testImplementation 'com.google.code.findbugs:jsr305:2.0.1'
 }
 

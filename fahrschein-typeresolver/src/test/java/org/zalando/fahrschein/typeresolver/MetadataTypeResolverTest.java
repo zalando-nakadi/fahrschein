@@ -10,12 +10,14 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonTypeResolver;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.domain.Metadata;
 
 import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MetadataTypeResolverTest {
     private static final String ORDER_SHIPPED = "{\"foo\":\"bar\",\"metadata\":{\"occurred_at\":\"2017-03-15T02:00:48.497Z\",\"eid\":\"36931a5d-74d6-3033-84ea-a8336197c4ce\",\"event_type\":\"order_shipped\",\"partition\":\"0\",\"received_at\":\"2017-03-15T02:00:52.355Z\",\"flow_id\":\"GEI8VPtEd02DSBMBnV1GjChS\",\"version\":\"0.1.0\"},\"order_number\":\"10410018540147\",\"flow_id\":\"RzhTJ2sLTVigDrxhTrlQ_Q\"}";
@@ -97,11 +99,11 @@ public class MetadataTypeResolverTest {
         final OrderEvent event = objectMapper.readValue(ORDER_SHIPPED, OrderEvent.class);
 
         final Metadata metadata = event.getMetadata();
-        Assert.assertEquals("36931a5d-74d6-3033-84ea-a8336197c4ce", metadata.getEid());
-        Assert.assertEquals("order_shipped", metadata.getEventType());
-        Assert.assertEquals("10410018540147", event.getOrderNumber());
+        assertEquals("36931a5d-74d6-3033-84ea-a8336197c4ce", metadata.getEid());
+        assertEquals("order_shipped", metadata.getEventType());
+        assertEquals("10410018540147", event.getOrderNumber());
 
-        Assert.assertTrue(event instanceof OrderShippedEvent);
+        assertTrue(event instanceof OrderShippedEvent);
     }
 
     @Test
@@ -109,12 +111,12 @@ public class MetadataTypeResolverTest {
         final OrderEvent event = objectMapper.readValue(ORDER_CREATED, OrderEvent.class);
 
         final Metadata metadata = event.getMetadata();
-        Assert.assertEquals("a3e25946-5ae9-3964-91fa-26ecb7588d67", metadata.getEid());
-        Assert.assertEquals("order_created", metadata.getEventType());
-        Assert.assertEquals("10410018540147", event.getOrderNumber());
+        assertEquals("a3e25946-5ae9-3964-91fa-26ecb7588d67", metadata.getEid());
+        assertEquals("order_created", metadata.getEventType());
+        assertEquals("10410018540147", event.getOrderNumber());
 
-        Assert.assertTrue(event instanceof OrderCreatedEvent);
-        Assert.assertEquals("123456", ((OrderCreatedEvent)event).getCustomerNumber());
-        Assert.assertEquals("INVOICE", ((OrderCreatedEvent)event).getPaymentMethod());
+        assertTrue(event instanceof OrderCreatedEvent);
+        assertEquals("123456", ((OrderCreatedEvent)event).getCustomerNumber());
+        assertEquals("INVOICE", ((OrderCreatedEvent)event).getPaymentMethod());
     }
 }

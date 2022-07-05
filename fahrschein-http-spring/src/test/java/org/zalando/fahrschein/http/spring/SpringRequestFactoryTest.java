@@ -1,9 +1,9 @@
 package org.zalando.fahrschein.http.spring;
 
 import okhttp3.OkHttpClient;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Request;
@@ -14,10 +14,12 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(MockitoJUnitRunner.class)
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@ExtendWith(MockitoExtension.class)
 public class SpringRequestFactoryTest extends AbstractRequestFactoryTest {
 
-    @Test(expected = SocketTimeoutException.class)
+    @Test
     public void testTimeout() throws IOException {
         // given
         server.createContext("/timeout", exchange -> {
@@ -35,7 +37,7 @@ public class SpringRequestFactoryTest extends AbstractRequestFactoryTest {
         OkHttp3ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory(client);
         SpringRequestFactory f = new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.IDENTITY);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");
-        r.execute();
+        assertThrows(SocketTimeoutException.class, () -> r.execute());
     }
 
     @Override
