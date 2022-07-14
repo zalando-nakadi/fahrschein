@@ -312,7 +312,7 @@ Fahrschein is a gradle-based project. For local development, Fahrschein requires
 * A local installation of JDK11
 * A local Docker installation for running integration tests
 
-When developing, make sure to run unit and integration tests with `./gradlew test`.
+When developing, make sure to run unit and integration tests with `./gradlew check`.
 
 ### Understanding the build
 
