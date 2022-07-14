@@ -1,5 +1,6 @@
 plugins {
     id 'fahrschein.java-conventions'
+    id 'jvm-test-suite'
 }
 
 dependencies {
@@ -17,6 +18,14 @@ dependencies {
     testImplementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
     testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
+}
+
+testing {
+    suites {
+        test {
+            testType = TestSuiteType.INTEGRATION_TEST
+        }
+    }
 }
 
 test {

@@ -323,10 +323,27 @@ We use Gradle [convention plugins](https://docs.gradle.org/current/samples/sampl
 Most dependencies are defined on a per-subproject level, only the versions for the most-used shared dependencies are controlled centrally, in the [gradle.properties](./gradle.properties) file. This also allows you testing your build with a different version by specifying the property on the command-line.
 
 ```sh
-./gradlew test -Pjackson.version=2.9.0
+./gradlew check -Pjackson.version=2.9.0
 ```
 
 The [integration tests](.github/workflows/ci.yaml) include running the build with our supported baseline dependency as well as the latest micro release of Jackson, Apache HttpClient and Spring. Please update the section in the README when bumping dependency baselines, and add this to the release notes.
+
+
+### Unit Tests and Code Coverage
+
+Fahrschein automatically generates test coverage reports via its `JaCoCo` build integration. For example, you can check code coverage for a single subproject:
+
+```sh
+./gradlew fahrschein-http-api:check
+open fahrschein-http-api/build/reports/jacoco/test/html/index.html
+```
+
+Alternatively, run the full build and check the aggregated coverage report:
+
+```sh
+./gradlew check -Pe2e.skip
+open build/reports/jacoco/testCodeCoverageReport/html/index.html
+```
 
 ### End-to-End tests
 
@@ -334,12 +351,13 @@ The `fahrschein-e2e-test` module has end-to-end tests using `docker-compose`. If
 
 ```sh
 docker-compose -f fahrschein-e2e-test/src/test/resources/docker-compose.yaml up -d
-./gradlew :fahrschein-e2e:test -Pe2e.composeProvided
+./gradlew :fahrschein-e2e:check -Pe2e.composeProvided
 ```
 
 If you want to skip end-to-end tests completely, run 
+
 ```sh
-./gradlew test -Pe2e.skip
+./gradlew check -Pe2e.skip
 ```
 
 ### CVE scanning
