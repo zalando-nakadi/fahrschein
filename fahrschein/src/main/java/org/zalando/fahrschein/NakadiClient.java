@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static org.zalando.fahrschein.Preconditions.checkArgument;
@@ -67,7 +68,7 @@ public class NakadiClient {
      * @throws IOException in case of network issues.
      */
     public List<Partition> getPartitions(String eventName) throws IOException {
-        final URI uri = baseUri.resolve(String.format("/event-types/%s/partitions", eventName));
+        final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/partitions", eventName));
         final Request request = requestFactory.createRequest(uri, "GET");
         try (final Response response = request.execute()) {
             try (final InputStream is = response.getBody()) {
@@ -85,7 +86,7 @@ public class NakadiClient {
      * @throws EventPublishingException In case Nakadi returns an Erroneous response
      */
     public <T> void publish(String eventName, List<T> events) throws EventPublishingException, IOException {
-        final URI uri = baseUri.resolve(String.format("/event-types/%s/events", eventName));
+        final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/events", eventName));
         final Request request = requestFactory.createRequest(uri, "POST");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
@@ -129,7 +130,7 @@ public class NakadiClient {
     public void deleteSubscription(String subscriptionId) throws IOException {
         checkArgument(!subscriptionId.isEmpty(), "Subscription ID cannot be empty.");
 
-        final URI uri = baseUri.resolve(String.format("/subscriptions/%s", subscriptionId));
+        final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/subscriptions/%s", subscriptionId));
         final Request request = requestFactory.createRequest(uri, "DELETE");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);

@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Locale;
 
 class JsonParserHelper {
     private JsonParserHelper() {
@@ -26,7 +27,7 @@ class JsonParserHelper {
             }
         }
         if (currentToken != expectedToken) {
-            throw new IOException(String.format("Expected [%s] but got [%s]", expectedToken, currentToken));
+            throw new IOException(String.format(Locale.ENGLISH, "Expected [%s] but got [%s]", expectedToken, currentToken));
         }
     }
 }

@@ -9,6 +9,7 @@ import org.zalando.fahrschein.http.api.ContentType;
 import java.io.IOException;
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -41,7 +42,7 @@ public class ManagedCursorManagerTest {
                 .andRespondWith(204)
                 .setup();
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(ZoneOffset.UTC), null);
         cursorManager.addSubscription(subscription);
         cursorManager.addStreamId(subscription, "stream-id");
 
@@ -62,7 +63,7 @@ public class ManagedCursorManagerTest {
                 .andRespondWith(errorCode, ContentType.TEXT_PLAIN, "Session with stream id " + streamId + " not found")
                 .setup();
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(ZoneOffset.UTC), null);
         cursorManager.addSubscription(subscription);
         cursorManager.addStreamId(subscription, streamId);
         Cursor cursor = new Cursor("0", "10", "foo", "token");
@@ -88,7 +89,7 @@ public class ManagedCursorManagerTest {
                 .andRespondWith(errorCode, ContentType.TEXT_PLAIN, "Session with stream id " + streamId + " not found")
                 .setup();
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(ZoneOffset.UTC), null);
         cursorManager.addSubscription(subscription);
         cursorManager.addStreamId(subscription, streamId);
         Cursor cursor = new Cursor("0", "10", "foo", "token");
@@ -111,7 +112,7 @@ public class ManagedCursorManagerTest {
                 .andRespondWith(200, ContentType.APPLICATION_JSON, "{\"items\":[{\"partition\":\"0\",\"offset\":\"10\"},{\"partition\":\"1\",\"offset\":\"20\"}]}")
                 .setup();
 
-        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(), null);
+        final Subscription subscription = new Subscription("1234", "nakadi-client-test", Collections.singleton("foo"), "bar", OffsetDateTime.now(ZoneOffset.UTC), null);
         cursorManager.addSubscription(subscription);
 
         final Collection<Cursor> cursors = cursorManager.getCursors("foo");

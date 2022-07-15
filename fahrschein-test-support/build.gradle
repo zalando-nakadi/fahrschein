@@ -8,3 +8,9 @@ dependencies {
     testFixturesImplementation("org.junit.jupiter:junit-jupiter:${property('junit.version')}")
     testFixturesImplementation "org.springframework:spring-tx:${property('spring.version')}"
 }
+
+forbiddenApisTestFixtures {
+    // allow non-portable classes for the mock server in AbstractRequestFactoryTest
+    bundledSignatures = ['jdk-unsafe', 'jdk-deprecated',  'jdk-reflection' ]
+    ignoreFailures = false
+}

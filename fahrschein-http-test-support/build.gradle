@@ -9,5 +9,10 @@ dependencies {
     testFixturesImplementation "org.mockito:mockito-core:${property('mockito.version')}"
     testFixturesImplementation("org.junit.jupiter:junit-jupiter:${property('junit.version')}")
     testFixturesImplementation('org.hamcrest:hamcrest:2.2')
+}
 
+forbiddenApisTestFixtures {
+    // allow non-portable classes for the mock server in AbstractRequestFactoryTest
+    bundledSignatures = ['jdk-unsafe', 'jdk-deprecated',  'jdk-reflection' ]
+    ignoreFailures = false
 }

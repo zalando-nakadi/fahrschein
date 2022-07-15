@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -117,7 +118,7 @@ public abstract class AbstractRequestFactoryTest {
         Request r = f.createRequest(serverAddress.resolve(requestPath), "POST");
         r.getHeaders().setContentType(ContentType.APPLICATION_JSON);
         try (final OutputStream body = r.getBody()) {
-            body.write(requestBody.getBytes());
+            body.write(requestBody.getBytes(UTF_8));
         }
         Response executed = r.execute();
         String actualResponse = readStream(executed.getBody());

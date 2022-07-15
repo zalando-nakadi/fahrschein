@@ -5,6 +5,7 @@ plugins {
     id 'jacoco-report-aggregation'
     id 'com.github.ben-manes.versions' version '0.42.0'
     id 'org.owasp.dependencycheck' version '7.1.1'
+    id 'de.thetaphi.forbiddenapis' version '3.3'
 }
 
 // CVE vulnerability scanning
