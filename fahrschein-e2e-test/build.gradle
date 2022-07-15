@@ -8,6 +8,7 @@ dependencies {
     testImplementation project(':fahrschein-http-apache')
     testImplementation project(':fahrschein-http-spring')
     testImplementation project(':fahrschein-http-jdk11')
+    testImplementation 'com.tngtech.archunit:archunit:1.0.0-rc1'
     testImplementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
     testImplementation "com.squareup.okhttp3:logging-interceptor:${property('okhttp.version')}"
     testImplementation "org.testcontainers:testcontainers:1.17.2"
@@ -25,6 +26,8 @@ test {
     systemProperty "COMPOSE_PROVIDED", project.hasProperty("e2e.composeProvided") ? "true" : "false"
 }
 
+
 tasks.withType(JavaCompile).configureEach {
     options.release = 11
 }
+

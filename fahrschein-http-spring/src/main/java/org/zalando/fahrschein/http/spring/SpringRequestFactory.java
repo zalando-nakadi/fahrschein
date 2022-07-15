@@ -9,7 +9,7 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import java.io.IOException;
 import java.net.URI;
 
-public class SpringRequestFactory implements RequestFactory {
+public final class SpringRequestFactory implements RequestFactory {
     private final ClientHttpRequestFactory clientRequestFactory;
     private final ContentEncoding contentEncoding;
 
@@ -20,6 +20,6 @@ public class SpringRequestFactory implements RequestFactory {
 
     @Override
     public Request createRequest(URI uri, String method) throws IOException {
-        return new RequestAdapter(clientRequestFactory.createRequest(uri, HttpMethod.valueOf(method)), contentEncoding);
+        return new SpringRequest(clientRequestFactory.createRequest(uri, HttpMethod.valueOf(method)), contentEncoding);
     }
 }

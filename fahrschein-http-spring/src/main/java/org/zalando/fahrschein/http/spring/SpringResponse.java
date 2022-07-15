@@ -7,10 +7,10 @@ import org.zalando.fahrschein.http.api.Response;
 import java.io.IOException;
 import java.io.InputStream;
 
-class ResponseAdapter implements Response {
+class SpringResponse implements Response {
     private final ClientHttpResponse clientHttpResponse;
 
-    ResponseAdapter(ClientHttpResponse clientHttpResponse) {
+    SpringResponse(ClientHttpResponse clientHttpResponse) {
         this.clientHttpResponse = clientHttpResponse;
     }
 

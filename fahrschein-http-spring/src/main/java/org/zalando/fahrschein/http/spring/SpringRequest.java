@@ -10,15 +10,12 @@ import org.zalando.fahrschein.http.api.Response;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
-class RequestAdapter implements Request {
+class SpringRequest implements Request {
     private final ClientHttpRequest clientHttpRequest;
     private final ContentEncoding contentEncoding;
 
-    RequestAdapter(ClientHttpRequest clientHttpRequest, ContentEncoding contentEncoding) {
+    SpringRequest(ClientHttpRequest clientHttpRequest, ContentEncoding contentEncoding) {
         this.clientHttpRequest = clientHttpRequest;
         this.contentEncoding = contentEncoding;
     }
@@ -53,6 +50,6 @@ class RequestAdapter implements Request {
 
     @Override
     public Response execute() throws IOException {
-        return new ResponseAdapter(clientHttpRequest.execute());
+        return new SpringResponse(clientHttpRequest.execute());
     }
 }
