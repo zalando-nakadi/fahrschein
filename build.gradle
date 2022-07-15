@@ -3,6 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'jacoco-report-aggregation'
+    id "org.barfuin.gradle.jacocolog" version "1.2.3"
     id 'com.github.ben-manes.versions' version '0.42.0'
     id 'org.owasp.dependencycheck' version '7.1.1'
 }
@@ -36,12 +37,12 @@ dependencies {
 
 reporting {
     reports {
-        testCodeCoverageReport(JacocoCoverageReport) {
+        jacocoAggregateReport(JacocoCoverageReport) {
             testType = TestSuiteType.UNIT_TEST
         }
     }
 }
 
 tasks.named('check') {
-    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    dependsOn tasks.named('jacocoAggregateReport', JacocoReport)
 }
