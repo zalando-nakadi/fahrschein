@@ -2,6 +2,7 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zalando.fahrschein.http.api.RequestFactory;
+
 import javax.annotation.Nullable;
 import java.net.URI;
 
@@ -48,7 +49,7 @@ public final class NakadiClientBuilder {
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
-        RequestFactory requestFactory = new ProblemHandlingRequestFactory(delegate);
+        RequestFactory requestFactory = new ProblemHandlingRequestFactory(new UserAgentRequestFactory(delegate));
         if (authorizationProvider != null) {
             requestFactory = new AuthorizedRequestFactory(requestFactory, authorizationProvider);
         }

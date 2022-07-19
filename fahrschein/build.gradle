@@ -19,3 +19,31 @@ dependencies {
 }
 
 publishing.publications.maven.pom.description = 'A Java client for the Nakadi event bus'
+
+def generateResourcesTask = tasks.register("generate-resources", GenerateResourcesTask) {
+    resourcesDir.set(layout.buildDirectory.dir("generated-resources/main"))
+}
+
+sourceSets {
+    main {
+        output.dir(generateResourcesTask)
+    }
+}
+
+idea {
+    module {
+        // Marks the already(!) added srcDir as "generated"
+        generatedSourceDirs += file('build/generated-resources/main')
+    }
+}
+
+abstract class GenerateResourcesTask extends DefaultTask {
+    @OutputDirectory
+    abstract DirectoryProperty getResourcesDir()
+
+    @TaskAction
+    def generateResources() {
+        def generated = resourcesDir.file("fahrschein.properties").get().asFile
+        generated.text = "fahrschein-version=" + project.version
+    }
+}

@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.domain.Partition;
@@ -54,6 +55,17 @@ public class NakadiClientTest {
 
         this.server = clientHttpRequestFactory;
         this.client = nakadiClient;
+    }
+
+    @Test
+    public void shouldAddUserAgent() throws IOException {
+        server.expectRequestTo("http://example.com/event-types/foobar/partitions", "GET")
+                .andExpectHeader("User-Agent", Matchers.startsWith("Fahrschein/"))
+                .andRespondWith(200, ContentType.APPLICATION_JSON, "[]")
+                .setup();
+
+        client.getPartitions("foobar");
+        server.verify();
     }
 
     @Test
