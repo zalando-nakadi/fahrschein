@@ -326,7 +326,7 @@ Most dependencies are defined on a per-subproject level, only the versions for t
 ./gradlew test -Pjackson.version=2.9.0
 ```
 
-The [integration tests](.github/workflows/ci.yaml) include running the build with our supported baseline dependency as well as the latest micro release of Jackson, Apache HttpClient and Spring. Please update the section in the README when bumping dependency baselines, and add this to the release notes.
+The [integration tests](.github/workflows/ci.yml) include running the build with our supported baseline dependency as well as the latest micro release of Jackson, Apache HttpClient and Spring. Please update the section in the README when bumping dependency baselines, and add this to the release notes.
 
 ### End-to-End tests
 
@@ -353,7 +353,7 @@ open build/reports/dependency-check-report.html
 
 ### Releasing
 
-Fahrschein uses Github Workflows to [build](.github/workflows/ci.yaml) and [publish releases](.github/workflows/maven-publish.yaml). This happens automatically whenever a new release is created in Github. After creating a release, please bump the `project.version` property in [gradle.properties](./gradle.properties).
+Fahrschein uses Github Workflows to [build](.github/workflows/ci.yml) and [publish releases](.github/workflows/maven-publish.yml). This happens automatically whenever a new release is created in Github. After creating a release, please bump the `project.version` property in [gradle.properties](./gradle.properties).
 
 If needed, you can preview the signed release artifacts in your local maven repository.
 
