@@ -5,25 +5,24 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.Properties;
 
 public final class UserAgent {
-private static final String PROPERTIES_FILE = "fahrschein.properties";
+    private static final String PROPERTIES_FILE = "fahrschein.properties";
     private static final Logger logger = LoggerFactory.getLogger(UserAgent.class);
 
     private static final Properties fahrscheinProperties = new Properties();
 
     static {
         try (final InputStream stream =
-                     UserAgent.class.getResourceAsStream("/"+PROPERTIES_FILE)) {
+                     UserAgent.class.getResourceAsStream("/" + PROPERTIES_FILE)) {
             if (stream != null) {
                 fahrscheinProperties.load(stream);
             } else {
-                logger.error("Properties file not found: {}", PROPERTIES_FILE);
+                logger.warn("Properties file not found: {}", PROPERTIES_FILE);
             }
         } catch (IOException e) {
-            logger.error("Cannot read file: "+ PROPERTIES_FILE, e);
+            logger.warn("Cannot read file: " + PROPERTIES_FILE, e);
         }
     }
 
