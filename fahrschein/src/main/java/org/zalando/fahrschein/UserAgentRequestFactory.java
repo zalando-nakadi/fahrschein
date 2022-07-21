@@ -8,7 +8,7 @@ import org.zalando.fahrschein.http.api.UserAgent;
 import java.io.IOException;
 import java.net.URI;
 
-public class UserAgentRequestFactory implements RequestFactory {
+public final class UserAgentRequestFactory implements RequestFactory {
     private final RequestFactory delegate;
     private final String userAgent;
 
