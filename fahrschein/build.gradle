@@ -38,12 +38,18 @@ idea {
 }
 
 abstract class GenerateResourcesTask extends DefaultTask {
+
+    @Input
+    String getVersion() {
+        return project.version
+    }
+
     @OutputDirectory
     abstract DirectoryProperty getResourcesDir()
 
     @TaskAction
     def generateResources() {
         def generated = resourcesDir.file("fahrschein.properties").get().asFile
-        generated.text = "fahrschein-version=" + project.version
+        generated.text = "fahrschein-version=" + getVersion()
     }
 }
