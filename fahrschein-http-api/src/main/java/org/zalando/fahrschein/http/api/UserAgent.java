@@ -9,7 +9,7 @@ import java.net.URI;
 import java.util.Properties;
 
 public final class UserAgent {
-
+private static final String PROPERTIES_FILE = "fahrschein.properties";
     private static final Logger logger = LoggerFactory.getLogger(UserAgent.class);
 
     private static final Properties fahrscheinProperties = new Properties();
