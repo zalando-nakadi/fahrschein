@@ -68,7 +68,7 @@ final class JavaNetBufferingRequest implements Request {
 
             @Override
             public void put(String headerName, String value) {
-                request.header(headerName, value);
+                request.setHeader(headerName, value);
             }
 
             @Override

@@ -56,6 +56,26 @@ public abstract class AbstractRequestFactoryTest {
     public ArgumentCaptor<HttpExchange> exchangeCaptor;
 
     @Test
+    public void testUserAgent() throws IOException {
+        // given
+        String expectedResponse = "{}";
+        HttpHandler spy = Mockito.spy(new SimpleRequestResponseContentHandler(expectedResponse));
+        server.createContext("/user-agent", spy);
+
+        // when
+        final RequestFactory f = defaultRequestFactory(ContentEncoding.IDENTITY);
+        Request r = f.createRequest(serverAddress.resolve("/user-agent"), "GET");
+        r.getHeaders().put("User-Agent", "Test");
+        Response executed = r.execute();
+        readStream(executed.getBody());
+
+        // then
+        Mockito.verify(spy).handle(exchangeCaptor.capture());
+        HttpExchange capturedArgument = exchangeCaptor.getValue();
+        assertThat("UserAgent header", capturedArgument.getRequestHeaders().get("user-agent"), equalTo(Arrays.asList("Test")));
+    }
+
+    @Test
     public void testGzippedResponseBody() throws IOException {
         // given
         String expectedResponse = "{}";

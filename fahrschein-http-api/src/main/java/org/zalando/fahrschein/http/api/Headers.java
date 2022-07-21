@@ -11,6 +11,7 @@ public interface Headers {
     String CONTENT_TYPE = "Content-Type";
     String CONTENT_ENCODING = "Content-Encoding";
     String ACCEPT_ENCODING = "Accept-Encoding";
+    String USER_AGENT = "User-Agent";
 
     List<String> get(String headerName);
 
