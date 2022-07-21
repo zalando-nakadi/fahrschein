@@ -23,7 +23,7 @@ private static final String PROPERTIES_FILE = "fahrschein.properties";
                 logger.error("Properties file not found: {}", PROPERTIES_FILE);
             }
         } catch (IOException e) {
-            logger.error("Cannot read file: fahrschein.properties", e);
+            logger.error("Cannot read file: "+ PROPERTIES_FILE, e);
         }
     }
 
