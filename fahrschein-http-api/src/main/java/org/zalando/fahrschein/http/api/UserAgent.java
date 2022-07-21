@@ -16,7 +16,7 @@ private static final String PROPERTIES_FILE = "fahrschein.properties";
 
     static {
         try (final InputStream stream =
-                     UserAgent.class.getResourceAsStream("/fahrschein.properties")) {
+                     UserAgent.class.getResourceAsStream("/"+PROPERTIES_FILE)) {
             if (stream != null) {
                 fahrscheinProperties.load(stream);
             } else {
