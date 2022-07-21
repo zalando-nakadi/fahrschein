@@ -20,7 +20,7 @@ private static final String PROPERTIES_FILE = "fahrschein.properties";
             if (stream != null) {
                 fahrscheinProperties.load(stream);
             } else {
-                logger.error("Properties file not found: fahrschein.properties");
+                logger.error("Properties file not found: {}", PROPERTIES_FILE);
             }
         } catch (IOException e) {
             logger.error("Cannot read file: fahrschein.properties", e);
