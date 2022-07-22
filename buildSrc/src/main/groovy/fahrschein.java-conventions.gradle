@@ -17,10 +17,6 @@ java {
     }
 }
 
-test {
-    useJUnitPlatform()
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-parameters'
     options.compilerArgs << '-Xlint:all'
@@ -62,10 +58,9 @@ configurations.all {
 }
 
 test {
-    finalizedBy jacocoTestReport // report is always generated after tests run
+    useJUnitPlatform()
 }
 
-jacocoTestReport {
-    dependsOn test // tests are required to run before generating the report
+tasks.named('test') {
+    finalizedBy tasks.named('jacocoTestReport', JacocoReport)
 }
-
