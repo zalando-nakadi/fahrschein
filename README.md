@@ -342,7 +342,7 @@ Alternatively, run the full build and check the aggregated coverage report:
 
 ```sh
 ./gradlew check -Pe2e.skip
-open build/reports/jacoco/testCodeCoverageReport/html/index.html
+open build/reports/jacoco/jacocoAggregateReport/html/index.html
 ```
 
 ### End-to-End tests
