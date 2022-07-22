@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-java@v2
         with:
           distribution: 'adopt-hotspot'
@@ -20,6 +20,10 @@ jobs:
           gradle-version: 7.4.1
       - name: Test Default
         run: gradle build
+      - uses: codecov/codecov-action@v3
+        with:
+          files: ./build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
+          flags: unittests
       - name: Test oldest supported library versions
         run: gradle build -Pjackson.version=2.8.0 -Pspring.version=4.3.0.RELEASE -Pokhttp.version=3.3.0 -Papachehttp.version=4.3
       - name: Test with latest library (micro) updates
