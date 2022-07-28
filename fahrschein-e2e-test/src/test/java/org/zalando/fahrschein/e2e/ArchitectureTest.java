@@ -9,7 +9,6 @@ import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.api.Response;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.tngtech.archunit.base.DescribedPredicate.anyElementThat;
@@ -18,9 +17,6 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableFr
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.codeUnits;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noCodeUnits;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
 
 public class ArchitectureTest {
