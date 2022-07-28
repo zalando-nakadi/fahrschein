@@ -31,6 +31,11 @@ public class ManagedCursorManager implements CursorManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ManagedCursorManager.class);
 
+    private final URI baseUri;
+    private final RequestFactory clientHttpRequestFactory;
+    private final ObjectMapper objectMapper;
+    private final Map<String, SubscriptionStream> streams;
+
     static final class SubscriptionStream {
         private final String eventName;
         private final String subscriptionId;
@@ -70,11 +75,6 @@ public class ManagedCursorManager implements CursorManager {
             return items;
         }
     }
-
-    private final URI baseUri;
-    private final RequestFactory clientHttpRequestFactory;
-    private final ObjectMapper objectMapper;
-    private final Map<String, SubscriptionStream> streams;
 
     public ManagedCursorManager(URI baseUri, RequestFactory clientHttpRequestFactory, AuthorizationProvider authorizationProvider) {
         this(baseUri, wrapClientHttpRequestFactory(clientHttpRequestFactory, authorizationProvider), true);

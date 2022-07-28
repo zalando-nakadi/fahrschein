@@ -4,7 +4,6 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.mockito.Mockito;
 import org.zalando.fahrschein.http.api.ContentType;

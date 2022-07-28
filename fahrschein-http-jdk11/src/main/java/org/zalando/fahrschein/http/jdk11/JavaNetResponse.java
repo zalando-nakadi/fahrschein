@@ -1,7 +1,6 @@
 package org.zalando.fahrschein.http.jdk11;
 
 import org.zalando.fahrschein.http.api.Headers;
-import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Response;
 
 import java.io.IOException;

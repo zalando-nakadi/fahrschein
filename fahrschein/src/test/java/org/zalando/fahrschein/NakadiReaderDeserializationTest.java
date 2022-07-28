@@ -34,7 +34,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class NakadiReaderDeserializationTest {
-    private final URI uri = java.net.URI.create("http://example.com/events");
+    private final URI uri = URI.create("http://example.com/events");
     private final ObjectMapper objectMapper = createObjectMapper();
     private final CursorManager cursorManager = mock(CursorManager.class);
     private final RequestFactory requestFactory = mock(RequestFactory.class);

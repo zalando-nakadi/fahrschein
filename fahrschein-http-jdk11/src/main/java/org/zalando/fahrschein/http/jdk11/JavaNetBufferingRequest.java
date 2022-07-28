@@ -15,7 +15,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -119,6 +118,7 @@ final class JavaNetBufferingRequest implements Request {
 
     @Override
     public Response execute() throws IOException {
+        assertNotExecuted();
         try {
             requestTimeout.ifPresent(t -> request.timeout(t));
             HttpResponse<InputStream> response = client.send(

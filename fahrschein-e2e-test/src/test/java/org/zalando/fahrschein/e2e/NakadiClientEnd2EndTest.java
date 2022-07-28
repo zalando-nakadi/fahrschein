@@ -11,8 +11,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
@@ -29,7 +27,6 @@ import org.zalando.fahrschein.domain.Metadata;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
 import org.zalando.fahrschein.http.api.ContentEncoding;
-import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.jdk11.JavaNetRequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
@@ -45,7 +42,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.util.stream.Collectors.toList;
@@ -144,7 +140,7 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
         List<OrderEvent> events = IntStream.range(0, 10)
             .mapToObj(
                     i -> new OrderEvent(new Metadata(testId, OffsetDateTime.now()), testId))
-            .collect(Collectors.toList());
+            .collect(toList());
         nakadiClient.publish("fahrschein.e2e-test.ordernumber" + testId, events);
         return events;
     }
@@ -168,14 +164,14 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
                         .withStreamLimit(1)
                 );
         Executors.newSingleThreadExecutor().submit(
-            (() -> {
+            () -> {
                 try {
                     b.listen(OrderEvent.class, listener);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
                 return;
-            }));;
+            });
         List<String> eventOrderNumbers = publish(nakadiClient, testId).stream().map(e -> e.orderNumber).collect(toList());
         // verifies that every order number that was published got consumed
         for (String on: eventOrderNumbers) {

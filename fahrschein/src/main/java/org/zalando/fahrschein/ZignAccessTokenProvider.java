@@ -17,6 +17,8 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
     private static final Logger LOG = LoggerFactory.getLogger(ZignAccessTokenProvider.class);
     private static final long CACHE_DURATION = 5 * 60 * 1000L;
 
+    private final AtomicReference<Entry> token = new AtomicReference<>();
+
     static class Entry {
         final long timestamp;
         final String value;
@@ -26,8 +28,6 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
             this.value = value;
         }
     }
-
-    private final AtomicReference<Entry> token = new AtomicReference<>();
 
     private static String readAll(InputStream inputStream) throws IOException {
         try (final Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {

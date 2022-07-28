@@ -6,7 +6,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.collection.IsArrayWithSize.arrayWithSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class StreamParametersTest {
@@ -43,7 +42,7 @@ public class StreamParametersTest {
 
 
         IllegalArgumentException expectedException = assertThrows(IllegalArgumentException.class, () -> {
-            final StreamParameters streamParameters = new StreamParameters()
+            new StreamParameters()
                     .withBatchFlushTimeout(100)
                     .withStreamTimeout(50);
         });

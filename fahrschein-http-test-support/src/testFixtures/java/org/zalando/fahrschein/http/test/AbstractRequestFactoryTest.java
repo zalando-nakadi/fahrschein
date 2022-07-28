@@ -43,6 +43,9 @@ public abstract class AbstractRequestFactoryTest {
     protected static HttpServer server;
     protected static URI serverAddress;
 
+    @Captor
+    public ArgumentCaptor<HttpExchange> exchangeCaptor;
+
     @BeforeAll
     public static void startServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress("localhost", 0), 1);
@@ -51,9 +54,6 @@ public abstract class AbstractRequestFactoryTest {
         server.setExecutor(executor);
         server.start();
     }
-
-    @Captor
-    public ArgumentCaptor<HttpExchange> exchangeCaptor;
 
     @Test
     public void testUserAgent() throws IOException {
