@@ -28,12 +28,12 @@ This is a rough outline of what the workflow for code contributions looks like:
 
 - Check the list of open [issues](https://github.com/zalando-nakadi/fahrschein/issues). Either assign an existing issue to yourself, or create a new one that you would like work on and **discuss your ideas and use cases with the project maintainers**.
 - Fork the repository on GitHub
-- Create a topic branch, for example feature/foo fix/bar refactor/baz, from where you want to base your work. The base is usually master.
+- Create a topic branch, for example feature/foo fix/bar refactor/baz, from where you want to base your work. The base is usually main.
 - Make commits of logical units.
 - Write good commit messages (see below).
 - Push your changes to a topic branch in your fork of the repository.
 - Submit a pull request to [zalando-nakadi/fahrschein](https://github.com/zalando-nakadi/fahrschein)
-- Your pull request must receive a :thumbsup: from two [Maintainers](https://github.com/zalando-nakadi/fahrschein/blob/master/MAINTAINERS)
+- Your pull request must receive a :thumbsup: from two [Maintainers](https://github.com/zalando-nakadi/fahrschein/blob/main/MAINTAINERS)
 - Major changes need to include tests.
 
 Thanks for your contributions!
