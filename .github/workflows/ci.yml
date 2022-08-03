@@ -20,6 +20,10 @@ jobs:
           gradle-version: 7.4.1
       - name: Test Default
         run: gradle build
+      - name: codacy
+        env:
+          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ./build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
       - uses: codecov/codecov-action@v3
         with:
           files: ./build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
