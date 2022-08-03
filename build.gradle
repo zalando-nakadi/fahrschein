@@ -14,7 +14,14 @@ dependencyCheck {
     failBuildOnCVSS = 5
     suppressionFile = 'cve-suppressions.xml'
     analyzers {
+        experimentalEnabled = false
         assemblyEnabled = false
+        msbuildEnabled = false
+        nodeEnabled = false
+        nuspecEnabled = false
+        retirejs {
+            enabled = false
+        }
     }
 }
 
