@@ -27,8 +27,8 @@ public class OpenTracingWrapperTest {
 			
 			Map<String, String> nakadiCtx = OpenTracingWrapper.convertSpanContext(tracer, ctx);
 			Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), null, nakadiCtx);
-			Assertions.assertEquals(ctx.toSpanId(), nakadiCtx.get("spanid"), "span-id");
-			Assertions.assertEquals(ctx.toTraceId(), nakadiCtx.get("traceid"), "trace-id");
+			Assertions.assertEquals(ctx.toSpanId(), md.getSpanCtx().get("spanid"), "span-id");
+			Assertions.assertEquals(ctx.toTraceId(), md.getSpanCtx().get("traceid"), "trace-id");
 		} finally {
 			span.finish();
 		}
@@ -52,4 +52,5 @@ public class OpenTracingWrapperTest {
 			span.finish();
 		}
 	}
+	
 }
