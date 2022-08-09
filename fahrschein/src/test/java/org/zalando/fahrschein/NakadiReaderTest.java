@@ -61,7 +61,7 @@ import static org.mockito.Mockito.when;
 public class NakadiReaderTest {
 
     private static final String EVENT_NAME = "some-event";
-    private final URI uri = java.net.URI.create("http://example.com/events");
+    private final URI uri = URI.create("http://example.com/events");
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final CursorManager cursorManager = mock(CursorManager.class);
     private final RequestFactory RequestFactory = mock(RequestFactory.class);

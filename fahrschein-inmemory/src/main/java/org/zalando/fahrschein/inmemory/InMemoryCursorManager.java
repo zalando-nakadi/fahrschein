@@ -1,7 +1,5 @@
 package org.zalando.fahrschein.inmemory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.domain.Cursor;
 
@@ -12,8 +10,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class InMemoryCursorManager implements CursorManager {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InMemoryCursorManager.class);
 
     private final ConcurrentHashMap<String, ConcurrentHashMap<String, Cursor>> partitionsByEventName = new ConcurrentHashMap<>();
 

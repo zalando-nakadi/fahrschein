@@ -1,13 +1,8 @@
 package org.zalando.fahrschein;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Random;
 
-
 public class EqualJitterBackoffStrategy extends ExponentialBackoffStrategy {
-    private static final Logger LOG = LoggerFactory.getLogger(EqualJitterBackoffStrategy.class);
     private final Random random = new Random();
 
     public EqualJitterBackoffStrategy() {

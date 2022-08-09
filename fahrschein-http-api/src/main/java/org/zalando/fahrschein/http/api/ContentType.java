@@ -52,6 +52,11 @@ public final class ContentType {
         return subtype;
     }
 
+
+    public String getParameters() {
+        return parameters;
+    }
+
     @Override
     public boolean equals(Object o) {
         return o instanceof ContentType && value.equals(((ContentType)o).value);

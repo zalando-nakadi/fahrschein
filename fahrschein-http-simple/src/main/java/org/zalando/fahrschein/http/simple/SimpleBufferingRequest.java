@@ -13,7 +13,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * {@link Request} implementation that uses standard JDK facilities to

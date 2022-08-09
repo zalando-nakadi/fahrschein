@@ -17,11 +17,7 @@ public class LastActivityMetricsCollector implements MetricsCollector {
     private long lastErrorHappend = 0;
     private long lastReconnect = 0;
 
-    private final MetricRegistry metricRegistry;
-
     public LastActivityMetricsCollector(final MetricRegistry metricRegistry, final String metricsNamePrefix) {
-        this.metricRegistry = metricRegistry;
-
         createOrReplaceGauge(metricRegistry,
                 name(this.getClass(), metricsNamePrefix, "lastMessageReceived"),
                 () -> ((currentTimeMillis() - lastMessageReceived) / 1000));
