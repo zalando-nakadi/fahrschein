@@ -39,7 +39,8 @@ dependencies {
             project(':fahrschein-inmemory'),
             project(':fahrschein-metrics-dropwizard'),
             project(':fahrschein-typeresolver'),
-            project(':fahrschein-opentracing')
+            project(':fahrschein-opentracing'),
+            project(':fahrschein-opentelemetry')
 }
 
 reporting {
