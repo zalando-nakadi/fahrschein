@@ -38,7 +38,8 @@ dependencies {
             project(':fahrschein-http-jdk11'),
             project(':fahrschein-inmemory'),
             project(':fahrschein-metrics-dropwizard'),
-            project(':fahrschein-typeresolver')
+            project(':fahrschein-typeresolver'),
+            project(':fahrschein-opentracing')
 }
 
 reporting {

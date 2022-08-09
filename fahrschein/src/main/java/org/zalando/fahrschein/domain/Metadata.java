@@ -47,6 +47,10 @@ public final class Metadata {
         this(null, eid, occurredAt, null, null,  null, null, null, null);
     }
 
+    public Metadata(String eid, OffsetDateTime occurredAt, String flowId, Map<String, String> spanCtx) {
+    	this(null, eid, occurredAt, null, null, null, null, flowId, spanCtx);
+    }
+    
     public String getEventType() {
         return eventType;
     }
