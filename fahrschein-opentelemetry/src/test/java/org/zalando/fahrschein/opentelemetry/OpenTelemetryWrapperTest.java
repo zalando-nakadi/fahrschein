@@ -8,7 +8,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
+import io.opentelemetry.api.baggage.Baggage;
+import io.opentelemetry.api.baggage.BaggageBuilder;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.TraceId;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.ContextPropagators;
@@ -59,10 +62,22 @@ public class OpenTelemetryWrapperTest {
 	@Test
 	public void testInjectContext() {
 		Span span = tracer.spanBuilder("name").startSpan();
-		try (Scope scope = span.makeCurrent()) {
-			Map<String, String> carrierContext = OpenTelemetryWrapper.convertSpanContext(tracer, span.getSpanContext());
-			Assertions.assertNotNull(carrierContext);
-			
+
+		try (Scope spanScope = span.makeCurrent()) {
+
+			// setup some baggage items
+			Baggage baggage = Baggage.builder().put("sample-item", "John Doe").build();
+			try (Scope baggageScope = baggage.makeCurrent()) {
+
+				Map<String, String> carrierContext = OpenTelemetryWrapper.convertSpanContext(tracer,
+						span.getSpanContext());
+				Assertions.assertNotNull(carrierContext);
+				Assertions.assertEquals(span.getSpanContext().getTraceId().substring(TraceId.getLength() / 2), carrierContext.get("ot-tracer-traceid"));
+				Assertions.assertEquals(span.getSpanContext().getSpanId(), carrierContext.get("ot-tracer-spanid"));
+				Assertions.assertEquals(span.getSpanContext().getTraceFlags().isSampled() ? "true" : "false",
+						carrierContext.get("ot-tracer-sampled"));
+				Assertions.assertEquals("John Doe", carrierContext.get("ot-baggage-sample-item"));
+			}
 		} finally {
 			span.end();
 		}
