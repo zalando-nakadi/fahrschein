@@ -30,16 +30,16 @@ public class OpenTelemetryWrapper {
 	 * @param nakadiContext the nakadi context
 	 * @return
 	 */
-	public static void extractFromMetadata(Metadata metadata) {
+	public static Context extractFromMetadata(Metadata metadata) {
 		Map<String, String> carrier = metadata.getSpanCtx();
 		if (carrier == null || carrier.isEmpty()) {
-			return;
+			return Context.current();
 		}
 
 		OpenTelemetry ot = GlobalOpenTelemetry.get();
 
 		TextMapPropagator propagator = ot.getPropagators().getTextMapPropagator();
-		propagator.extract(Context.current(), carrier, new TextMapGetter<Map<String, String>>() {
+		return propagator.extract(Context.current(), carrier, new TextMapGetter<Map<String, String>>() {
 			public String get(Map<String, String> carrier, String key) {
 				return carrier.get(key);
 			};

@@ -1,18 +1,22 @@
 package org.zalando.fahrschein.opentelemetry;
 
+import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.zalando.fahrschein.domain.Metadata;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.baggage.Baggage;
-import io.opentelemetry.api.baggage.BaggageBuilder;
+import io.opentelemetry.api.internal.StringUtils;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.TraceId;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.extension.trace.propagation.OtTracePropagator;
@@ -20,6 +24,7 @@ import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.testing.exporter.InMemoryMetricReader;
 import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
+import io.opentelemetry.sdk.trace.IdGenerator;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 
@@ -62,7 +67,6 @@ public class OpenTelemetryWrapperTest {
 	@Test
 	public void testInjectContext() {
 		Span span = tracer.spanBuilder("name").startSpan();
-
 		try (Scope spanScope = span.makeCurrent()) {
 
 			// setup some baggage items
@@ -72,9 +76,10 @@ public class OpenTelemetryWrapperTest {
 				Map<String, String> carrierContext = OpenTelemetryWrapper.convertSpanContext(tracer,
 						span.getSpanContext());
 				Assertions.assertNotNull(carrierContext);
+				// convention found in OtTracePropagator
 				Assertions.assertEquals(span.getSpanContext().getTraceId().substring(TraceId.getLength() / 2), carrierContext.get("ot-tracer-traceid"));
 				Assertions.assertEquals(span.getSpanContext().getSpanId(), carrierContext.get("ot-tracer-spanid"));
-				Assertions.assertEquals(span.getSpanContext().getTraceFlags().isSampled() ? "true" : "false",
+				Assertions.assertEquals(String.valueOf(span.getSpanContext().getTraceFlags().isSampled()),
 						carrierContext.get("ot-tracer-sampled"));
 				Assertions.assertEquals("John Doe", carrierContext.get("ot-baggage-sample-item"));
 			}
@@ -83,7 +88,31 @@ public class OpenTelemetryWrapperTest {
 		}
 	}
 
+	@Test
 	public void testExtractContext() {
-
+		IdGenerator idGenerator = IdGenerator.random();
+		String traceId = idGenerator.generateTraceId().substring(TraceId.getLength() / 2);
+		String spanId = idGenerator.generateSpanId();
+		
+		Map<String, String> carrierContext = new HashMap<>();
+		// convention found in OtTracePropagator
+		carrierContext.put("ot-tracer-traceid", traceId);
+		carrierContext.put("ot-tracer-spanid", spanId);
+		carrierContext.put("ot-tracer-sampled", "true");
+		carrierContext.put("ot-baggage-sample-item", "John Doe");
+		
+		Metadata metadata = new Metadata("sample-eid", OffsetDateTime.now(), "sample-flow-id", carrierContext);
+		
+		Context context = OpenTelemetryWrapper.extractFromMetadata(metadata);
+		context.makeCurrent();
+		Span span = Span.fromContext(context);
+		// convention found in the OtTracePropagator
+		Assertions.assertEquals(StringUtils.padLeft(traceId, TraceId.getLength()), span.getSpanContext().getTraceId());
+		Assertions.assertEquals(spanId, span.getSpanContext().getSpanId());
+		Assertions.assertEquals(true, span.getSpanContext().getTraceFlags().isSampled());
+		
+		Baggage baggage = Baggage.fromContext(context);
+		Assertions.assertEquals("John Doe", baggage.getEntryValue("sample-item"));
+		
 	}
 }
