@@ -8,6 +8,7 @@ dependencies {
     implementation('io.opentelemetry:opentelemetry-api:1.16.0')
     testImplementation(testFixtures(project(':fahrschein-test-support')))
     testImplementation('io.opentelemetry:opentelemetry-sdk-testing:1.16.0')
+    testImplementation 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.16.0'
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein OpenTelemetry Support'
