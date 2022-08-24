@@ -25,9 +25,8 @@ public class OpenTelemetryWrapper {
 
 	/**
 	 * Extracts the trace and baggage context from the given carrier map.
-	 * 
-	 * @param tracer        the tracer
-	 * @param nakadiContext the nakadi context
+	 *
+	 * @param metadata the event metadata
 	 * @return the OpenTelemetry context ready to be set as current
 	 */
 	public static Context extractFromMetadata(Metadata metadata) {
