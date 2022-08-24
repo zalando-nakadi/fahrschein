@@ -13,7 +13,7 @@ import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
-import io.opentracing.propagation.Format.Builtin;
+import io.opentracing.propagation.Format;
 import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.propagation.TextMapInjectAdapter;
 import io.opentracing.tag.Tags;
@@ -42,7 +42,7 @@ public class OpenTracingWrapper {
 	 * @return
 	 */
 	public static SpanContext convertNakadiContext(Tracer tracer, Map<String, String> nakadiContext) {
-		return tracer.extract(Builtin.TEXT_MAP_EXTRACT, new TextMapExtractAdapter(nakadiContext));
+		return tracer.extract(Format.Builtin.TEXT_MAP_EXTRACT, new TextMapExtractAdapter(nakadiContext));
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class OpenTracingWrapper {
 	 */
 	public static Map<String, String> convertSpanContext(Tracer tracer, SpanContext spanContext) {
 		Map<String, String> nakadiContext = new HashMap<>();
-		tracer.inject(spanContext, Builtin.TEXT_MAP_INJECT, new TextMapInjectAdapter(nakadiContext));
+		tracer.inject(spanContext, Format.Builtin.TEXT_MAP_INJECT, new TextMapInjectAdapter(nakadiContext));
 		return nakadiContext;
 	}
 
@@ -72,7 +72,7 @@ public class OpenTracingWrapper {
 		Map<String, String> carrierData = metadata.getSpanCtx();
 
 		return carrierData == null || carrierData.isEmpty() ? null
-				: tracer.extract(Builtin.TEXT_MAP_EXTRACT, new TextMapExtractAdapter(carrierData));
+				: tracer.extract(Format.Builtin.TEXT_MAP_EXTRACT, new TextMapExtractAdapter(carrierData));
 	}
 
 	/**
