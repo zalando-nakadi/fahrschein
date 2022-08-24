@@ -28,7 +28,7 @@ public class OpenTelemetryWrapper {
 	 * 
 	 * @param tracer        the tracer
 	 * @param nakadiContext the nakadi context
-	 * @return
+	 * @return the OpenTelemetry context ready to be set as current
 	 */
 	public static Context extractFromMetadata(Metadata metadata) {
 		Map<String, String> carrier = metadata.getSpanCtx();
