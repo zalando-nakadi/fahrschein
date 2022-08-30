@@ -20,8 +20,8 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
-    implementation "io.opentelemetry:opentelemetry-sdk-testing:1.16.0"
-    implementation "io.opentelemetry:opentelemetry-extension-trace-propagators:1.16.0"
+    implementation "io.opentelemetry:opentelemetry-sdk-testing:${property('opentelemetry.version')}"
+    implementation "io.opentelemetry:opentelemetry-extension-trace-propagators:${property('opentelemetry.version')}"
 }
 
 description = 'Fahrschein Example'

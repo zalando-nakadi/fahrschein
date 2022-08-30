@@ -5,10 +5,10 @@ plugins {
 
 dependencies {
     api project(':fahrschein')
-    implementation('io.opentelemetry:opentelemetry-api:1.16.0')
+    implementation('io.opentelemetry:opentelemetry-api:${property("opentelemetry.version")}')
     testImplementation(testFixtures(project(':fahrschein-test-support')))
-    testImplementation('io.opentelemetry:opentelemetry-sdk-testing:1.16.0')
-    testImplementation 'io.opentelemetry:opentelemetry-extension-trace-propagators:1.16.0'
+    testImplementation('io.opentelemetry:opentelemetry-sdk-testing:${property("opentelemetry.version")}')
+    testImplementation 'io.opentelemetry:opentelemetry-extension-trace-propagators:${property("opentelemetry.version")}'
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein OpenTelemetry Support'
