@@ -46,12 +46,12 @@ public class OpenTracingWrapper {
 	}
 
 	/**
-	 * Converts the given span context into a nakadi context that can be added to
-	 * the metadata of the nakadi event.
+	 * Converts the given span context into a Nakadi context that can be added to
+	 * the metadata of the Nakadi event.
 	 * 
-	 * @param tracer      the tracer the tracer instance
+	 * @param tracer      the tracer instance
 	 * @param spanContext the span context
-	 * @return the nakadi context that can be added to the metadata of the nakadi
+	 * @return the nakadi context that can be added to the metadata of the Nakadi
 	 *         event
 	 */
 	public static Map<String, String> convertSpanContext(Tracer tracer, SpanContext spanContext) {
@@ -99,7 +99,7 @@ public class OpenTracingWrapper {
 	}
 
 	/**
-	 * A wrapper that handles opentracing around the given function. You need to
+	 * A wrapper that handles OpenTracing around the given function. You need to
 	 * pass in the function that either does the event handling or calls the event
 	 * handling service. The wrapper instance sets up the Span around this
 	 * invocation.
@@ -113,7 +113,7 @@ public class OpenTracingWrapper {
 	public <R, T extends Event> R process(T event, Function<T, R> f) {
 		Span span = createSpan(tracer, operation, event);
 
-		try (Scope scope = tracer.activateSpan(span)) {
+		try (Scope __ = tracer.activateSpan(span)) {
 			return f.apply(event);
 		} finally {
 			span.finish();
@@ -121,7 +121,7 @@ public class OpenTracingWrapper {
 	}
 
 	/**
-	 * A warpper that handles opentracing around the given consumer. You need to
+	 * A wrapper that handles OpenTracing around the given consumer. You need to
 	 * pass in a consumer that does the event handling or calls the event handling
 	 * service. The wrapper instance sets up the Span around this invocation.
 	 * 
@@ -131,7 +131,7 @@ public class OpenTracingWrapper {
 	 */
 	public <T extends Event> void process(T event, Consumer<T> c) {
 		Span span = createSpan(tracer, operation, event);
-		try (Scope scope = tracer.activateSpan(span)) {
+		try (Scope __ = tracer.activateSpan(span)) {
 			c.accept(event);
 		} finally {
 			span.finish();

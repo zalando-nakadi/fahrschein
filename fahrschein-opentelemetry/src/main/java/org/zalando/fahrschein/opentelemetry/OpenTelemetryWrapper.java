@@ -15,12 +15,12 @@ import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.context.propagation.TextMapSetter;
 
 /**
- * OpenTracing support class for Fahrschein Nakadi client. This class provides
- * helper methods for setting up OpenTracing.
+ * OpenTelemetry support class for Fahrschein Nakadi client. This class provides
+ * helper methods for setting up OpenTelemetry.
  */
 public class OpenTelemetryWrapper {
 
-	public OpenTelemetryWrapper() {
+	private OpenTelemetryWrapper() {
 	}
 
 	/**
@@ -51,12 +51,12 @@ public class OpenTelemetryWrapper {
 	}
 	
 	/**
-	 * Converts the given span context into a nakadi context that can be added to
-	 * the metadata of the nakadi event.
+	 * Converts the given span context into a Nakadi context that can be added to
+	 * the metadata of the Nakadi event.
 	 * 
-	 * @param tracer      the tracer the tracer instance
+	 * @param tracer      the tracer instance
 	 * @param spanContext the span context
-	 * @return the nakadi context that can be added to the metadata of the nakadi
+	 * @return the Nakadi context that can be added to the metadata of the Nakadi
 	 *         event
 	 */
 	public static Map<String, String> convertSpanContext(Tracer tracer, SpanContext spanContext) {
@@ -65,12 +65,7 @@ public class OpenTelemetryWrapper {
 		OpenTelemetry ot = GlobalOpenTelemetry.get();
 		TextMapPropagator propagator = ot.getPropagators().getTextMapPropagator();
 		
-		propagator.inject(Context.current(), carrier, new TextMapSetter<Map<String, String>>() {
-			@Override
-			public void set(Map<String, String> carrier, String key, String value) {
-				carrier.put(key, value);
-			}
-		});
+		propagator.inject(Context.current(), carrier, (carrier1, key, value) -> carrier1.put(key, value));
 		return carrier;
 	}
 

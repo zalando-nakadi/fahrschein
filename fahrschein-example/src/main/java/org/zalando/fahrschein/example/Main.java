@@ -77,7 +77,7 @@ public class Main {
 
 	static {
 		/*
-		 * This code is taken from Junit5 OpenTelementryExtension and adapted to use the
+		 * This code is taken from Junit5 OpenTelemetryExtension and adapted to use the
 		 * OtTracePropagator instead of the W3CPropagator
 		 */
 		InMemorySpanExporter spanExporter = InMemorySpanExporter.create();

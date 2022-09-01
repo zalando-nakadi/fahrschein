@@ -1,6 +1,6 @@
 # OpenTracing Support
 
-This module provides support for propagating OpenTracing context over Nakadi Events.
+This module provides support for propagating OpenTracing contexts over Nakadi Events.
 
 ## Event Publishing
 
@@ -16,9 +16,9 @@ Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(),
 
 ## Event Consumption
 
-The event consumption supports extracts OpenTracing span context using a TextMap propagator from the metadata of the Nakadi event.
+The event consumption supports extracting the OpenTracing span context using a TextMap propagator from the metadata of the Nakadi event.
 
-When you process an event consumed as part of the batch you can use the support class as shown in the following code snippet for setting up the OpenTracing Span.
+When you process an event consumed as part of the batch, you can use the support class as shown in the following code snippet for setting up the OpenTracing Span.
 
 ```
 SpanContext spCtx = OpenTracingWrapper.convertNakadiContext(tracer, event.getMetadata().getSpanCtx());

@@ -1,6 +1,6 @@
 # OpenTelemetry Support
 
-This module provides support for propagating OpenTracing context over Nakadi Events.
+This module provides support for propagating OpenTelemetry contexts over Nakadi Events.
 
 ## Event Publishing
 
@@ -8,7 +8,7 @@ The event publishing support injects the OpenTelementry context using a TextMap 
 
 When you create the event you can use the support class as shown in the following code snippet for setting up the event metadata.
 
-```
+```java
 SpanContext ctx = tracer.activeSpan().context();
 Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(),
     "sample-flow-id", OpenTelemetryWrapper.convertSpanContext(tracer, ctx));
@@ -16,12 +16,12 @@ Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(),
 
 ## Event Consumption
 
-The event consumption supports extracts OpenTelemetry context using a TextMap propagator from the metadata of the Nakadi event.
+The event consumption supports extracting the OpenTelemetry span context using a TextMap propagator from the metadata of the Nakadi event.
 
-When you process an event consumed as part of the batch you can use the support class as shown in the following code snippet for setting up the OpenTelementry Span.
+When you process an event consumed as part of the batch, you can use the support class as shown in the following code snippet for setting up the OpenTelemetry span.
 
-```
-Context parentContext = OpenTelementryWrapper.extractFromMetadata(event.getMetadata());
+```java
+Context parentContext = OpenTelemetryWrapper.extractFromMetadata(event.getMetadata());
 Span span = tracer.spanBuilder("sample-consuming-operation")
     .setParent(eventContext)
     .setSpanKind(SpanKind.CONSUMER)
