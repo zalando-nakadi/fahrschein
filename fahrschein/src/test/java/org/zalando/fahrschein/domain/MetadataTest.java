@@ -3,7 +3,6 @@ package org.zalando.fahrschein.domain;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.UUID;
