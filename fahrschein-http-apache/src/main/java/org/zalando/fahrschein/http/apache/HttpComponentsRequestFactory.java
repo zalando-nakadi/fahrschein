@@ -33,7 +33,7 @@ import java.net.URI;
  * @author Juergen Hoeller
  * @author Joern Horstmann
  */
-public final class HttpComponentsRequestFactory implements RequestFactory {
+public class HttpComponentsRequestFactory implements RequestFactory {
 
     private final HttpClient httpClient;
     private final ContentEncoding contentEncoding;
