@@ -7,7 +7,7 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import java.io.IOException;
 import java.net.URI;
 
-public final class IdentityAcceptEncodingRequestFactory implements RequestFactory {
+public class IdentityAcceptEncodingRequestFactory implements RequestFactory {
 
     private final RequestFactory delegate;
 
