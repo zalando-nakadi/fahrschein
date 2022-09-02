@@ -14,7 +14,6 @@ import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.mock.MockTracer;
-import io.opentracing.util.ThreadLocalScopeManager;
 
 public class OpenTracingWrapperTest {
 	
