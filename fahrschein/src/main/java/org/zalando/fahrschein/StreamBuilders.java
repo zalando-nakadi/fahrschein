@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -103,7 +102,7 @@ class StreamBuilders {
 
         @Override
         protected URI getURI(String queryString) {
-            return baseUri.resolve(String.format(Locale.ENGLISH, "/subscriptions/%s/events?%s", subscription.getId(), queryString));
+            return baseUri.resolve("/subscriptions/" + subscription.getId() + "/events?" + queryString);
         }
 
         @Override
@@ -163,7 +162,7 @@ class StreamBuilders {
 
         @Override
         protected URI getURI(String queryString) {
-            return baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/events?%s", eventName, queryString));
+            return baseUri.resolve("/event-types/" + eventName + "/events?" + queryString);
         }
 
         @Override

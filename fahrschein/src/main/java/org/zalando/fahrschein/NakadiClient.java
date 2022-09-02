@@ -68,7 +68,7 @@ public class NakadiClient {
      * @throws IOException in case of network issues.
      */
     public List<Partition> getPartitions(String eventName) throws IOException {
-        final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/partitions", eventName));
+        final URI uri = baseUri.resolve("/event-types/" + eventName + "/partitions");
         final Request request = requestFactory.createRequest(uri, "GET");
         try (final Response response = request.execute()) {
             try (final InputStream is = response.getBody()) {

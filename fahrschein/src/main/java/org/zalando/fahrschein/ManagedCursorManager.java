@@ -21,7 +21,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -114,7 +113,7 @@ public class ManagedCursorManager implements CursorManager {
 
         final SubscriptionStream stream = streams.get(eventName);
         final String subscriptionId = stream.getSubscriptionId();
-        final URI subscriptionUrl = baseUri.resolve(String.format(Locale.ENGLISH, "/subscriptions/%s/cursors", subscriptionId));
+        final URI subscriptionUrl = baseUri.resolve("/subscriptions/" + subscriptionId + "/cursors");
 
         LOG.debug("Committing cursors for subscription [{}] to event [{}] in partition [{}] with offset [{}]", subscriptionId, stream.getEventName(), cursor.getPartition(), cursor.getOffset());
 
@@ -159,7 +158,7 @@ public class ManagedCursorManager implements CursorManager {
     @Override
     public Collection<Cursor> getCursors(String eventName) throws IOException {
         final SubscriptionStream stream = streams.get(eventName);
-        final URI subscriptionUrl = baseUri.resolve(String.format(Locale.ENGLISH, "/subscriptions/%s/cursors", stream.getSubscriptionId()));
+        final URI subscriptionUrl = baseUri.resolve("/subscriptions/" + stream.getSubscriptionId() + "/cursors");
 
         final Request request = clientHttpRequestFactory.createRequest(subscriptionUrl, "GET");
 
