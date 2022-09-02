@@ -21,7 +21,7 @@ import java.net.URLConnection;
  * @author Joern Horstmann
  * @see java.net.HttpURLConnection
  */
-public final class SimpleRequestFactory implements RequestFactory {
+public class SimpleRequestFactory implements RequestFactory {
 
     private static final int DEFAULT_CONNECT_TIMEOUT = 500;
     private static final int DEFAULT_READ_TIMEOUT = 60 * 1000;
