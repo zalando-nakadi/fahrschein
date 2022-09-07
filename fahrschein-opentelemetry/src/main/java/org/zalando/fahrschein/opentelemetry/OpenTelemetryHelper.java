@@ -7,8 +7,6 @@ import org.zalando.fahrschein.domain.Metadata;
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.trace.SpanContext;
-import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.TextMapGetter;
 import io.opentelemetry.context.propagation.TextMapPropagator;
@@ -50,10 +48,10 @@ public class OpenTelemetryHelper {
 	}
 	
 	/**
-	 * Converts the given span context into a Nakadi context that can be added to
-	 * the metadata of the Nakadi event.
-	 *
-	 * @return the Nakadi context that can be added to the metadata of the Nakadi
+	 * Converts the given span context into a nakadi context that can be added to
+	 * the metadata of the nakadi event.
+	 * 
+	 * @return the nakadi context that can be added to the metadata of the nakadi
 	 *         event
 	 */
 	public static Map<String, String> convertSpanContext() {
