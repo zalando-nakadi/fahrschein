@@ -17,9 +17,9 @@ import io.opentelemetry.context.propagation.TextMapPropagator;
  * OpenTelemetry support class for Fahrschein Nakadi client. This class provides
  * helper methods for setting up OpenTelemetry.
  */
-public class OpenTelemetryWrapper {
+public class OpenTelemetryHelper {
 
-	private OpenTelemetryWrapper() {
+	private OpenTelemetryHelper() {
 	}
 
 	/**
@@ -40,7 +40,7 @@ public class OpenTelemetryWrapper {
 		return propagator.extract(Context.current(), carrier, new TextMapGetter<Map<String, String>>() {
 			public String get(Map<String, String> carrier, String key) {
 				return carrier.get(key);
-			};
+			}
 			
 			@Override
 			public Iterable<String> keys(Map<String, String> carrier) {

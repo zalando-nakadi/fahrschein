@@ -28,7 +28,7 @@ import io.opentelemetry.sdk.trace.IdGenerator;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 
-public class OpenTelemetryWrapperTest {
+public class OpenTelemetryHelperTest {
 
 	private static final OpenTelemetrySdk otelTesting;
 
@@ -73,7 +73,7 @@ public class OpenTelemetryWrapperTest {
 			Baggage baggage = Baggage.builder().put("sample-item", "John Doe").build();
 			try (Scope baggageScope = baggage.makeCurrent()) {
 
-				Map<String, String> carrierContext = OpenTelemetryWrapper.convertSpanContext(tracer,
+				Map<String, String> carrierContext = OpenTelemetryHelper.convertSpanContext(tracer,
 						span.getSpanContext());
 				Assertions.assertNotNull(carrierContext);
 				// convention found in OtTracePropagator
@@ -103,13 +103,13 @@ public class OpenTelemetryWrapperTest {
 		
 		Metadata metadata = new Metadata("sample-eid", OffsetDateTime.now(), "sample-flow-id", carrierContext);
 		
-		Context context = OpenTelemetryWrapper.extractFromMetadata(metadata);
+		Context context = OpenTelemetryHelper.extractFromMetadata(metadata);
 		context.makeCurrent();
 		Span span = Span.fromContext(context);
 		// convention found in the OtTracePropagator
 		Assertions.assertEquals(StringUtils.padLeft(traceId, TraceId.getLength()), span.getSpanContext().getTraceId());
 		Assertions.assertEquals(spanId, span.getSpanContext().getSpanId());
-		Assertions.assertEquals(true, span.getSpanContext().getTraceFlags().isSampled());
+		Assertions.assertTrue(span.getSpanContext().getTraceFlags().isSampled());
 		
 		Baggage baggage = Baggage.fromContext(context);
 		Assertions.assertEquals("John Doe", baggage.getEntryValue("sample-item"));

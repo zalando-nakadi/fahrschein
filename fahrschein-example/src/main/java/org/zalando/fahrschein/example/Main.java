@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
 import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 import org.zalando.fahrschein.inmemory.InMemoryCursorManager;
-import org.zalando.fahrschein.opentelemetry.OpenTelemetryWrapper;
+import org.zalando.fahrschein.opentelemetry.OpenTelemetryHelper;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -96,7 +97,7 @@ public class Main {
 
 	private static class SalesOrderPlacedListener implements Listener<SalesOrderPlaced> {
 
-		private Tracer tracer;
+		private final Tracer tracer;
 
 		public SalesOrderPlacedListener(Tracer tracer) {
 			this.tracer = tracer;
@@ -114,8 +115,8 @@ public class Main {
 			}
 		}
 
-		private void acceptSingle(SalesOrderPlaced event) throws IOException, EventAlreadyProcessedException {
-			Context eventContext = OpenTelemetryWrapper.extractFromMetadata(event.getMetadata());
+		private void acceptSingle(SalesOrderPlaced event) {
+			Context eventContext = OpenTelemetryHelper.extractFromMetadata(event.getMetadata());
 
 			Span span = tracer.spanBuilder("accept_sales_order_placed").setParent(eventContext)
 					.setSpanKind(SpanKind.CONSUMER).startSpan();
@@ -126,18 +127,18 @@ public class Main {
 			}
 		}
 
-		private void processSingle(SalesOrderPlaced event) throws IOException, EventAlreadyProcessedException {
+		private void processSingle(SalesOrderPlaced event) {
 			final SalesOrder order = event.getSalesOrder();
 			LOG.info("Received sales order [{}] created at [{}]", order.getOrderNumber(), order.getCreatedAt());
 		}
 	}
 
-	public static void main(String[] args) throws IOException, InterruptedException {
+	public static void main(String[] args) throws IOException {
 		Tracer tracer = otelTesting.getTracer("test");
 
 		final ObjectMapper objectMapper = new ObjectMapper();
 
-		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+		objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 		objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
 		objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);

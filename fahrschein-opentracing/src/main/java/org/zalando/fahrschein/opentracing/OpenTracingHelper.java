@@ -22,13 +22,13 @@ import io.opentracing.tag.Tags;
  * OpenTracing support class for Fahrschein Nakadi client. This class provides
  * helper methods for setting up OpenTracing.
  */
-public class OpenTracingWrapper {
+public class OpenTracingHelper {
 
-	private Tracer tracer;
+	private final Tracer tracer;
 
-	private String operation;
+	private final String operation;
 
-	public OpenTracingWrapper(Tracer tracer, String operation) {
+	public OpenTracingHelper(Tracer tracer, String operation) {
 		this.tracer = tracer;
 		this.operation = operation;
 	}
@@ -39,7 +39,7 @@ public class OpenTracingWrapper {
 	 * 
 	 * @param tracer        the tracer
 	 * @param nakadiContext the nakadi context
-	 * @return
+	 * @return The {@code SpanContext} for the given NakadiContext
 	 */
 	public static SpanContext convertNakadiContext(Tracer tracer, Map<String, String> nakadiContext) {
 		return tracer.extract(Format.Builtin.TEXT_MAP_EXTRACT, new TextMapExtractAdapter(nakadiContext));
@@ -88,7 +88,7 @@ public class OpenTracingWrapper {
 	protected static Span createSpan(Tracer tracer, String operation, Event event) {
 		SpanContext spanContext = extractSpanContext(tracer, event);
 
-		Span span = null;
+		Span span;
 		if (spanContext != null) {
 			span = tracer.buildSpan(operation).asChildOf(spanContext)
 					.withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CONSUMER).start();

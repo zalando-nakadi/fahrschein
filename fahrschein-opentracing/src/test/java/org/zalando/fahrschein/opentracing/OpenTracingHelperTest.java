@@ -15,9 +15,9 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.mock.MockTracer;
 
-public class OpenTracingWrapperTest {
+public class OpenTracingHelperTest {
 	
-	private Tracer tracer = new MockTracer();
+	private final Tracer tracer = new MockTracer();
 
 	@Test
 	public void testConvertSpanContext() {
@@ -26,7 +26,7 @@ public class OpenTracingWrapperTest {
 		try (Scope scope = tracer.activateSpan(span)) {
 			SpanContext ctx = tracer.activeSpan().context();
 			
-			Map<String, String> nakadiCtx = OpenTracingWrapper.convertSpanContext(tracer, ctx);
+			Map<String, String> nakadiCtx = OpenTracingHelper.convertSpanContext(tracer, ctx);
 			Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), null, nakadiCtx);
 			Assertions.assertEquals(ctx.toSpanId(), md.getSpanCtx().get("spanid"), "span-id");
 			Assertions.assertEquals(ctx.toTraceId(), md.getSpanCtx().get("traceid"), "trace-id");
@@ -44,7 +44,7 @@ public class OpenTracingWrapperTest {
 		nakadiCtx.put("baggage-sample-item", "John Doe");
 		
 		Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), null, nakadiCtx);
-		SpanContext spCtx = OpenTracingWrapper.convertNakadiContext(tracer, md.getSpanCtx());
+		SpanContext spCtx = OpenTracingHelper.convertNakadiContext(tracer, md.getSpanCtx());
 		
 		Span span = tracer.buildSpan("sample-consuming-operation").asChildOf(spCtx).start();
 		try (Scope scope = tracer.activateSpan(span)) {
