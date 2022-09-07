@@ -73,8 +73,7 @@ public class OpenTelemetryHelperTest {
 			Baggage baggage = Baggage.builder().put("sample-item", "John Doe").build();
 			try (Scope baggageScope = baggage.makeCurrent()) {
 
-				Map<String, String> carrierContext = OpenTelemetryHelper.convertSpanContext(tracer,
-						span.getSpanContext());
+				Map<String, String> carrierContext = OpenTelemetryHelper.convertSpanContext();
 				Assertions.assertNotNull(carrierContext);
 				// convention found in OtTracePropagator
 				Assertions.assertEquals(span.getSpanContext().getTraceId().substring(TraceId.getLength() / 2), carrierContext.get("ot-tracer-traceid"));

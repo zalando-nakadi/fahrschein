@@ -52,13 +52,11 @@ public class OpenTelemetryHelper {
 	/**
 	 * Converts the given span context into a Nakadi context that can be added to
 	 * the metadata of the Nakadi event.
-	 * 
-	 * @param tracer      the tracer instance
-	 * @param spanContext the span context
+	 *
 	 * @return the Nakadi context that can be added to the metadata of the Nakadi
 	 *         event
 	 */
-	public static Map<String, String> convertSpanContext(Tracer tracer, SpanContext spanContext) {
+	public static Map<String, String> convertSpanContext() {
 		Map<String, String> carrier = new HashMap<>();
 
 		OpenTelemetry ot = GlobalOpenTelemetry.get();
