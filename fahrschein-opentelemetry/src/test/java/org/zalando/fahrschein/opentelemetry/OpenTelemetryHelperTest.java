@@ -73,7 +73,11 @@ public class OpenTelemetryHelperTest {
 			Baggage baggage = Baggage.builder().put("sample-item", "John Doe").build();
 			try (Scope baggageScope = baggage.makeCurrent()) {
 
+<<<<<<< Updated upstream:fahrschein-opentelemetry/src/test/java/org/zalando/fahrschein/opentelemetry/OpenTelemetryHelperTest.java
 				Map<String, String> carrierContext = OpenTelemetryHelper.convertSpanContext();
+=======
+				Map<String, String> carrierContext = OpenTelemetryWrapper.convertSpanContext();
+>>>>>>> Stashed changes:fahrschein-opentelemetry/src/test/java/org/zalando/fahrschein/opentelemetry/OpenTelemetryWrapperTest.java
 				Assertions.assertNotNull(carrierContext);
 				// convention found in OtTracePropagator
 				Assertions.assertEquals(span.getSpanContext().getTraceId().substring(TraceId.getLength() / 2), carrierContext.get("ot-tracer-traceid"));

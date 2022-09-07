@@ -50,10 +50,17 @@ public class OpenTelemetryHelper {
 	}
 	
 	/**
+<<<<<<< Updated upstream:fahrschein-opentelemetry/src/main/java/org/zalando/fahrschein/opentelemetry/OpenTelemetryHelper.java
 	 * Converts the given span context into a Nakadi context that can be added to
 	 * the metadata of the Nakadi event.
 	 *
 	 * @return the Nakadi context that can be added to the metadata of the Nakadi
+=======
+	 * Converts the given span context into a nakadi context that can be added to
+	 * the metadata of the nakadi event.
+	 * 
+	 * @return the nakadi context that can be added to the metadata of the nakadi
+>>>>>>> Stashed changes:fahrschein-opentelemetry/src/main/java/org/zalando/fahrschein/opentelemetry/OpenTelemetryWrapper.java
 	 *         event
 	 */
 	public static Map<String, String> convertSpanContext() {
