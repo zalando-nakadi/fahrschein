@@ -48,10 +48,10 @@ public class OpenTelemetryHelper {
 	}
 	
 	/**
-	 * Converts the given span context into a nakadi context that can be added to
-	 * the metadata of the nakadi event.
-	 * 
-	 * @return the nakadi context that can be added to the metadata of the nakadi
+	 * Converts the given span context into a Nakadi context that can be added to
+	 * the metadata of the Nakadi event.
+	 *
+	 * @return the Nakadi context that can be added to the metadata of the Nakadi
 	 *         event
 	 */
 	public static Map<String, String> convertSpanContext() {
