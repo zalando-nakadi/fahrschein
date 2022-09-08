@@ -3,6 +3,7 @@ package org.zalando.fahrschein.http.jdk11;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Response;
+import org.zalando.fahrschein.http.api.StreamUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,6 +91,7 @@ final class JavaNetResponse implements Response {
     @Override
     public void close() {
         try {
+            StreamUtils.drain(r.body());
             r.body().close();
         } catch (Exception e) {
             // ignore

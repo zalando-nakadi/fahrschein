@@ -3,6 +3,7 @@ package org.zalando.fahrschein.http.simple;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Response;
+import org.zalando.fahrschein.http.api.StreamUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,6 +81,7 @@ final class SimpleResponse implements Response {
     public void close() {
         if (this.responseStream != null) {
             try {
+                StreamUtils.drain(this.responseStream);
                 this.responseStream.close();
             }
             catch (IOException ex) {
