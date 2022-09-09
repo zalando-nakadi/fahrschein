@@ -9,9 +9,8 @@ The event publishing support injects the OpenTelementry context using a TextMap 
 When you create the event you can use the support class as shown in the following code snippet for setting up the event metadata.
 
 ```java
-SpanContext ctx = tracer.activeSpan().context();
 Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(),
-    "sample-flow-id", OpenTelemetryWrapper.convertSpanContext(tracer, ctx));
+    "sample-flow-id", OpenTelemetryHelper.currentContextToMap());
 ```
 
 ## Event Consumption
@@ -21,7 +20,7 @@ The event consumption supports extracting the OpenTelemetry span context using a
 When you process an event consumed as part of the batch, you can use the support class as shown in the following code snippet for setting up the OpenTelemetry span.
 
 ```java
-Context parentContext = OpenTelemetryWrapper.extractFromMetadata(event.getMetadata());
+Context parentContext = OpenTelemetryHelper.extractFromMetadata(event.getMetadata());
 Span span = tracer.spanBuilder("sample-consuming-operation")
     .setParent(eventContext)
     .setSpanKind(SpanKind.CONSUMER)
@@ -33,4 +32,11 @@ try (Scope scope = span.makeCurrent()) {
 } finally {
   span.end();
 }
+```
+
+In order to simplify event consumption this library provides a wrapper class that takes a function with return value or consumer wiithout return value as shown in the next snippet.
+
+```
+OpenTracingWrapper wrapper = new OpenTelemetryWrapper(tracer, "sample-consuming-operation");
+wrapper.process(event, this::doTheRealWork());
 ```
