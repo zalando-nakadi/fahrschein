@@ -26,7 +26,7 @@ public class OpenTracingHelperTest {
 		try (Scope scope = tracer.activateSpan(span)) {
 			SpanContext ctx = tracer.activeSpan().context();
 			
-			Map<String, String> nakadiCtx = OpenTracingHelper.convertSpanContext(tracer, ctx);
+			Map<String, String> nakadiCtx = OpenTracingHelper.spanContextToMap(tracer, ctx);
 			Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), null, nakadiCtx);
 			Assertions.assertEquals(ctx.toSpanId(), md.getSpanCtx().get("spanid"), "span-id");
 			Assertions.assertEquals(ctx.toTraceId(), md.getSpanCtx().get("traceid"), "trace-id");
@@ -44,7 +44,7 @@ public class OpenTracingHelperTest {
 		nakadiCtx.put("baggage-sample-item", "John Doe");
 		
 		Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), null, nakadiCtx);
-		SpanContext spCtx = OpenTracingHelper.convertNakadiContext(tracer, md.getSpanCtx());
+		SpanContext spCtx = OpenTracingHelper.mapToSpanContext(tracer, md.getSpanCtx());
 		
 		Span span = tracer.buildSpan("sample-consuming-operation").asChildOf(spCtx).start();
 		try (Scope scope = tracer.activateSpan(span)) {

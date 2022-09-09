@@ -26,7 +26,7 @@ public class OpenTracingHelper {
 	 * @param nakadiContext the nakadi context
 	 * @return The {@code SpanContext} for the given NakadiContext
 	 */
-	public static SpanContext convertNakadiContext(Tracer tracer, Map<String, String> nakadiContext) {
+	public static SpanContext mapToSpanContext(Tracer tracer, Map<String, String> nakadiContext) {
 		return tracer.extract(Format.Builtin.TEXT_MAP_EXTRACT, new TextMapExtractAdapter(nakadiContext));
 	}
 
@@ -39,7 +39,7 @@ public class OpenTracingHelper {
 	 * @return the nakadi context that can be added to the metadata of the Nakadi
 	 *         event
 	 */
-	public static Map<String, String> convertSpanContext(Tracer tracer, SpanContext spanContext) {
+	public static Map<String, String> spanContextToMap(Tracer tracer, SpanContext spanContext) {
 		Map<String, String> nakadiContext = new HashMap<>();
 		tracer.inject(spanContext, Format.Builtin.TEXT_MAP_INJECT, new TextMapInjectAdapter(nakadiContext));
 		return nakadiContext;

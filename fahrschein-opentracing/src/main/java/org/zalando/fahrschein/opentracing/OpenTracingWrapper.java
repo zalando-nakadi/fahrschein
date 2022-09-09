@@ -79,7 +79,7 @@ public class OpenTracingWrapper {
 		Map<String, String> carrierData = metadata.getSpanCtx();
 
 		return carrierData == null || carrierData.isEmpty() ? null
-				: OpenTracingHelper.convertNakadiContext(tracer, carrierData);
+				: OpenTracingHelper.mapToSpanContext(tracer, carrierData);
 	}
 
 	/**
