@@ -12,8 +12,6 @@ import io.opentracing.ScopeManager;
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
-import io.opentracing.propagation.Format;
-import io.opentracing.propagation.TextMapExtractAdapter;
 import io.opentracing.tag.Tags;
 
 public class OpenTracingWrapper {
