@@ -32,9 +32,9 @@ try (Scope scope = tracer.activateSpan(span)) {
 }
 ```
 
-In order to simplify event consumption this library provides a wrapper class that takes a function with return value or consumer wiithout return value as shown in the next snippet.
+In order to simplify event consumption, this library provides a wrapper class that takes care of creating, starting and finishing the necessary spans, and calls your event consuming function.
 
-```
+```java
 OpenTracingWrapper wrapper = new OpenTracingWrapper(tracer, "sample-consuming-operation");
-wrapper.process(event, this::doTheRealWork());
+wrapper.process(event, event -> doTheRealWork(event));
 ```
