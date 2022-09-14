@@ -1,0 +1,12 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+}
+
+dependencies {
+    api project(':fahrschein')
+    implementation "io.opentracing:opentracing-api:${property('opentracing.version')}"
+    testImplementation "io.opentracing:opentracing-mock:${property('opentracing.version')}"
+}
+
+publishing.publications.maven.pom.description = 'Fahrschein OpenTracing Support'

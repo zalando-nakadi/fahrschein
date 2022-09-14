@@ -12,6 +12,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
+ 
     testImplementation ('com.jayway.jsonpath:json-path:2.7.0') {
         exclude group: "org.ow2.asm", module: "asm"
     }
