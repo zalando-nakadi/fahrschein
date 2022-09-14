@@ -6,7 +6,6 @@ plugins {
 dependencies {
     api project(':fahrschein')
     implementation "io.opentracing:opentracing-api:${property('opentracing.version')}"
-    testImplementation(testFixtures(project(':fahrschein-test-support')))
     testImplementation "io.opentracing:opentracing-mock:${property('opentracing.version')}"
 }
 

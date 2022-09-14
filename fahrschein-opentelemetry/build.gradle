@@ -6,9 +6,9 @@ plugins {
 dependencies {
     api project(':fahrschein')
     implementation "io.opentelemetry:opentelemetry-api:${property('opentelemetry.version')}"
-    testImplementation(testFixtures(project(':fahrschein-test-support')))
     testImplementation "io.opentelemetry:opentelemetry-sdk-testing:${property('opentelemetry.version')}"
     testImplementation "io.opentelemetry:opentelemetry-extension-trace-propagators:${property('opentelemetry.version')}"
+    testImplementation("org.assertj:assertj-core:3.23.1")
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein OpenTelemetry Support'

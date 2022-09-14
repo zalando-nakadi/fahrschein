@@ -4,13 +4,11 @@ import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.zalando.fahrschein.domain.Metadata;
 
-import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.baggage.Baggage;
 import io.opentelemetry.api.internal.StringUtils;
 import io.opentelemetry.api.trace.Span;
@@ -18,51 +16,13 @@ import io.opentelemetry.api.trace.TraceId;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
-import io.opentelemetry.context.propagation.ContextPropagators;
-import io.opentelemetry.extension.trace.propagation.OtTracePropagator;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
-import io.opentelemetry.sdk.metrics.SdkMeterProvider;
-import io.opentelemetry.sdk.testing.exporter.InMemoryMetricReader;
-import io.opentelemetry.sdk.testing.exporter.InMemorySpanExporter;
 import io.opentelemetry.sdk.trace.IdGenerator;
-import io.opentelemetry.sdk.trace.SdkTracerProvider;
-import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 
 public class OpenTelemetryHelperTest {
 
-	private static final OpenTelemetrySdk otelTesting;
-
-	private final Tracer tracer = otelTesting.getTracer("test");
-
-	static {
-		/*
-		 * This code is taken from Junit5 OpenTelemetryExtension and adapted to use the
-		 * OtTracePropagator instead of the W3CPropagator
-		 */
-		InMemorySpanExporter spanExporter = InMemorySpanExporter.create();
-
-		SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
-				.addSpanProcessor(SimpleSpanProcessor.create(spanExporter)).build();
-
-		InMemoryMetricReader metricReader = InMemoryMetricReader.create();
-
-		SdkMeterProvider meterProvider = SdkMeterProvider.builder().registerMetricReader(metricReader).build();
-
-		otelTesting = OpenTelemetrySdk.builder()
-				.setPropagators(ContextPropagators.create(OtTracePropagator.getInstance()))
-				.setTracerProvider(tracerProvider).setMeterProvider(meterProvider).build();
-	}
-
-	@BeforeAll
-	public static void beforeAll() {
-		GlobalOpenTelemetry.resetForTest();
-		GlobalOpenTelemetry.set(otelTesting);
-	}
-
-	@AfterAll
-	public static void afterAll() {
-		GlobalOpenTelemetry.resetForTest();
-	}
+	@RegisterExtension
+	static final CustomOpenTelemetryExtension otelTesting = CustomOpenTelemetryExtension.create();
+	private final Tracer tracer = otelTesting.getOpenTelemetry().getTracer(OpenTelemetryHelperTest.class.getName());
 
 	@Test
 	public void testInjectContext() {
@@ -89,19 +49,19 @@ public class OpenTelemetryHelperTest {
 
 	@Test
 	public void testExtractContext() {
-		IdGenerator idGenerator = IdGenerator.random();
-		String traceId = idGenerator.generateTraceId().substring(TraceId.getLength() / 2);
-		String spanId = idGenerator.generateSpanId();
-		
-		Map<String, String> carrierContext = new HashMap<>();
-		// convention found in OtTracePropagator
-		carrierContext.put("ot-tracer-traceid", traceId);
-		carrierContext.put("ot-tracer-spanid", spanId);
-		carrierContext.put("ot-tracer-sampled", "true");
-		carrierContext.put("ot-baggage-sample-item", "John Doe");
-		
-		Metadata metadata = new Metadata("sample-eid", OffsetDateTime.now(), "sample-flow-id", carrierContext);
-		
+	IdGenerator idGenerator = IdGenerator.random();
+	String traceId = idGenerator.generateTraceId().substring(TraceId.getLength() / 2);
+	String spanId = idGenerator.generateSpanId();
+
+	Map<String, String> carrierContext = new HashMap<>();
+	// convention found in OtTracePropagator
+	carrierContext.put("ot-tracer-traceid", traceId);
+	carrierContext.put("ot-tracer-spanid", spanId);
+	carrierContext.put("ot-tracer-sampled", "true");
+	carrierContext.put("ot-baggage-sample-item", "John Doe");
+
+	Metadata metadata = new Metadata("sample-eid", OffsetDateTime.now(), "sample-flow-id", carrierContext);
+
 		Context context = OpenTelemetryHelper.extractFromMetadata(metadata);
 		context.makeCurrent();
 		Span span = Span.fromContext(context);
