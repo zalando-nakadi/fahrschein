@@ -12,7 +12,7 @@ import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
 public class OpenTelemetrySetup {
 
     public static Tracer init() {
-                /*
+        /*
          * This code is taken from Junit5 OpenTelemetryExtension and adapted to use the
          * OtTracePropagator instead of the W3CPropagator
          */
@@ -23,6 +23,6 @@ public class OpenTelemetrySetup {
                 .setPropagators(ContextPropagators.create(OtTracePropagator.getInstance()))
                 .setTracerProvider(tracerProvider).build();
         GlobalOpenTelemetry.set(otelTesting);
-        return otelTesting.getTracer(ConsumerExample.class.getName());
+        return otelTesting.getTracer(OpenTelemetrySetup.class.getName());
     }
 }
