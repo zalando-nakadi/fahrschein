@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in `curl -s localhost:8080/subscriptions | jq  -r '.items[] .id'` ; do
+for i in $(curl -s localhost:8080/subscriptions | jq  -r '.items[] .id'); do
   curl -s -XDELETE localhost:8080/subscriptions/"$i"
 done
 
