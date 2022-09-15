@@ -14,6 +14,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-core:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
     implementation "io.opentelemetry:opentelemetry-sdk-testing:${property('opentelemetry.version')}"
     implementation "io.opentelemetry:opentelemetry-extension-trace-propagators:${property('opentelemetry.version')}"
     implementation "org.slf4j:slf4j-simple:${property('slf4j.version')}"

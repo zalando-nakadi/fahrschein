@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.extension.trace.propagation.OtTracePropagator;
@@ -38,22 +39,7 @@ public class ConsumerExample {
     public static final String ORDER_CREATED = "order_created";
     public static final String ORDER_PAYMENT_STATUS_ACCEPTED = "payment_accepted";
 
-    private static Tracer tracer;
-
-    static {
-        /*
-         * This code is taken from Junit5 OpenTelemetryExtension and adapted to use the
-         * OtTracePropagator instead of the W3CPropagator
-         */
-        InMemorySpanExporter spanExporter = InMemorySpanExporter.create();
-        SdkTracerProvider tracerProvider = SdkTracerProvider.builder()
-                .addSpanProcessor(SimpleSpanProcessor.create(spanExporter)).build();
-        OpenTelemetrySdk otelTesting = OpenTelemetrySdk.builder()
-                .setPropagators(ContextPropagators.create(OtTracePropagator.getInstance()))
-                .setTracerProvider(tracerProvider).build();
-        tracer = otelTesting.getTracer(ConsumerExample.class.getName());
-    }
-
+    private static Tracer tracer = OpenTelemetrySetup.init();
 
     public static void main(String[] args) throws IOException {
         subscriptionToMultipleEvents();
