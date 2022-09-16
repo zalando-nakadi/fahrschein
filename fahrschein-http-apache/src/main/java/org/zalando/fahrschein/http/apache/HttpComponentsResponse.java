@@ -6,6 +6,7 @@ import org.apache.http.HttpResponse;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Response;
+import org.zalando.fahrschein.http.api.StreamUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -26,6 +27,7 @@ final class HttpComponentsResponse implements Response {
 
     private final HttpResponse httpResponse;
     private Headers headers;
+    private InputStream responseStream;
 
     HttpComponentsResponse(HttpResponse httpResponse) {
         this.httpResponse = httpResponse;
@@ -54,19 +56,26 @@ final class HttpComponentsResponse implements Response {
 
     @Override
     public InputStream getBody() throws IOException {
-        HttpEntity entity = this.httpResponse.getEntity();
-        return (entity != null ? entity.getContent() : new ByteArrayInputStream(new byte[0]));
+        if (this.responseStream == null) {
+            HttpEntity entity = this.httpResponse.getEntity();
+            this.responseStream = (entity != null ? entity.getContent() : new ByteArrayInputStream(new byte[0]));
+        }
+        return this.responseStream;
     }
 
     @Override
     public void close() {
         // Release underlying connection back to the connection manager
-        if (this.httpResponse instanceof Closeable) {
-            try {
-                ((Closeable) this.httpResponse).close();
-            } catch (IOException e) {
-                // ignore exception on close
+        try {
+            if (this.responseStream != null) {
+                StreamUtils.drain(this.responseStream);
+                this.responseStream.close();
             }
+            if (this.httpResponse instanceof Closeable) {
+                ((Closeable) this.httpResponse).close();
+            }
+        } catch (IOException e) {
+            // ignore exception on close
         }
     }
 
