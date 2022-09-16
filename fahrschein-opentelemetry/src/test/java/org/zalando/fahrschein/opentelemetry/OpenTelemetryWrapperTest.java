@@ -9,6 +9,7 @@ import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.domain.Metadata;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,7 +64,7 @@ public class OpenTelemetryWrapperTest {
             carrierContext.put("ot-tracer-spanid", parentSpanId);
             carrierContext.put("ot-tracer-sampled", "true");
             carrierContext.put("ot-baggage-sample-item", "John Doe");
-            return new Metadata("sample-eid", OffsetDateTime.now(), "sample-flow-id", carrierContext);
+            return new Metadata("sample-eid", OffsetDateTime.now(ZoneOffset.UTC), "sample-flow-id", carrierContext);
         };
     }
 

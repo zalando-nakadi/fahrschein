@@ -1,6 +1,7 @@
 package org.zalando.fahrschein.opentelemetry;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,7 +61,7 @@ public class OpenTelemetryHelperTest {
 	carrierContext.put("ot-tracer-sampled", "true");
 	carrierContext.put("ot-baggage-sample-item", "John Doe");
 
-	Metadata metadata = new Metadata("sample-eid", OffsetDateTime.now(), "sample-flow-id", carrierContext);
+	Metadata metadata = new Metadata("sample-eid", OffsetDateTime.now(ZoneOffset.UTC), "sample-flow-id", carrierContext);
 
 		Context context = OpenTelemetryHelper.extractFromMetadata(metadata);
 		context.makeCurrent();

@@ -7,6 +7,7 @@ import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.domain.Metadata;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,7 @@ public class OpenTracingWrapperTest {
             nakadiCtx.put("traceid", parentTraceId.toString());
             nakadiCtx.put("spanid", parentSpanId.toString());
             nakadiCtx.put("baggage-sample-item", "John Doe");
-            return new Metadata("test-event", OffsetDateTime.now(), null, nakadiCtx);
+            return new Metadata("test-event", OffsetDateTime.now(ZoneOffset.UTC), null, nakadiCtx);
         };
     }
 

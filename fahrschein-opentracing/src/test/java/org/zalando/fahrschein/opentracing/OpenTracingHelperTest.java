@@ -1,6 +1,7 @@
 package org.zalando.fahrschein.opentracing;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -27,7 +28,7 @@ public class OpenTracingHelperTest {
 			SpanContext ctx = tracer.activeSpan().context();
 			
 			Map<String, String> nakadiCtx = OpenTracingHelper.spanContextToMap(tracer, ctx);
-			Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), null, nakadiCtx);
+			Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(ZoneOffset.UTC), null, nakadiCtx);
 			Assertions.assertEquals(ctx.toSpanId(), md.getSpanCtx().get("spanid"), "span-id");
 			Assertions.assertEquals(ctx.toTraceId(), md.getSpanCtx().get("traceid"), "trace-id");
 			Assertions.assertEquals("John Doe", md.getSpanCtx().get("baggage-sample-item"));
@@ -43,7 +44,7 @@ public class OpenTracingHelperTest {
 		nakadiCtx.put("spanid", "2");
 		nakadiCtx.put("baggage-sample-item", "John Doe");
 		
-		Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), null, nakadiCtx);
+		Metadata md = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(ZoneOffset.UTC), null, nakadiCtx);
 		SpanContext spCtx = OpenTracingHelper.mapToSpanContext(tracer, md.getSpanCtx());
 		
 		Span span = tracer.buildSpan("sample-consuming-operation").asChildOf(spCtx).start();
