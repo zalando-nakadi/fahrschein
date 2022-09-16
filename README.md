@@ -168,17 +168,6 @@ future.cancel(true);
 final Future<?> future2 = executorService.submit(runnable);
 ```
 
-### Handling data binding problems
-
-You might want to ignore events that could not be mapped to your domain objects by Jackson, instead of having these events block all further processing.
-To achieve this you can implement the `onMappingException` method of the `ErrorHandler` interface handle the `JsonMappingException` yourself.
-
-```java
-nakadiClient.stream(eventName)
-        .withErrorHandler(e -> {...})
-        .listen(SalesOrderPlaced.class, listener);
-```
-
 ## `RequestFactory` implementations
 
 Fahrschein uses it's own http abstraction which is very similar to spring framework's [`ClientHttpRequestFactory`](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/http/client/ClientHttpRequestFactory.html) interface. By default it uses the `SimpleRequestFactory` which uses a `HttpURLConnection` internally and has no further dependencies.
