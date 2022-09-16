@@ -24,6 +24,7 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 import java.io.IOException;
 import java.net.URI;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class ProducerExample {
                     Map<String, String> carrierContext = OpenTelemetryHelper.currentContextToMap();
                     List<OrderCreatedEvent> events = new ArrayList<>();
                     for (int i = 0; i < 10; i++) {
-                        Metadata metadata = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(), "sample-flow-id", carrierContext);
+                        Metadata metadata = new Metadata(UUID.randomUUID().toString(), OffsetDateTime.now(ZoneOffset.UTC), "sample-flow-id", carrierContext);
                         events.add(new OrderCreatedEvent(metadata, "123", Money.of(123, "EUR"), "1234", "paypal"));
                     }
                     LOG.info("publishing {} events", events.size());
