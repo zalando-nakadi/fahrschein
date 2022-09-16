@@ -3,6 +3,7 @@ package org.zalando.fahrschein;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Locale;
 import java.util.Optional;
 
 @SuppressWarnings("serial")
@@ -34,7 +35,7 @@ public class IOProblem extends IOException {
     }
 
     private static String formatMessage(final URI type, final String title, final int status, @Nullable final String detail) {
-        return String.format("Problem [%s] with status [%d]: [%s] [%s]", type, status, title, detail == null ? "" : detail);
+        return String.format(Locale.ENGLISH, "Problem [%s] with status [%d]: [%s] [%s]", type, status, title, detail == null ? "" : detail);
     }
 
     public URI getType() {

@@ -2,6 +2,7 @@ plugins {
     id 'java-library'
     id 'jacoco'
     id 'org.owasp.dependencycheck'
+    id 'de.thetaphi.forbiddenapis'
 }
 
 repositories {
@@ -64,3 +65,14 @@ test {
 tasks.named('test') {
     finalizedBy tasks.named('jacocoTestReport', JacocoReport)
 }
+
+forbiddenApisMain {
+    bundledSignatures = [ 'jdk-unsafe', 'jdk-deprecated', 'jdk-non-portable', 'jdk-reflection' ]
+    ignoreFailures = false
+}
+
+forbiddenApisTest {
+    bundledSignatures = [ 'jdk-unsafe', 'jdk-deprecated', 'jdk-reflection' ]
+    ignoreFailures = true
+}
+

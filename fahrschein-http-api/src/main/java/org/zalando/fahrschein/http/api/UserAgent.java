@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.Properties;
 
 public final class UserAgent {
@@ -31,7 +32,7 @@ public final class UserAgent {
     private final String userAgent;
 
     public UserAgent(Class implementation) {
-        this.userAgent = String.format(AGENT_STR_TEMPLATE, fahrscheinVersion(), implementation.getSimpleName().replace("RequestFactory", ""), javaVersion());
+        this.userAgent = String.format(Locale.ENGLISH, AGENT_STR_TEMPLATE, fahrscheinVersion(), implementation.getSimpleName().replace("RequestFactory", ""), javaVersion());
     }
 
     public String userAgent() {

@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -48,7 +49,7 @@ public class ZignAccessTokenProvider implements AccessTokenProvider {
             final String output = readAll(inputStream).trim();
             zign.waitFor(5, TimeUnit.SECONDS);
             if (zign.exitValue() != 0) {
-                throw new IOException(String.format("zign failed with the exit code: %d", zign.exitValue()));
+                throw new IOException(String.format(Locale.ENGLISH, "zign failed with the exit code: %d", zign.exitValue()));
             }
             LOG.debug("Refreshed token from zign");
             return output;

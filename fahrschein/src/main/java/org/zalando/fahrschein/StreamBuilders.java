@@ -102,7 +102,7 @@ class StreamBuilders {
 
         @Override
         protected URI getURI(String queryString) {
-            return baseUri.resolve(String.format("/subscriptions/%s/events?%s", subscription.getId(), queryString));
+            return baseUri.resolve("/subscriptions/" + subscription.getId() + "/events?" + queryString);
         }
 
         @Override
@@ -162,7 +162,7 @@ class StreamBuilders {
 
         @Override
         protected URI getURI(String queryString) {
-            return baseUri.resolve(String.format("/event-types/%s/events?%s", eventName, queryString));
+            return baseUri.resolve("/event-types/" + eventName + "/events?" + queryString);
         }
 
         @Override

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
@@ -37,7 +38,7 @@ public enum ContentEncoding {
             case IDENTITY:
                 return out;
             default:
-                throw new UnsupportedOperationException(String.format("No output stream-wrapping defined for ContentEncoding: %s", out));
+                throw new UnsupportedOperationException(String.format(Locale.ENGLISH, "No output stream-wrapping defined for ContentEncoding: %s", out));
         }
 
     }

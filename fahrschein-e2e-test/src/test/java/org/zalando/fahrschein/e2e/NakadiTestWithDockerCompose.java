@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -53,7 +54,7 @@ public abstract class NakadiTestWithDockerCompose {
 
     protected URI getNakadiUrl() {
         return URI.create(COMPOSE_PROVIDED ? "http://localhost:8080" :
-                format("http://%s:%d", compose.getServiceHost("nakadi_1", 8080),
+                format(Locale.ENGLISH, "http://%s:%d", compose.getServiceHost("nakadi_1", 8080),
                         compose.getServicePort("nakadi_1", 8080)));
     }
 

@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +113,7 @@ public class ManagedCursorManager implements CursorManager {
 
         final SubscriptionStream stream = streams.get(eventName);
         final String subscriptionId = stream.getSubscriptionId();
-        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", subscriptionId));
+        final URI subscriptionUrl = baseUri.resolve("/subscriptions/" + subscriptionId + "/cursors");
 
         LOG.debug("Committing cursors for subscription [{}] to event [{}] in partition [{}] with offset [{}]", subscriptionId, stream.getEventName(), cursor.getPartition(), cursor.getOffset());
 
@@ -143,7 +144,7 @@ public class ManagedCursorManager implements CursorManager {
     }
 
     private String inputStreamToString(InputStream inputStream) {
-        return new BufferedReader(new InputStreamReader(inputStream))
+        return new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))
             .lines().collect(Collectors.joining("\n"));
     }
 
@@ -157,7 +158,7 @@ public class ManagedCursorManager implements CursorManager {
     @Override
     public Collection<Cursor> getCursors(String eventName) throws IOException {
         final SubscriptionStream stream = streams.get(eventName);
-        final URI subscriptionUrl = baseUri.resolve(String.format("/subscriptions/%s/cursors", stream.getSubscriptionId()));
+        final URI subscriptionUrl = baseUri.resolve("/subscriptions/" + stream.getSubscriptionId() + "/cursors");
 
         final Request request = clientHttpRequestFactory.createRequest(subscriptionUrl, "GET");
 

@@ -3,6 +3,7 @@ package org.zalando.fahrschein.domain;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -17,8 +18,8 @@ public class MetadataTest {
         final String partition = "partition1";
         final String version = "v1";
         final String publishedBy = "unauthenticated";
-        final OffsetDateTime occurredAt = OffsetDateTime.now();
-        final OffsetDateTime receivedAt = OffsetDateTime.now();
+        final OffsetDateTime occurredAt = OffsetDateTime.now(ZoneOffset.UTC);
+        final OffsetDateTime receivedAt = OffsetDateTime.now(ZoneOffset.UTC);
         final String flowId = UUID.randomUUID().toString();
 
         final Metadata metadata = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, Collections.emptyMap());

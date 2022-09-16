@@ -26,6 +26,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -135,7 +136,7 @@ public class NakadiReaderDeserializationTest {
     }
 
     private void setupResponse(int partition, int offset, final String data) throws IOException {
-        final String body = String.format("{\"cursor\":{\"partition\":\"%d\",\"offset\":\"%d\"},\"events\":[%s]}", partition, offset, data);
+        final String body = String.format(Locale.ENGLISH, "{\"cursor\":{\"partition\":\"%d\",\"offset\":\"%d\"},\"events\":[%s]}", partition, offset, data);
         final Response response = mock(Response.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream(body.getBytes("utf-8"));
         when(response.getBody()).thenReturn(initialInputStream);

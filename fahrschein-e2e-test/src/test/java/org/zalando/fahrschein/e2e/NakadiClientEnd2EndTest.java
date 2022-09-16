@@ -35,9 +35,11 @@ import org.zalando.fahrschein.http.spring.SpringRequestFactory;
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -96,7 +98,7 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
                             {
                                 RequestFactory rf = factoryProvider.apply(e);
                                 RequestFactory wrapped = wrapper.apply(rf);
-                                String testName = String.format("%s (%s/%s)", rf.getClass().getSimpleName(), e.name(), wrapped.getClass().getSimpleName());
+                                String testName = String.format(Locale.ENGLISH, "%s (%s/%s)", rf.getClass().getSimpleName(), e.name(), wrapped.getClass().getSimpleName());
                                 parameters.add(new Object[]{wrapped, testName});
                             }
                     )
@@ -139,7 +141,7 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
         createEventTypes("/eventtypes", testId);
         List<OrderEvent> events = IntStream.range(0, 10)
             .mapToObj(
-                    i -> new OrderEvent(new Metadata(testId, OffsetDateTime.now()), testId))
+                    i -> new OrderEvent(new Metadata(testId, OffsetDateTime.now(ZoneOffset.UTC)), testId))
             .collect(toList());
         nakadiClient.publish("fahrschein.e2e-test.ordernumber" + testId, events);
         return events;
