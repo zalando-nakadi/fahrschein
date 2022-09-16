@@ -6,10 +6,13 @@ import com.fasterxml.jackson.databind.annotation.JsonTypeResolver;
 import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.typeresolver.MetadataTypeResolver;
 
+import java.io.IOException;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.CUSTOM, visible = false)
 @JsonTypeResolver(MetadataTypeResolver.class)
-@JsonSubTypes({@JsonSubTypes.Type(OrderCreatedEvent.class), @JsonSubTypes.Type(OrderPaymentAcceptedEvent.class)})
+@JsonSubTypes({@JsonSubTypes.Type(OrderCreatedEvent.class), @JsonSubTypes.Type(PaymentAcceptedEvent.class)})
 public abstract class OrderEvent implements Event {
     public abstract String getOrderNumber();
-    public abstract void process(OrderEventProcessor processor);
+
+    public abstract void process(MultiEventProcessor processor) throws IOException;
 }

@@ -3,21 +3,24 @@ package org.zalando.fahrschein.example.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import org.zalando.fahrschein.EventProcessingException;
 import org.zalando.fahrschein.domain.Metadata;
 
-@JsonTypeName("eventlog.e96001_order_created")
+import javax.money.MonetaryAmount;
+
+@JsonTypeName("order_created")
 public class OrderCreatedEvent extends OrderEvent {
 
     private final Metadata metadata;
     private final String orderNumber;
     private final String customerNumber;
-    private final Integer grandTotal;
+    private final MonetaryAmount grandTotal;
     private final String paymentMethod;
 
     @JsonCreator
     public OrderCreatedEvent(@JsonProperty("metadata") Metadata metadata,
                              @JsonProperty("orderNumber") String orderNumber,
-                             @JsonProperty("grandTotal") Integer grandTotal,
+                             @JsonProperty("grandTotal") MonetaryAmount grandTotal,
                              @JsonProperty("customerNumber") String customerNumber,
                              @JsonProperty("paymentMethod") String paymentMethod) {
         this.metadata = metadata;
@@ -38,11 +41,11 @@ public class OrderCreatedEvent extends OrderEvent {
     }
 
     @Override
-    public void process(final OrderEventProcessor processor) {
-        processor.processOrderCreated(this);
+    public void process(final MultiEventProcessor processor) throws EventProcessingException {
+        processor.process(this);
     }
 
-    public Integer getGrandTotal() {
+    public MonetaryAmount getGrandTotal() {
         return grandTotal;
     }
 
