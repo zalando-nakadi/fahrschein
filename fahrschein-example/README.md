@@ -1,5 +1,7 @@
 ## Fahrschein Examples
 
+### Prerequisites
+
 These examples need a locally running Nakadi with the necessary event-types set up. First, start Nakadi via docker-compose:
 
 ```sh
@@ -11,7 +13,6 @@ Then, create the event types:
 ```sh
 fahrschein-example/scripts/create-event-types.sh
 ```
-
 
 ### Producer Example
 
