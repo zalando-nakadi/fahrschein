@@ -7,6 +7,9 @@ import org.zalando.fahrschein.NakadiPublisher;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
+
+import static io.opentracing.tag.Tags.ERROR;
 
 public final class InstrumentedNakadiPublisher {
     private final NakadiPublisher client;
@@ -30,7 +33,7 @@ public final class InstrumentedNakadiPublisher {
         try {
             client.publish(eventName, events);
         } catch (Throwable t) {
-            childSpan.setTag(Tags.ERROR, true);
+            childSpan.setTag(ERROR, true);
             throw t;
         } finally {
             childSpan.finish();
@@ -40,8 +43,8 @@ public final class InstrumentedNakadiPublisher {
     // @VisibleForTesting
     // changes must be applied to both OpenTracing and OpenTelemetry implementations.
     static String sizeBucket(int size) {
-       if (size == 0) return "0";
-        return String.format("%.0f-%.0f",
+        if (size == 0) return "0";
+        return String.format(Locale.ENGLISH, "%.0f-%.0f",
                 Math.floor((size - 1) / 10f) * 10 + 1,
                 Math.ceil((size) / 10f) * 10);
     }

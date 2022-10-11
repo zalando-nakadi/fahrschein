@@ -1,9 +1,6 @@
 package org.zalando.fahrschein.opentelemetry;
 
-import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
@@ -11,6 +8,7 @@ import org.zalando.fahrschein.NakadiPublisher;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
 
@@ -49,7 +47,7 @@ public final class InstrumentedNakadiPublisher {
     // changes must be applied to both OpenTracing and OpenTelemetry implementations.
     static String sizeBucket(int size) {
         if (size == 0) return "0";
-        return String.format("%.0f-%.0f",
+        return String.format(Locale.ENGLISH, "%.0f-%.0f",
                 Math.floor((size - 1) / 10f) * 10 + 1,
                 Math.ceil((size) / 10f) * 10);
     }
