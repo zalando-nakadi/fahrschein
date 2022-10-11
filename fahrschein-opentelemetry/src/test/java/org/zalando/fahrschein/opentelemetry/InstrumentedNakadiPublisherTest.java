@@ -18,6 +18,7 @@ import org.zalando.fahrschein.NakadiPublisher;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -57,6 +58,7 @@ public class InstrumentedNakadiPublisherTest {
                                                                 Attributes.of(
                                                                         AttributeKey.stringKey("messaging.destination_kind"), "topic",
                                                                         AttributeKey.stringKey("messaging.destination"), "test_event",
+                                                                        AttributeKey.stringKey("messaging.message_payload_size"), "1-10",
                                                                         AttributeKey.stringKey("messaging.system"), "Nakadi"))));
     }
 
@@ -82,5 +84,17 @@ public class InstrumentedNakadiPublisherTest {
                                                 spanDataAssert
                                                         .hasName("send_test_event")
                                                         .hasStatus(StatusData.error())));
+    }
+
+    @Test
+    public void testBucketing() {
+        assertEquals("0", InstrumentedNakadiPublisher.sizeBucket(0));
+        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(1));
+        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(2));
+        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(10));
+        assertEquals("11-20", InstrumentedNakadiPublisher.sizeBucket(11));
+        assertEquals("101-110", InstrumentedNakadiPublisher.sizeBucket(104));
+        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2101));
+        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2105));
     }
 }

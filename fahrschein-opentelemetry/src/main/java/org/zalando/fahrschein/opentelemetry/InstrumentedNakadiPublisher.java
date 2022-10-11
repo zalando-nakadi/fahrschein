@@ -32,6 +32,7 @@ public final class InstrumentedNakadiPublisher {
                 .setAttribute("messaging.destination_kind", "topic")
                 .setAttribute("messaging.destination", eventName)
                 .setAttribute("messaging.system", "Nakadi")
+                .setAttribute("messaging.message_payload_size", sizeBucket(events.size()))
                 .startSpan();
         try {
             client.publish(eventName, events);
@@ -42,5 +43,14 @@ public final class InstrumentedNakadiPublisher {
         } finally {
             childSpan.end();
         }
+    }
+
+    // @VisibleForTesting
+    // changes must be applied to both OpenTracing and OpenTelemetry implementations.
+    static String sizeBucket(int size) {
+        if (size == 0) return "0";
+        return String.format("%.0f-%.0f",
+                Math.floor((size - 1) / 10f) * 10 + 1,
+                Math.ceil((size) / 10f) * 10);
     }
 }

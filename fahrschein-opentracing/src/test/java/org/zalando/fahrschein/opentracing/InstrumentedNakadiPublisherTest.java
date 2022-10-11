@@ -41,7 +41,7 @@ public class InstrumentedNakadiPublisherTest {
         verify(nakadiPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
         assertEquals(1, tracer.finishedSpans().size(), "finished spans");
         assertEquals("send_test_event", tracer.finishedSpans().get(0).operationName(), "send_test_event");
-        assertEquals("{messaging.system=Nakadi, messaging.destination=test_event, messaging.destination_kind=topic, span.kind=producer}", tracer.finishedSpans().get(0).tags().toString(), "send_test_event tags");
+        assertEquals("{messaging.system=Nakadi, messaging.destination=test_event, messaging.message_payload_size=1-10, messaging.destination_kind=topic, span.kind=producer}", tracer.finishedSpans().get(0).tags().toString(), "send_test_event tags");
     }
 
     @Test
@@ -60,6 +60,18 @@ public class InstrumentedNakadiPublisherTest {
         assertEquals(1, tracer.finishedSpans().size(), "finished spans");
         assertEquals("send_test_event", tracer.finishedSpans().get(0).operationName(), "send_test_event");
         assertEquals(true, tracer.finishedSpans().get(0).tags().get(Tags.ERROR.getKey()), "send_test_event error=true");
+    }
+
+    @Test
+    public void testBucketing() {
+        assertEquals("0", InstrumentedNakadiPublisher.sizeBucket(0));
+        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(1));
+        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(2));
+        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(10));
+        assertEquals("11-20", InstrumentedNakadiPublisher.sizeBucket(11));
+        assertEquals("101-110", InstrumentedNakadiPublisher.sizeBucket(104));
+        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2101));
+        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2105));
     }
 
 }
