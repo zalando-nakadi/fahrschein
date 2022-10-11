@@ -30,7 +30,7 @@ import static org.zalando.fahrschein.Preconditions.checkState;
 /**
  * General implementation of the Nakadi Client used within this Library.
  */
-public class NakadiClient {
+public class NakadiClient implements NakadiPublisher, NakadiSubscriber {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
 
     private static final TypeReference<List<Partition>> LIST_OF_PARTITIONS = new TypeReference<List<Partition>>() {
