@@ -9,6 +9,7 @@ import org.zalando.fahrschein.NakadiPublisher;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
 
@@ -23,6 +24,7 @@ public final class InstrumentedNakadiPublisher {
     }
 
     public <T> void publish(String eventName, List<T> events, Span parentSpan) throws IOException {
+        Objects.requireNonNull(parentSpan);
         Span childSpan = tracer
                 .spanBuilder("send_" + eventName)
                 .setParent(Context.current().with(parentSpan))
@@ -30,6 +32,8 @@ public final class InstrumentedNakadiPublisher {
                 .setAttribute("messaging.destination_kind", "topic")
                 .setAttribute("messaging.destination", eventName)
                 .setAttribute("messaging.system", "Nakadi")
+                // message payload size in number of entities, of a given messaging operation (producing or consuming).
+                // The value should be in buckets (e.g.: 1-10). Based on internal guidance for tracing of messaging systems
                 .setAttribute("messaging.message_payload_size", sizeBucket(events.size()))
                 .startSpan();
         try {
