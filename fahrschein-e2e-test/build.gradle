@@ -14,7 +14,7 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers:1.17.2"
     testImplementation "com.fasterxml.jackson.core:jackson-core:${property('jackson.version')}"
     testImplementation "com.fasterxml.jackson.core:jackson-annotations:${property('jackson.version')}"
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:${property('jackson.version')}"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:${property('jackson_databind.version')}"
     testImplementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
     testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
