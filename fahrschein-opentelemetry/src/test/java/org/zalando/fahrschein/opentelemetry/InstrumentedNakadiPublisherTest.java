@@ -40,7 +40,7 @@ public class InstrumentedNakadiPublisherTest {
         Span parentSpan = tracer.spanBuilder("parent").startSpan();
 
         // when
-        p.publish("test_event", Arrays.asList("ev1", "ev2"), parentSpan);
+        p.publish("test_event", Arrays.asList("ev1", "ev2"));
 
         // then
         verify(nakadiPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
@@ -69,7 +69,7 @@ public class InstrumentedNakadiPublisherTest {
 
         // when
         assertThrows(IOException.class, () ->
-                p.publish("test_event", Arrays.asList("ev1", "ev2"), parentSpan));
+                p.publish("test_event", Arrays.asList("ev1", "ev2")));
 
         // then
         verify(nakadiPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));

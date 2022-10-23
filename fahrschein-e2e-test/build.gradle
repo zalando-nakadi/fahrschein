@@ -9,6 +9,9 @@ dependencies {
     testImplementation project(':fahrschein-http-apache')
     testImplementation project(':fahrschein-http-spring')
     testImplementation project(':fahrschein-http-jdk11')
+    testImplementation project(':fahrschein-opentelemetry')
+    testImplementation "io.opentelemetry:opentelemetry-api:${property('opentelemetry.version')}"
+    testImplementation "io.opentelemetry:opentelemetry-sdk-testing:${property('opentelemetry.version')}"
     testImplementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
     testImplementation "com.squareup.okhttp3:logging-interceptor:${property('okhttp.version')}"
     testImplementation "org.testcontainers:testcontainers:${property('testcontainers.version')}"

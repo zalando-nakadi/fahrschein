@@ -13,7 +13,7 @@ import java.util.Objects;
 
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
 
-public final class InstrumentedNakadiPublisher {
+public final class InstrumentedNakadiPublisher implements NakadiPublisher {
 
     private final NakadiPublisher client;
     private final Tracer tracer;
@@ -23,11 +23,10 @@ public final class InstrumentedNakadiPublisher {
         this.tracer = tracer;
     }
 
-    public <T> void publish(String eventName, List<T> events, Span parentSpan) throws IOException {
-        Objects.requireNonNull(parentSpan);
+    public <T> void publish(String eventName, List<T> events) throws IOException {
         Span childSpan = tracer
                 .spanBuilder("send_" + eventName)
-                .setParent(Context.current().with(parentSpan))
+                .setParent(Context.current())
                 .setSpanKind(PRODUCER)
                 .setAttribute("messaging.destination_kind", "topic")
                 .setAttribute("messaging.destination", eventName)

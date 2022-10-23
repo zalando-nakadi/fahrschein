@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.sdk.OpenTelemetrySdk;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -21,6 +23,8 @@ import org.zalando.fahrschein.EventAlreadyProcessedException;
 import org.zalando.fahrschein.IdentityAcceptEncodingRequestFactory;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
+import org.zalando.fahrschein.NakadiPublisher;
+import org.zalando.fahrschein.NakadiSubscriber;
 import org.zalando.fahrschein.StreamBuilder;
 import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.domain.Metadata;
@@ -31,6 +35,7 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.jdk11.JavaNetRequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
 import org.zalando.fahrschein.http.spring.SpringRequestFactory;
+import org.zalando.fahrschein.opentelemetry.InstrumentedNakadiPublisher;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
@@ -59,6 +64,8 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
     private static final Logger logger = LoggerFactory.getLogger("okhttp3.wire");
     private static final HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(logger::debug);
 
+    private static final OpenTelemetry otel = OpenTelemetrySdk.builder().buildAndRegisterGlobal();
+
     static {
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.HEADERS);
     }
@@ -76,11 +83,21 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    private NakadiClient setUpNakadiClient(RequestFactory requestFactory) {
+
+    private NakadiClient setUpNakadiSubscriber(RequestFactory requestFactory) {
         return NakadiClient
                 .builder(getNakadiUrl(), requestFactory)
                 .withObjectMapper(objectMapper)
                 .build();
+    }
+
+    private NakadiPublisher setUpNakadiPublisher(RequestFactory requestFactory) {
+
+        NakadiClient client = NakadiClient
+                .builder(getNakadiUrl(), requestFactory)
+                .withObjectMapper(objectMapper)
+                .build();
+        return new InstrumentedNakadiPublisher(client, otel.getTracer("test", "0.0"));
     }
 
     @Parameters( name = "{1}" )
@@ -133,11 +150,11 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
     @ParameterizedTest
     @MethodSource("getRequestFactories")
     public void testPublish(RequestFactory requestFactory) throws IOException {
-        NakadiClient nakadiClient = setUpNakadiClient(requestFactory);
+        NakadiPublisher nakadiClient = setUpNakadiPublisher(requestFactory);
         publish(nakadiClient, UUID.randomUUID().toString());
     }
 
-    private List<OrderEvent> publish(NakadiClient nakadiClient, String testId) throws IOException {
+    private List<OrderEvent> publish(NakadiPublisher nakadiClient, String testId) throws IOException {
         createEventTypes("/eventtypes", testId);
         List<OrderEvent> events = IntStream.range(0, 10)
             .mapToObj(
@@ -150,7 +167,7 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
     @ParameterizedTest
     @MethodSource("getRequestFactories")
     public void testSubscribe(RequestFactory requestFactory) throws IOException, EventAlreadyProcessedException {
-        NakadiClient nakadiClient = setUpNakadiClient(requestFactory);
+        NakadiSubscriber nakadiClient = setUpNakadiSubscriber(requestFactory);
         String testId = UUID.randomUUID().toString();
         createEventTypes("/eventtypes", testId);
         final Listener<OrderEvent> listener = subscriptionListener();
@@ -174,7 +191,8 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
                 }
                 return;
             });
-        List<String> eventOrderNumbers = publish(nakadiClient, testId).stream().map(e -> e.orderNumber).collect(toList());
+        NakadiPublisher nakadiPublisher = setUpNakadiPublisher(requestFactory);
+        List<String> eventOrderNumbers = publish(nakadiPublisher, testId).stream().map(e -> e.orderNumber).collect(toList());
         // verifies that every order number that was published got consumed
         for (String on: eventOrderNumbers) {
             Mockito.verify(listener, timeout(10000).atLeastOnce()).accept(
