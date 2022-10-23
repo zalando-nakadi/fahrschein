@@ -9,7 +9,6 @@ import org.zalando.fahrschein.NakadiPublisher;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
 

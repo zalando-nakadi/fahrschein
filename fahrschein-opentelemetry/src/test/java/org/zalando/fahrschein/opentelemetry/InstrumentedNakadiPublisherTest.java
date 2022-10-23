@@ -2,7 +2,6 @@ package org.zalando.fahrschein.opentelemetry;
 
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
-import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.trace.data.StatusData;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,6 @@ public class InstrumentedNakadiPublisherTest {
     public void successfulPublish() throws IOException {
         // given
         InstrumentedNakadiPublisher p = new InstrumentedNakadiPublisher(nakadiPublisher, tracer);
-        Span parentSpan = tracer.spanBuilder("parent").startSpan();
 
         // when
         p.publish("test_event", Arrays.asList("ev1", "ev2"));
@@ -64,7 +62,6 @@ public class InstrumentedNakadiPublisherTest {
     public void failedPublish() throws IOException {
         // given
         InstrumentedNakadiPublisher p = new InstrumentedNakadiPublisher(nakadiPublisher, tracer);
-        Span parentSpan = tracer.spanBuilder("parent").startSpan();
         doThrow(new IOException("something went wrong")).when(nakadiPublisher).publish(anyString(), anyList());
 
         // when
