@@ -11,18 +11,18 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 
-public class OpenTelemetryWrapper {
+public class InstrumentedEventListener {
 	
 	private Tracer tracer;
 	
 	private String operationName;
 	
-	public OpenTelemetryWrapper(Tracer tracer, String operationName) {
+	public InstrumentedEventListener(Tracer tracer, String operationName) {
 		this.tracer = tracer;
 		this.operationName = operationName;
 	}
 
-	public <R, T extends Event> R process(T event, Function<T, R> f) {
+	public <R, T extends Event> R accept(T event, Function<T, R> f) {
 		Context context = OpenTelemetryHelper.extractFromMetadata(event.getMetadata());
 		Span span = tracer.spanBuilder(operationName).setParent(context).setSpanKind(SpanKind.CONSUMER).startSpan();
 		try (Scope scope = span.makeCurrent()) {
@@ -32,7 +32,7 @@ public class OpenTelemetryWrapper {
 		}
 	}
 
-	public <T extends Event> void process(T event, Consumer<T> c) {
+	public <T extends Event> void accept(T event, Consumer<T> c) {
 		Context context = OpenTelemetryHelper.extractFromMetadata(event.getMetadata());
 		Span span = tracer.spanBuilder(operationName).setParent(context).setSpanKind(SpanKind.CONSUMER).startSpan();
 		try (Scope scope = span.makeCurrent()) {

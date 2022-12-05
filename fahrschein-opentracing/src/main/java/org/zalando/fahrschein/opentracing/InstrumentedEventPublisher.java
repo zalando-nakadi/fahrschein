@@ -3,7 +3,7 @@ package org.zalando.fahrschein.opentracing;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
-import org.zalando.fahrschein.NakadiPublisher;
+import org.zalando.fahrschein.EventPublisher;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,11 +12,11 @@ import java.util.Objects;
 
 import static io.opentracing.tag.Tags.ERROR;
 
-public final class InstrumentedNakadiPublisher {
-    private final NakadiPublisher client;
+public final class InstrumentedEventPublisher {
+    private final EventPublisher client;
     private final Tracer tracer;
 
-    public InstrumentedNakadiPublisher(NakadiPublisher client, Tracer tracer) {
+    public InstrumentedEventPublisher(EventPublisher client, Tracer tracer) {
         this.client = client;
         this.tracer = tracer;
     }

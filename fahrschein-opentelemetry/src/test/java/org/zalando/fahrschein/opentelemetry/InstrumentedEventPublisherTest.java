@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.zalando.fahrschein.NakadiPublisher;
+import org.zalando.fahrschein.EventPublisher;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -23,25 +23,25 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class InstrumentedNakadiPublisherTest {
+public class InstrumentedEventPublisherTest {
 
     @RegisterExtension
     static final CustomOpenTelemetryExtension otelTesting = CustomOpenTelemetryExtension.create();
     private final Tracer tracer = otelTesting.getOpenTelemetry().getTracer(OpenTelemetryHelperTest.class.getName());
 
     @Mock
-    private NakadiPublisher nakadiPublisher;
+    private EventPublisher eventPublisher;
 
     @Test
     public void successfulPublish() throws IOException {
         // given
-        InstrumentedNakadiPublisher p = new InstrumentedNakadiPublisher(nakadiPublisher, tracer);
+        InstrumentedEventPublisher p = new InstrumentedEventPublisher(eventPublisher, tracer);
 
         // when
         p.publish("test_event", Arrays.asList("ev1", "ev2"));
 
         // then
-        verify(nakadiPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
+        verify(eventPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
         otelTesting.assertTraces()
                 .hasTracesSatisfyingExactly(
                         traceAssert ->
@@ -61,15 +61,15 @@ public class InstrumentedNakadiPublisherTest {
     @Test
     public void failedPublish() throws IOException {
         // given
-        InstrumentedNakadiPublisher p = new InstrumentedNakadiPublisher(nakadiPublisher, tracer);
-        doThrow(new IOException("something went wrong")).when(nakadiPublisher).publish(anyString(), anyList());
+        InstrumentedEventPublisher p = new InstrumentedEventPublisher(eventPublisher, tracer);
+        doThrow(new IOException("something went wrong")).when(eventPublisher).publish(anyString(), anyList());
 
         // when
         assertThrows(IOException.class, () ->
                 p.publish("test_event", Arrays.asList("ev1", "ev2")));
 
         // then
-        verify(nakadiPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
+        verify(eventPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
         otelTesting.assertTraces()
                 .hasTracesSatisfyingExactly(
                         traceAssert ->
@@ -82,13 +82,13 @@ public class InstrumentedNakadiPublisherTest {
 
     @Test
     public void testBucketing() {
-        assertEquals("0", InstrumentedNakadiPublisher.sizeBucket(0));
-        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(1));
-        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(2));
-        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(10));
-        assertEquals("11-20", InstrumentedNakadiPublisher.sizeBucket(11));
-        assertEquals("101-110", InstrumentedNakadiPublisher.sizeBucket(104));
-        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2101));
-        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2105));
+        assertEquals("0", InstrumentedEventPublisher.sizeBucket(0));
+        assertEquals("1-10", InstrumentedEventPublisher.sizeBucket(1));
+        assertEquals("1-10", InstrumentedEventPublisher.sizeBucket(2));
+        assertEquals("1-10", InstrumentedEventPublisher.sizeBucket(10));
+        assertEquals("11-20", InstrumentedEventPublisher.sizeBucket(11));
+        assertEquals("101-110", InstrumentedEventPublisher.sizeBucket(104));
+        assertEquals("2101-2110", InstrumentedEventPublisher.sizeBucket(2101));
+        assertEquals("2101-2110", InstrumentedEventPublisher.sizeBucket(2105));
     }
 }

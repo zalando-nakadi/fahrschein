@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.zalando.fahrschein.NakadiPublisher;
+import org.zalando.fahrschein.EventPublisher;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -21,24 +21,24 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class InstrumentedNakadiPublisherTest {
+public class InstrumentedEventPublisherTest {
 
     private final MockTracer tracer = new MockTracer();
 
     @Mock
-    private NakadiPublisher nakadiPublisher;
+    private EventPublisher eventPublisher;
 
     @Test
     public void successfulPublish() throws IOException {
         // given
-        InstrumentedNakadiPublisher p = new InstrumentedNakadiPublisher(nakadiPublisher, tracer);
+        InstrumentedEventPublisher p = new InstrumentedEventPublisher(eventPublisher, tracer);
         MockSpan parentSpan = tracer.buildSpan("parent").start();
 
         // when
         p.publish("test_event", Arrays.asList("ev1", "ev2"), parentSpan);
 
         // then
-        verify(nakadiPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
+        verify(eventPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
         assertEquals(1, tracer.finishedSpans().size(), "finished spans");
         assertEquals("send_test_event", tracer.finishedSpans().get(0).operationName(), "send_test_event");
         assertEquals("{messaging.system=Nakadi, messaging.destination=test_event, messaging.message_payload_size=1-10, messaging.destination_kind=topic, span.kind=producer}", tracer.finishedSpans().get(0).tags().toString(), "send_test_event tags");
@@ -47,16 +47,16 @@ public class InstrumentedNakadiPublisherTest {
     @Test
     public void failedPublish() throws IOException {
         // given
-        InstrumentedNakadiPublisher p = new InstrumentedNakadiPublisher(nakadiPublisher, tracer);
+        InstrumentedEventPublisher p = new InstrumentedEventPublisher(eventPublisher, tracer);
         MockSpan parentSpan = tracer.buildSpan("parent").start();
-        doThrow(new IOException("something went wrong")).when(nakadiPublisher).publish(anyString(), anyList());
+        doThrow(new IOException("something went wrong")).when(eventPublisher).publish(anyString(), anyList());
 
         // when
         Assertions.assertThrows(IOException.class, () ->
                 p.publish("test_event", Arrays.asList("ev1", "ev2"), parentSpan));
 
         // then
-        verify(nakadiPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
+        verify(eventPublisher).publish(eq("test_event"), eq(Arrays.asList("ev1", "ev2")));
         assertEquals(1, tracer.finishedSpans().size(), "finished spans");
         assertEquals("send_test_event", tracer.finishedSpans().get(0).operationName(), "send_test_event");
         assertEquals(true, tracer.finishedSpans().get(0).tags().get(Tags.ERROR.getKey()), "send_test_event error=true");
@@ -64,14 +64,14 @@ public class InstrumentedNakadiPublisherTest {
 
     @Test
     public void testBucketing() {
-        assertEquals("0", InstrumentedNakadiPublisher.sizeBucket(0));
-        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(1));
-        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(2));
-        assertEquals("1-10", InstrumentedNakadiPublisher.sizeBucket(10));
-        assertEquals("11-20", InstrumentedNakadiPublisher.sizeBucket(11));
-        assertEquals("101-110", InstrumentedNakadiPublisher.sizeBucket(104));
-        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2101));
-        assertEquals("2101-2110", InstrumentedNakadiPublisher.sizeBucket(2105));
+        assertEquals("0", InstrumentedEventPublisher.sizeBucket(0));
+        assertEquals("1-10", InstrumentedEventPublisher.sizeBucket(1));
+        assertEquals("1-10", InstrumentedEventPublisher.sizeBucket(2));
+        assertEquals("1-10", InstrumentedEventPublisher.sizeBucket(10));
+        assertEquals("11-20", InstrumentedEventPublisher.sizeBucket(11));
+        assertEquals("101-110", InstrumentedEventPublisher.sizeBucket(104));
+        assertEquals("2101-2110", InstrumentedEventPublisher.sizeBucket(2101));
+        assertEquals("2101-2110", InstrumentedEventPublisher.sizeBucket(2105));
     }
 
 }

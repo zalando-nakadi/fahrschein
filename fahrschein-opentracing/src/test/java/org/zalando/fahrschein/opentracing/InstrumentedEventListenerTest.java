@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class OpenTracingWrapperTest {
+public class InstrumentedEventListenerTest {
 
     private Long parentSpanId = 1L;
     private Long parentTraceId = 2L;
@@ -23,8 +23,8 @@ public class OpenTracingWrapperTest {
     @Test
     public void testInjectContextIntoConsumer() {
         MockTracer tracer = new MockTracer();
-        OpenTracingWrapper wrapper = new OpenTracingWrapper(tracer, "process_events");
-        wrapper.process(getEvent(), (event) -> {
+        InstrumentedEventListener wrapper = new InstrumentedEventListener(tracer, "process_events");
+        wrapper.accept(getEvent(), (event) -> {
             // process event
         });
         assertTraces(tracer);
@@ -33,8 +33,8 @@ public class OpenTracingWrapperTest {
     @Test
     public void testInjectContextIntoFunction() {
         MockTracer tracer = new MockTracer();
-        OpenTracingWrapper wrapper = new OpenTracingWrapper(tracer, "process_events");
-        wrapper.process(getEvent(), (event) -> {
+        InstrumentedEventListener wrapper = new InstrumentedEventListener(tracer, "process_events");
+        wrapper.accept(getEvent(), (event) -> {
             // process event
             return new Object();
         });

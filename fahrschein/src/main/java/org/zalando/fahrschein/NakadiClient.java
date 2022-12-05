@@ -30,7 +30,7 @@ import static org.zalando.fahrschein.Preconditions.checkState;
 /**
  * General implementation of the Nakadi Client used within this Library.
  */
-public class NakadiClient implements NakadiPublisher, NakadiSubscriber {
+public class NakadiClient implements EventPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(NakadiClient.class);
 
     private static final TypeReference<List<Partition>> LIST_OF_PARTITIONS = new TypeReference<List<Partition>>() {
@@ -114,14 +114,14 @@ public class NakadiClient implements NakadiPublisher, NakadiSubscriber {
      * Build a subscription for a single event type.
      */
     public SubscriptionBuilder subscription(String applicationName, String eventName) throws IOException {
-        return new SubscriptionBuilder(this, applicationName, Collections.singleton(eventName));
+        return new SubscriptionBuilderImpl(this, applicationName, Collections.singleton(eventName));
     }
 
     /**
      * Build a subscription for multiple event types.
      */
     public SubscriptionBuilder subscription(String applicationName, Set<String> eventNames) throws IOException {
-        return new SubscriptionBuilder(this, applicationName, eventNames);
+        return new SubscriptionBuilderImpl(this, applicationName, eventNames);
     }
 
     /**

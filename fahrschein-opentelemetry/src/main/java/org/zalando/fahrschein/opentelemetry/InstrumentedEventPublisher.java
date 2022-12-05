@@ -4,7 +4,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
-import org.zalando.fahrschein.NakadiPublisher;
+import org.zalando.fahrschein.EventPublisher;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,12 +12,12 @@ import java.util.Locale;
 
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
 
-public final class InstrumentedNakadiPublisher implements NakadiPublisher {
+public final class InstrumentedEventPublisher implements EventPublisher {
 
-    private final NakadiPublisher client;
+    private final EventPublisher client;
     private final Tracer tracer;
 
-    public InstrumentedNakadiPublisher(NakadiPublisher client, Tracer tracer) {
+    public InstrumentedEventPublisher(EventPublisher client, Tracer tracer) {
         this.client = client;
         this.tracer = tracer;
     }

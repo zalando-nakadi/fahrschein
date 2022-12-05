@@ -14,13 +14,13 @@ import io.opentracing.SpanContext;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
 
-public class OpenTracingWrapper {
+public class InstrumentedEventListener {
 	
 	private final Tracer tracer;
 	
 	private final String operation;
 	
-	public OpenTracingWrapper(Tracer tracer, String operation) {
+	public InstrumentedEventListener(Tracer tracer, String operation) {
 		this.tracer = tracer;
 		this.operation = operation;
 	}
@@ -37,7 +37,7 @@ public class OpenTracingWrapper {
 	 * @param f     the function (e.g. lambda)
 	 * @return the result from the function
 	 */
-	public <R, T extends Event> R process(T event, Function<T, R> f) {
+	public <R, T extends Event> R accept(T event, Function<T, R> f) {
 		Span span = createSpan(tracer, operation, event);
 
 		try (Scope __ = tracer.activateSpan(span)) {
@@ -56,7 +56,7 @@ public class OpenTracingWrapper {
 	 * @param event the event
 	 * @param c     the consumer
 	 */
-	public <T extends Event> void process(T event, Consumer<T> c) {
+	public <T extends Event> void accept(T event, Consumer<T> c) {
 		Span span = createSpan(tracer, operation, event);
 		try (Scope __ = tracer.activateSpan(span)) {
 			c.accept(event);
