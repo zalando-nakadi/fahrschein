@@ -39,6 +39,7 @@ public class SimpleRequestFactory implements RequestFactory {
      * A timeout value of 0 specifies an infinite timeout.
      * <p>Default is the system's default timeout.
      *
+     * @param connectTimeout connect timeout
      * @see URLConnection#setConnectTimeout(int)
      */
     public void setConnectTimeout(int connectTimeout) {
@@ -50,6 +51,7 @@ public class SimpleRequestFactory implements RequestFactory {
      * A timeout value of 0 specifies an infinite timeout.
      * <p>Default is the system's default timeout.
      *
+     * @param readTimeout read timeout
      * @see URLConnection#setReadTimeout(int)
      */
     public void setReadTimeout(int readTimeout) {
