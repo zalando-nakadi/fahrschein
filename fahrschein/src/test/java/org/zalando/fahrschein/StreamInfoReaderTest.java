@@ -1,6 +1,5 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -18,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,14 +32,14 @@ public class StreamInfoReaderTest {
     private final RequestFactory RequestFactory = mock(RequestFactory.class);
 
     @SuppressWarnings("unchecked")
-    private final Listener<NakadiReaderTest.SomeEvent> listener = (Listener<NakadiReaderTest.SomeEvent>)mock(Listener.class);
+    private final Listener<NakadiReaderTest.SomeEvent> listener = (Listener<NakadiReaderTest.SomeEvent>) mock(Listener.class);
 
     class LastResult<E> implements Answer {
         E lastResult = null;
 
         @Override
         public Object answer(InvocationOnMock invocation) throws Throwable {
-            lastResult = (E)  invocation.callRealMethod();
+            lastResult = (E) invocation.callRealMethod();
             return lastResult;
         }
     }
@@ -56,7 +54,7 @@ public class StreamInfoReaderTest {
     // Tests
 
     @Test
-    public void shouldExtraxctStreamInfoDebug() throws IOException {
+    public void shouldExtractStreamInfoDebug() throws IOException {
         final Response response = mock(Response.class);
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"},\"events\":[{\"id\":\"1\",\"foo\":\"bar\"},{}], \"info\":{\"debug\":\"DEBUG INFO\"}}".getBytes("utf-8"));
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);

@@ -56,8 +56,6 @@ class NakadiReader<T> implements IORunnable {
 
     private final MetricsCollector metricsCollector;
 
-
-
     /*
      * @VisibleForTesting
      */
@@ -117,7 +115,6 @@ class NakadiReader<T> implements IORunnable {
         this.listener = listener;
         this.batchHandler = batchHandler;
         this.metricsCollector = metricsCollector;
-
         this.streamInfoReader = streamInfoReader;
         this.jsonFactory = DefaultObjectMapper.INSTANCE.getFactory();
         this.cursorHeaderWriter = DefaultObjectMapper.INSTANCE.writerFor(COLLECTION_OF_CURSORS);
@@ -411,9 +408,13 @@ class NakadiReader<T> implements IORunnable {
                     break;
                 }
                 case "info": {
-                    Optional<String> debug = streamInfoReader.readDebug(jsonParser);
-                    if (debug.isPresent()) LOG.debug("Stream info: {}", debug.get());
-                    else LOG.debug("No event in batch!");
+                    if(LOG.isDebugEnabled()) {
+                        Optional<String> debug = streamInfoReader.readDebug(jsonParser);
+                        if (debug.isPresent()) LOG.debug("Stream info: {}", debug.get());
+                    } else {
+                        jsonParser.nextToken();
+                        jsonParser.skipChildren();
+                    }
                     break;
                 }
                 default: {
