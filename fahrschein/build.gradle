@@ -16,7 +16,7 @@ dependencies {
     testImplementation ('com.jayway.jsonpath:json-path:2.7.0') {
         exclude group: "org.ow2.asm", module: "asm"
     }
-    testImplementation 'com.google.code.findbugs:jsr305:2.0.1'
+    testImplementation 'com.google.code.findbugs:jsr305:3.0.2'
 }
 
 publishing.publications.maven.pom.description = 'A Java client for the Nakadi event bus'
