@@ -114,14 +114,14 @@ public class NakadiClient implements EventPublisher {
      * Build a subscription for a single event type.
      */
     public SubscriptionBuilder subscription(String applicationName, String eventName) throws IOException {
-        return new SubscriptionBuilderImpl(this, applicationName, Collections.singleton(eventName));
+        return new SubscriptionBuilder(this, applicationName, Collections.singleton(eventName));
     }
 
     /**
      * Build a subscription for multiple event types.
      */
     public SubscriptionBuilder subscription(String applicationName, Set<String> eventNames) throws IOException {
-        return new SubscriptionBuilderImpl(this, applicationName, eventNames);
+        return new SubscriptionBuilder(this, applicationName, eventNames);
     }
 
     /**
