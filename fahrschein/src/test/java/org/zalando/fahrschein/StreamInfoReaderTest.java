@@ -1,8 +1,6 @@
 package org.zalando.fahrschein;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.zalando.fahrschein.http.api.Request;
@@ -27,7 +25,6 @@ public class StreamInfoReaderTest {
 
     private static final String EVENT_NAME = "some-event";
     private final URI uri = URI.create("http://example.com/events");
-    private final ObjectMapper objectMapper = new ObjectMapper();
     private final CursorManager cursorManager = mock(CursorManager.class);
     private final RequestFactory RequestFactory = mock(RequestFactory.class);
 
@@ -69,7 +66,7 @@ public class StreamInfoReaderTest {
 
         StreamInfoReader streamInfoReader = spy(StreamInfoReader.getDefault());
         LastResult<Optional<String>> lastResult = new LastResult<>();
-        doAnswer(lastResult).when(streamInfoReader).readDebug(ArgumentMatchers.any());
+        doAnswer(lastResult).when(streamInfoReader).readDebug(any());
 
         final List<String> ids = new ArrayList<>();
 
@@ -86,7 +83,7 @@ public class StreamInfoReaderTest {
         });
 
         assertBackoffException(expectedException, 0, IOException.class, "Stream was closed");
-        verify(streamInfoReader).readDebug(ArgumentMatchers.any());
+        verify(streamInfoReader).readDebug(any());
         assertEquals(lastResult.lastResult.get(), "DEBUG INFO");
     }
 
