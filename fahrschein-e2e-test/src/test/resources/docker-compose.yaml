@@ -12,8 +12,8 @@ services:
   nakadi:
     image: ghcr.io/adyach/nakadi-docker/nakadi:3.4
     ports:
-      - 8080:8080
-      - 7979
+      - "8080:8080"
+      - "7979"
     depends_on:
       - nakadi_postgres
       - zookeeper
@@ -27,7 +27,7 @@ services:
   nakadi_postgres:
     image: ghcr.io/adyach/nakadi-docker/postgres:13.6
     ports:
-      - 5432
+      - "5432"
     environment:
       POSTGRES_USER: nakadi
       POSTGRES_PASSWORD: nakadi
@@ -36,12 +36,12 @@ services:
   zookeeper:
     image: ghcr.io/adyach/nakadi-docker/zookeeper:3.6.3
     ports:
-      - 2181
+      - "2181"
 
   kafka:
     image: ghcr.io/adyach/kafka-docker/kafka-docker:2.7.0
     ports:
-      - 9092
+      - "9092"
     depends_on:
       - zookeeper
     environment:

@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     testFixturesApi project(':fahrschein-http-api')
-    testFixturesImplementation "com.github.luben:zstd-jni:1.5.2-2"
     testFixturesImplementation "org.mockito:mockito-core:${property('mockito.version')}"
     testFixturesImplementation("org.junit.jupiter:junit-jupiter:${property('junit.version')}")
     testFixturesImplementation('org.hamcrest:hamcrest:2.2')
