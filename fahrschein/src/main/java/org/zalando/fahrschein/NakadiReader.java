@@ -52,56 +52,19 @@ class NakadiReader<T> implements IORunnable {
     private final JsonFactory jsonFactory;
     private final ObjectWriter cursorHeaderWriter;
 
-    private final StreamInfoReader streamInfoReader;
-
     private final MetricsCollector metricsCollector;
 
     /*
      * @VisibleForTesting
      */
-    NakadiReader(
-            URI uri,
-            RequestFactory requestFactory,
-            BackoffStrategy backoffStrategy,
-            CursorManager cursorManager,
-            ObjectMapper objectMapper,
-            Set<String> eventNames,
-            Optional<Subscription> subscription,
-            Optional<Lock> lock,
-            Class<T> eventClass,
-            Listener<T> listener
-    ) {
-        this(
-                uri,
-                requestFactory,
-                backoffStrategy,
-                cursorManager,
-                eventNames,
-                subscription,
-                lock,
-                new MappingEventReader<>(eventClass, objectMapper),
-                listener,
-                DefaultBatchHandler.INSTANCE,
-                NoMetricsCollector.NO_METRICS_COLLECTOR,
-                StreamInfoReader.getDefault()
-        );
+    NakadiReader(URI uri, RequestFactory requestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, ObjectMapper objectMapper, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, Class<T> eventClass, Listener<T> listener) {
+        this(uri, requestFactory, backoffStrategy, cursorManager, eventNames, subscription, lock, new MappingEventReader<>(eventClass, objectMapper), listener, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
     }
 
-    NakadiReader(
-            URI uri,
-            RequestFactory requestFactory,
-            BackoffStrategy backoffStrategy,
-            CursorManager cursorManager,
-            Set<String> eventNames,
-            Optional<Subscription> subscription,
-            Optional<Lock> lock,
-            EventReader<T> eventReader,
-            Listener<T> listener,
-            BatchHandler batchHandler,
-            final MetricsCollector metricsCollector,
-            StreamInfoReader streamInfoReader
-    ) {
-
+    /*
+     * @VisibleForTesting
+     */
+    NakadiReader(URI uri, RequestFactory requestFactory, BackoffStrategy backoffStrategy, CursorManager cursorManager, Set<String> eventNames, Optional<Subscription> subscription, Optional<Lock> lock, EventReader<T> eventReader, Listener<T> listener, BatchHandler batchHandler, final MetricsCollector metricsCollector) {
         checkState(subscription.isPresent() || eventNames.size() == 1, "Low level api only supports reading from a single event");
 
         this.uri = uri;
@@ -115,7 +78,6 @@ class NakadiReader<T> implements IORunnable {
         this.listener = listener;
         this.batchHandler = batchHandler;
         this.metricsCollector = metricsCollector;
-        this.streamInfoReader = streamInfoReader;
         this.jsonFactory = DefaultObjectMapper.INSTANCE.getFactory();
         this.cursorHeaderWriter = DefaultObjectMapper.INSTANCE.writerFor(COLLECTION_OF_CURSORS);
     }
@@ -409,8 +371,22 @@ class NakadiReader<T> implements IORunnable {
                 }
                 case "info": {
                     if(LOG.isDebugEnabled()) {
-                        Optional<String> debug = streamInfoReader.readDebug(jsonParser);
-                        if (debug.isPresent()) LOG.debug("Stream info: {}", debug.get());
+                        JsonParserHelper.expectToken(jsonParser, JsonToken.START_OBJECT);
+                        while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                            final String currentFieldName = jsonParser.getCurrentName();
+                            switch (currentFieldName) {
+                                case "debug":
+                                    String debug = jsonParser.nextTextValue();
+                                    if (debug != null && !debug.isEmpty()) {
+                                        LOG.debug("Stream info: {}", debug);
+                                    }
+                                    break;
+                                default:
+                                    jsonParser.nextToken();
+                                    jsonParser.skipChildren();
+                                    break;
+                            }
+                        }
                     } else {
                         jsonParser.nextToken();
                         jsonParser.skipChildren();

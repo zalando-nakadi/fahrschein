@@ -79,7 +79,7 @@ class StreamBuilders {
             return new NakadiReader<>(
                     uri, requestFactory, backoffStrategy, cursorManager,
                     eventNames, subscription, lock, eventReader, listener, batchHandler,
-                    metricsCollector, StreamInfoReader.getDefault());
+                    metricsCollector);
         }
 
         @Override
