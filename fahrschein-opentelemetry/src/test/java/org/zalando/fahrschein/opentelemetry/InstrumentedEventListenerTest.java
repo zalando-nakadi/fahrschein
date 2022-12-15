@@ -5,16 +5,12 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.trace.IdGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.zalando.fahrschein.EventAlreadyProcessedException;
-import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.domain.Metadata;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class InstrumentedEventListenerTest {
@@ -39,12 +35,6 @@ public class InstrumentedEventListenerTest {
 
     @Test
     public void testInjectContextIntoFunction() {
-        Listener<Event> subscriptionListener = new Listener<Event>() {
-            @Override
-            public void accept(List<Event> events) throws IOException, EventAlreadyProcessedException {
-
-            }
-        };
         InstrumentedEventListener wrapper = new InstrumentedEventListener(tracer, "process_events");
         wrapper.accept(getEvent(), (event) -> {
             // process event
