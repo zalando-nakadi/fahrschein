@@ -43,8 +43,11 @@ dependencies {
     testImplementation('org.hamcrest:hamcrest:2.2') {
         because "we want to have hamcrest available for all testing"
     }
-    compileOnlyApi('com.google.code.findbugs:jsr305:3.0.2') {
+    compileOnly('com.google.code.findbugs:jsr305:3.0.2') {
         because "we want to have annotations like @Deprecated available at compilation time"
+    }
+    testCompileOnly('com.google.code.findbugs:jsr305:3.0.2') {
+        because "we also have some findbugs annotations in test code"
     }
 }
 
