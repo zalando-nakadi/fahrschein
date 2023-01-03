@@ -786,7 +786,4 @@ public class NakadiReaderTest {
                 () -> assertThat(expectedException.getCause().getMessage(), containsString(errorMessage)));
     }
 
-
-
-
 }

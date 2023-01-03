@@ -76,10 +76,8 @@ class StreamBuilders {
             final MetricsCollector metricsCollector = this.metricsCollector != null ? this.metricsCollector : NoMetricsCollector.NO_METRICS_COLLECTOR;
             final BatchHandler batchHandler = this.batchHandler != null ? this.batchHandler : DefaultBatchHandler.INSTANCE;
 
-            return new NakadiReader<>(
-                    uri, requestFactory, backoffStrategy, cursorManager,
-                    eventNames, subscription, lock, eventReader, listener, batchHandler,
-                    metricsCollector);
+            return new NakadiReader<>(uri, requestFactory, backoffStrategy, cursorManager,
+                    eventNames, subscription, lock, eventReader, listener, batchHandler, metricsCollector);
         }
 
         @Override
