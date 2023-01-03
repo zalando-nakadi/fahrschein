@@ -371,7 +371,7 @@ class NakadiReader<T> implements IORunnable {
                 }
                 case "info": {
                     if(LOG.isDebugEnabled()) {
-                        JsonParserHelper.expectToken(jsonParser, JsonToken.START_OBJECT);
+                        expectToken(jsonParser, JsonToken.START_OBJECT);
                         while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
                             final String currentFieldName = jsonParser.getCurrentName();
                             switch (currentFieldName) {
