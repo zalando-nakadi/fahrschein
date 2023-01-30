@@ -76,7 +76,6 @@ class NakadiReader<T> implements IORunnable {
         this.listener = listener;
         this.batchHandler = batchHandler;
         this.metricsCollector = metricsCollector;
-
         this.jsonFactory = DefaultObjectMapper.INSTANCE.getFactory();
         this.cursorHeaderWriter = DefaultObjectMapper.INSTANCE.writerFor(COLLECTION_OF_CURSORS);
     }
@@ -369,9 +368,27 @@ class NakadiReader<T> implements IORunnable {
                     break;
                 }
                 case "info": {
-                    LOG.debug("Skipping stream info in event batch");
-                    jsonParser.nextToken();
-                    jsonParser.skipChildren();
+                    if(LOG.isDebugEnabled()) {
+                        expectToken(jsonParser, JsonToken.START_OBJECT);
+                        while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                            final String currentFieldName = jsonParser.getCurrentName();
+                            switch (currentFieldName) {
+                                case "debug":
+                                    String debug = jsonParser.nextTextValue();
+                                    if (debug != null && !debug.isEmpty()) {
+                                        LOG.debug("Stream info: {}", debug);
+                                    }
+                                    break;
+                                default:
+                                    jsonParser.nextToken();
+                                    jsonParser.skipChildren();
+                                    break;
+                            }
+                        }
+                    } else {
+                        jsonParser.nextToken();
+                        jsonParser.skipChildren();
+                    }
                     break;
                 }
                 default: {

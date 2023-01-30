@@ -29,9 +29,6 @@ dependencies {
     implementation("org.slf4j:slf4j-api:${property('slf4j.version')}") {
         because "we want slf4j-api to be available everywhere"
     }
-    testRuntimeOnly("org.slf4j:slf4j-simple:${property('slf4j.version')}") {
-        because "we want the slf4j-simple logger implementation available at test runtime"
-    }
 
     // JUnit 5
     testImplementation("org.junit.jupiter:junit-jupiter:${property('junit.version')}")

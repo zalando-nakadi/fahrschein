@@ -1,10 +1,15 @@
 package org.zalando.fahrschein;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Lock;
 import org.zalando.fahrschein.domain.Partition;
@@ -27,7 +32,11 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +46,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -50,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doAnswer;
@@ -377,7 +388,7 @@ public class NakadiReaderTest {
     @Test
     public void shouldProcessEventsAndCommitCursor() throws IOException, EventAlreadyProcessedException {
         final Response response = mock(Response.class);
-        String input = "{\"cursor\":{\"event_type\":\""+EVENT_NAME+"\",\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"}]}";
+        String input = "{\"cursor\":{\"event_type\":\""+EVENT_NAME+"\",\"partition\":\"123\",\"offset\":\"456\"},\"events\":[{\"id\":\"789\"}], \"info\": {\"debug\":\"DEBUG INFO\"}}";
         final ByteArrayInputStream initialInputStream = new ByteArrayInputStream(input.getBytes("utf-8"));
         final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
         when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
@@ -419,6 +430,42 @@ public class NakadiReaderTest {
                 assertEquals("456", cursor.getOffset());
             }
         }
+    }
+
+    @Test
+    public void shouldExtractAndDebugStreamInfo() throws IOException {
+        final Response response = mock(Response.class);
+        final ByteArrayInputStream initialInputStream = new ByteArrayInputStream("{\"cursor\":{\"partition\":\"0\",\"offset\":\"0\"},\"events\":[{\"id\":\"1\"}], \"info\":{\"debug\":\"DEBUG INFO\"}}".getBytes("utf-8"));
+        final ByteArrayInputStream emptyInputStream = new ByteArrayInputStream(new byte[0]);
+        when(response.getBody()).thenReturn(initialInputStream, emptyInputStream);
+
+        final Request request = mock(Request.class);
+        when(request.execute()).thenReturn(response);
+        when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
+        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+
+        // create and start a ListAppender to check debug logs
+        Logger fooLogger = (Logger) LoggerFactory.getLogger(NakadiReader.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        fooLogger.addAppender(listAppender);
+
+        final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener);
+
+        BackoffException expectedException = assertThrows(BackoffException.class, () -> {
+            nakadiReader.runInternal();
+        });
+
+        assertBackoffException(expectedException, 0, IOException.class, "Stream was closed");
+        List<ILoggingEvent> logsList = listAppender.list;
+        List<String> filtered = logsList.stream().filter(p ->
+                        asList(p.getArgumentArray()).contains("DEBUG INFO") &&
+                                "Stream info: {}".equals(p.getMessage()) &&
+                                p.getLevel() == Level.DEBUG
+                )
+                .map(p -> p.getMessage())
+                .collect(Collectors.toList());
+        assertTrue(!filtered.isEmpty());
     }
 
     @Test
@@ -523,7 +570,12 @@ public class NakadiReaderTest {
 
         final List<String> ids = new ArrayList<>();
 
-        final NakadiReader<String> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), new StringPropertyExtractingEventReader("id"), ids::addAll, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
+        final NakadiReader<String> nakadiReader = new NakadiReader<>(
+                uri, RequestFactory, backoffStrategy, cursorManager,
+                Collections.singleton(EVENT_NAME),
+                Optional.empty(), Optional.empty(),
+                new StringPropertyExtractingEventReader("id"), ids::addAll,
+                DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
 
         BackoffException expectedException = assertThrows(BackoffException.class, () -> {
             nakadiReader.runInternal();
@@ -549,7 +601,11 @@ public class NakadiReaderTest {
 
         final List<String> ids = new ArrayList<>();
 
-        final NakadiReader<String> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), new StringPropertyExtractingEventReader("id"), ids::addAll, DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
+        final NakadiReader<String> nakadiReader = new NakadiReader<>(
+                uri, RequestFactory, backoffStrategy, cursorManager,
+                Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(),
+                new StringPropertyExtractingEventReader("id"), ids::addAll,
+                DefaultBatchHandler.INSTANCE, NoMetricsCollector.NO_METRICS_COLLECTOR);
 
         BackoffException expectedException = assertThrows(BackoffException.class, () -> {
             nakadiReader.runInternal();
