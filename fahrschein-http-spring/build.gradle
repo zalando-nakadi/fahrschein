@@ -10,4 +10,8 @@ dependencies {
     testImplementation(testFixtures(project(':fahrschein-http-test-support')))
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
+
 publishing.publications.maven.pom.description = 'Fahrschein HTTP Client using Spring Adapter'

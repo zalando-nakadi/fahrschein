@@ -14,3 +14,7 @@ forbiddenApisTestFixtures {
     bundledSignatures = ['jdk-unsafe', 'jdk-deprecated',  'jdk-reflection' ]
     ignoreFailures = false
 }
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}

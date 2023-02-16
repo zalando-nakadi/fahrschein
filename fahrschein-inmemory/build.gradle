@@ -9,3 +9,7 @@ dependencies {
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein In-Memory Cursor Management'
+
+compileTestJava.configure {
+    options.release = 17
+}
