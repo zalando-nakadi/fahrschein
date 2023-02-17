@@ -2,6 +2,7 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.api.tracing.TracingInterceptor;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -19,18 +20,34 @@ public final class NakadiClientBuilder {
     private final RequestFactory clientHttpRequestFactory;
     @Nullable
     private final CursorManager cursorManager;
+    @Nullable
+    private final TracingInterceptor tracingInterceptor;
 
     NakadiClientBuilder(final URI baseUri, RequestFactory requestFactory) {
-        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null);
+        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, null);
     }
 
-    private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider, @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
+    private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
+                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.authorizationProvider = authorizationProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
+        this.tracingInterceptor = null;
     }
+
+    public NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
+                               @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager,
+                               @Nullable TracingInterceptor tracingInterceptor) {
+        this.objectMapper = objectMapper;
+        this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
+        this.authorizationProvider = authorizationProvider;
+        this.clientHttpRequestFactory = clientHttpRequestFactory;
+        this.cursorManager = cursorManager;
+        this.tracingInterceptor = tracingInterceptor;
+    }
+
 
     public NakadiClientBuilder withObjectMapper(ObjectMapper objectMapper) {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
@@ -46,6 +63,10 @@ public final class NakadiClientBuilder {
 
     public NakadiClientBuilder withCursorManager(CursorManager cursorManager) {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
+    }
+
+    public NakadiClientBuilder withTracingInterceptor(TracingInterceptor tracingInterceptor) {
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, tracingInterceptor);
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
@@ -69,7 +90,10 @@ public final class NakadiClientBuilder {
         final RequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory, authorizationProvider);
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
-
-        return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager);
+        if(tracingInterceptor == null) {
+            return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager);
+        } else {
+            return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager, tracingInterceptor);
+        }
     }
 }

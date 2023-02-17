@@ -13,6 +13,7 @@ import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.api.Response;
+import org.zalando.fahrschein.http.api.tracing.TracingInterceptor;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -41,6 +42,7 @@ public class NakadiClient {
     private final ObjectMapper internalObjectMapper;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
+    private final TracingInterceptor tracingInterceptor;
 
     /**
      * Returns a new Builder that will make use of the given {@code RequestFactory}.
@@ -59,7 +61,18 @@ public class NakadiClient {
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
+        this.tracingInterceptor = null;
     }
+
+    NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager, TracingInterceptor tracingInterceptor) {
+        this.baseUri = baseUri;
+        this.requestFactory = requestFactory;
+        this.objectMapper = objectMapper;
+        this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
+        this.cursorManager = cursorManager;
+        this.tracingInterceptor = tracingInterceptor;
+    }
+
 
     /**
      * Resolves a list of partitions for the given eventName.
@@ -89,6 +102,10 @@ public class NakadiClient {
         final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/events", eventName));
         final Request request = requestFactory.createRequest(uri, "POST");
 
+        if(tracingInterceptor != null) {
+            tracingInterceptor.injectTrace(eventName, events.size());
+        }
+
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
         try (final OutputStream body = request.getBody()) {
@@ -97,6 +114,11 @@ public class NakadiClient {
 
         try (final Response response = request.execute()) {
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
+        } catch (Throwable t) {
+            if(tracingInterceptor != null) {
+                tracingInterceptor.recordError(t);
+            }
+            throw t;
         }
     }
 
