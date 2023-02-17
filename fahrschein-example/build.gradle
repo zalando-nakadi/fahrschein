@@ -7,6 +7,8 @@ dependencies {
     implementation project(':fahrschein-http-simple')
     implementation project(':fahrschein-http-apache')
     implementation project(':fahrschein-http-spring')
+    // spring-web is set up as provided dependency
+    implementation "org.springframework:spring-web:${property('spring.version')}"
     implementation project(':fahrschein-inmemory')
     implementation project(':fahrschein-typeresolver')
     implementation project(':fahrschein-opentelemetry')
