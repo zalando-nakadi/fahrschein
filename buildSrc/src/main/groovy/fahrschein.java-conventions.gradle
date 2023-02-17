@@ -22,7 +22,7 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << '-parameters'
     options.compilerArgs << '-Xlint:all'
     options.encoding = 'UTF-8'
-    options.release = 8
+    options.release = Integer.valueOf(project.property("jdk.version"))
 }
 
 dependencies {
