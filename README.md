@@ -217,7 +217,8 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactor
         .build();
 ```
 
-It is also possible to adapt other implementations from spring framework by wrapping them into `SpringRequestFactory`, contained in the `fahrschein-http-spring` artifact. The current version assumes Spring Framework 6 (and therefore sets a JDK17 baseline), but the depenency can be force-downgraded to an older version of Spring, with `4.3.0.RELEASE` being the lowest version tested for compatibility.
+It is also possible to adapt other client implementations (e.g. OkHttp3) by using the Spring framework abstraction and by wrapping them into `SpringRequestFactory`, contained in the `fahrschein-http-spring` artifact. The current version assumes Spring Framework to be a provided dependency. See table below for the range of compatible Spring versions.
+
 
 ```xml
 <dependency>
