@@ -217,7 +217,8 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactor
         .build();
 ```
 
-It is also possible to adapt other implementations from spring framework by wrapping them into `SpringRequestFactory`, contained in the `fahrschein-http-spring` artifact.
+It is also possible to adapt other client implementations (e.g. OkHttp3) by using the Spring framework abstraction and by wrapping them into `SpringRequestFactory`, contained in the `fahrschein-http-spring` artifact. The current version assumes Spring Framework to be a provided dependency. See table below for the range of compatible Spring versions.
+
 
 ```xml
 <dependency>
@@ -252,10 +253,10 @@ Although Fahrschein is using fixed dependency versions, it is integration-tested
 
 | Dependency | Baseline | Latest |
 | ---------- | -------- | ------ |
-| Jackson | 2.8.0 | 2.13.+ |
-| Spring Core | 4.3.0.RELEASE | 5.3.+ |
-| okHttp | 3.3.0 | 4.9.+ |
-| Apache HttpClient | 4.3 | 4.5.+ |
+| Jackson | 2.8.0 | 2.+ |
+| Spring Core | 4.3.0.RELEASE | 6.+ |
+| okHttp | 3.3.0 | 4.+ |
+| Apache HttpClient | 4.3 | 4.+ |
 
 ## Content-Compression
 

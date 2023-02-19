@@ -9,7 +9,7 @@ dependencies {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 11
+    options.release = Math.max(Integer.valueOf(project.property("jdk.version")), 11)
 }
 
 publishing.publications.maven.pom.description = "Fahrschein HTTP Client using JDK11's HttpClient"

@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: 'adopt-hotspot'
-          java-version: '11'
+          java-version: '17'
       - uses: gradle/gradle-build-action@v2
         with:
           gradle-version: 7.4.1
@@ -30,5 +30,5 @@ jobs:
           flags: unittests
       - name: Test oldest supported library versions
         run: gradle build -Pjackson.version=2.8.0 -Pspring.version=4.3.0.RELEASE -Pokhttp.version=3.3.0 -Papachehttp.version=4.3
-      - name: Test with latest library (micro) updates
-        run: gradle build -Pjackson.version=2.13.+ -Pspring.version=5.3.+ -Pokhttp.version=4.9.+ -Papachehttp.version=4.5.+
+      - name: Test with latest library (minor) updates
+        run: gradle build -Pjackson.version=2.+ -Pspring.version=6.+ -Pokhttp.version=4.+ -Papachehttp.version=4.+ -Pjdk.version=17

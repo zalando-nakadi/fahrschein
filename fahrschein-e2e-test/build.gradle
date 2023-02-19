@@ -8,6 +8,8 @@ dependencies {
     testImplementation project(':fahrschein-http-simple')
     testImplementation project(':fahrschein-http-apache')
     testImplementation project(':fahrschein-http-spring')
+    // test with spring 6
+    testImplementation "org.springframework:spring-web:6.0.1"
     testImplementation project(':fahrschein-http-jdk11')
     testImplementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
     testImplementation "com.squareup.okhttp3:logging-interceptor:${property('okhttp.version')}"
@@ -36,5 +38,5 @@ test {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 11
+    options.release = 17
 }

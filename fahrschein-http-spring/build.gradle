@@ -5,7 +5,10 @@ plugins {
 
 dependencies {
     api project(':fahrschein-http-api')
-    api "org.springframework:spring-web:${property('spring.version')}"
+    // make spring-web a provided dependency
+    compileOnlyApi "org.springframework:spring-web:${property('spring.version')}"
+    // use it in testing
+    testImplementation "org.springframework:spring-web:${property('spring.version')}"
     testImplementation "com.squareup.okhttp3:okhttp:${property('okhttp.version')}"
     testImplementation(testFixtures(project(':fahrschein-http-test-support')))
 }
