@@ -14,7 +14,6 @@ import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.api.RequestHandler;
 import org.zalando.fahrschein.http.api.Response;
-import org.zalando.fahrschein.http.api.tracing.TracingInterceptor;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -104,16 +103,18 @@ public class NakadiClient {
         final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/events", eventName));
         final Request request = requestFactory.createRequest(uri, "POST");
 
-
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
         try (final OutputStream body = request.getBody()) {
             objectMapper.writeValue(body, events);
         }
 
-        try (final Response response = request.execute(requestHandlers)) {
+        requestHandlers.forEach(requestHandler -> requestHandler.beforeExecute(request));
+        try (final Response response = request.execute()) {
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
+            requestHandlers.forEach(requestHandler -> requestHandler.afterExecute(request));
         } catch (Throwable t) {
+            requestHandlers.forEach(requestHandler -> requestHandler.onError(request));
             throw t;
         }
     }

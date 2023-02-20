@@ -2,10 +2,12 @@ package org.zalando.fahrschein;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zalando.fahrschein.http.api.RequestFactory;
-import org.zalando.fahrschein.http.api.tracing.TracingInterceptor;
+import org.zalando.fahrschein.http.api.RequestHandler;
 
 import javax.annotation.Nullable;
 import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 
 import static org.zalando.fahrschein.Preconditions.checkNotNull;
 
@@ -21,7 +23,7 @@ public final class NakadiClientBuilder {
     @Nullable
     private final CursorManager cursorManager;
     @Nullable
-    private final TracingInterceptor tracingInterceptor;
+    private final List<RequestHandler> requestHandlers;
 
     NakadiClientBuilder(final URI baseUri, RequestFactory requestFactory) {
         this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, null);
@@ -34,18 +36,18 @@ public final class NakadiClientBuilder {
         this.authorizationProvider = authorizationProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
-        this.tracingInterceptor = null;
+        this.requestHandlers = Collections.emptyList();
     }
 
     public NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager,
-                               @Nullable TracingInterceptor tracingInterceptor) {
+                               @Nullable List<RequestHandler> requestHandlers) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.authorizationProvider = authorizationProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
-        this.tracingInterceptor = tracingInterceptor;
+        this.requestHandlers = requestHandlers;
     }
 
 
@@ -65,8 +67,8 @@ public final class NakadiClientBuilder {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
     }
 
-    public NakadiClientBuilder withTracingInterceptor(TracingInterceptor tracingInterceptor) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, tracingInterceptor);
+    public NakadiClientBuilder withTracingInterceptor(List<RequestHandler> requestHandlers) {
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, requestHandlers);
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
@@ -90,10 +92,7 @@ public final class NakadiClientBuilder {
         final RequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory, authorizationProvider);
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
-        if(tracingInterceptor == null) {
-            return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager);
-        } else {
-            return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager, tracingInterceptor);
-        }
+
+        return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager, requestHandlers);
     }
 }
