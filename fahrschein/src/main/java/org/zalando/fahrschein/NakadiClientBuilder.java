@@ -26,7 +26,7 @@ public final class NakadiClientBuilder {
     private final List<RequestHandler> requestHandlers;
 
     NakadiClientBuilder(final URI baseUri, RequestFactory requestFactory) {
-        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, null);
+        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, Collections.emptyList());
     }
 
     private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
