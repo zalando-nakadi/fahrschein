@@ -3,6 +3,7 @@ package org.zalando.fahrschein.http.api;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.List;
 
 public interface Request {
     String getMethod();
@@ -13,6 +14,6 @@ public interface Request {
 
     OutputStream getBody() throws IOException;
 
-    Response execute() throws IOException;
+    Response execute(List<RequestHandler> requestHandlers) throws IOException;
 
 }

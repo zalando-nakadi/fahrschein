@@ -6,6 +6,7 @@ import org.zalando.fahrschein.domain.BatchItemResponse;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.RequestHandler;
 import org.zalando.fahrschein.http.api.Response;
 
 import java.io.IOException;
@@ -31,9 +32,10 @@ class ProblemHandlingRequest implements Request {
     }
 
     @Override
-    public Response execute() throws IOException {
-        final Response response = request.execute();
-
+    public Response execute(List<RequestHandler> requestHandlers) throws IOException {
+        requestHandlers.forEach(requestHandler -> requestHandler.beforeExecute(this));
+        final Response response = request.execute(requestHandlers);
+        requestHandlers.forEach(requestHandler -> requestHandler.afterExecute(this));
         try {
             final int statusCode = response.getStatusCode();
             if (statusCode == 207 || statusCode >= 400) {
@@ -60,6 +62,7 @@ class ProblemHandlingRequest implements Request {
             }
         } catch (Throwable throwable) {
             try {
+                requestHandlers.forEach(requestHandler -> requestHandler.onError(this));
                 response.close();
             } catch (Throwable suppressed) {
                 throwable.addSuppressed(suppressed);
