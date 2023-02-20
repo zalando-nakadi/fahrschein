@@ -12,6 +12,7 @@ import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.api.RequestHandler;
 import org.zalando.fahrschein.http.api.Response;
 import org.zalando.fahrschein.http.api.tracing.TracingInterceptor;
 
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -42,7 +44,7 @@ public class NakadiClient {
     private final ObjectMapper internalObjectMapper;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
-    private final TracingInterceptor tracingInterceptor;
+    private final List<RequestHandler> requestHandlers;
 
     /**
      * Returns a new Builder that will make use of the given {@code RequestFactory}.
@@ -61,16 +63,16 @@ public class NakadiClient {
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
-        this.tracingInterceptor = null;
+        this.requestHandlers = new ArrayList<>();
     }
 
-    NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager, TracingInterceptor tracingInterceptor) {
+    NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager, List<RequestHandler> requestHandlers) {
         this.baseUri = baseUri;
         this.requestFactory = requestFactory;
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
-        this.tracingInterceptor = tracingInterceptor;
+        this.requestHandlers = requestHandlers;
     }
 
 
@@ -102,9 +104,6 @@ public class NakadiClient {
         final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/events", eventName));
         final Request request = requestFactory.createRequest(uri, "POST");
 
-        if(tracingInterceptor != null) {
-            tracingInterceptor.injectTrace(eventName, events.size());
-        }
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
@@ -112,12 +111,9 @@ public class NakadiClient {
             objectMapper.writeValue(body, events);
         }
 
-        try (final Response response = request.execute()) {
+        try (final Response response = request.execute(requestHandlers)) {
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
         } catch (Throwable t) {
-            if(tracingInterceptor != null) {
-                tracingInterceptor.recordError(t);
-            }
             throw t;
         }
     }
