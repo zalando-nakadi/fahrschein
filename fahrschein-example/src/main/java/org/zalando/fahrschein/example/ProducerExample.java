@@ -23,6 +23,7 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class ProducerExample {
         final NakadiClient nakadiClient = NakadiClient
                 .builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withObjectMapper(getObjectMapper())
-                .withAccessTokenProvider(new PlatformAccessTokenProvider("./fahrschein-example/src/main/resources/meta/credentials","nakadi")).build();
+                .withAccessTokenProvider(new PlatformAccessTokenProvider(Paths.get("./fahrschein-example/src/main/resources/meta/credentials"),"nakadi")).build();
 
         while (true) {
             Span span = tracer.spanBuilder("publish_orders").startSpan();

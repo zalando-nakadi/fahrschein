@@ -1,14 +1,9 @@
 package org.zalando.fahrschein;
 
-import lombok.AllArgsConstructor;
-import org.zalando.fahrschein.AccessTokenProvider;
-import org.zalando.fahrschein.Preconditions;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -26,7 +21,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *
  * @see <a href="https://kubernetes-on-aws.readthedocs.io/en/latest/user-guide/zalando-iam.html">Zalando Platform IAM Integration</a>
  */
-@AllArgsConstructor
 public class PlatformAccessTokenProvider implements AccessTokenProvider {
 
     private static final String TOKEN_SECRET_SUFFIX = "-token-secret";
@@ -35,23 +29,28 @@ public class PlatformAccessTokenProvider implements AccessTokenProvider {
 
     private static final String DEFAULT_APPLICATION_NAME = "nakadi";
 
-    private final String directory;
+    private final Path directory;
 
     private final String name;
 
+    public PlatformAccessTokenProvider(final Path directory, final String name) {
+        this.directory = directory;
+        this.name = name;
+    }
+
     public PlatformAccessTokenProvider() {
-        this(DEFAULT_CREDENTIALS_DIRECTORY, DEFAULT_APPLICATION_NAME);
+        this(Paths.get(DEFAULT_CREDENTIALS_DIRECTORY), DEFAULT_APPLICATION_NAME);
     }
 
     public PlatformAccessTokenProvider(final String name) {
-        this(DEFAULT_CREDENTIALS_DIRECTORY, name);
+        this(Paths.get(DEFAULT_CREDENTIALS_DIRECTORY), name);
     }
 
     @Override
     public String getAccessToken() throws IOException {
-        final Path filePath = Paths.get(this.directory, name + TOKEN_SECRET_SUFFIX);
-        final List<String> lines = Files.readAllLines(filePath, UTF_8);
-        Preconditions.checkArgument(!lines.isEmpty(), "Secret file cannot be empty");
-        return Files.readAllLines(filePath, UTF_8).get(0);
+        final Path filePath = this.directory.resolve(name + TOKEN_SECRET_SUFFIX);
+        final String token = new String(Files.readAllBytes(filePath), UTF_8);
+        Preconditions.checkArgument(token.length() != 0, "Secret file cannot be empty");
+        return token;
     }
 }

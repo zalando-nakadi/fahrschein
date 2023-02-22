@@ -19,6 +19,7 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -60,7 +61,7 @@ public class ConsumerExample {
 
         final NakadiClient nakadiClient = NakadiClient
                 .builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-                .withAccessTokenProvider(new PlatformAccessTokenProvider("./fahrschein-example/src/main/resources/meta/credentials","nakadi")).build();
+                .withAccessTokenProvider(new PlatformAccessTokenProvider(Paths.get("./fahrschein-example/src/main/resources/meta/credentials"),"nakadi")).build();
 
         final Set<String> events = new HashSet<>(asList(ORDER_CREATED, ORDER_PAYMENT_STATUS_ACCEPTED));
 
