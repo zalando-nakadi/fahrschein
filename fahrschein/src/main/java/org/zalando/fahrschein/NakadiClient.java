@@ -112,9 +112,9 @@ public class NakadiClient {
         requestHandlers.forEach(requestHandler -> requestHandler.beforeExecute(request));
         try (final Response response = request.execute()) {
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
-            requestHandlers.forEach(requestHandler -> requestHandler.afterExecute(request));
+            requestHandlers.forEach(requestHandler -> requestHandler.afterExecute(request, response));
         } catch (Throwable t) {
-            requestHandlers.forEach(requestHandler -> requestHandler.onError(request));
+            requestHandlers.forEach(requestHandler -> requestHandler.onError(request, t));
             throw t;
         }
     }
