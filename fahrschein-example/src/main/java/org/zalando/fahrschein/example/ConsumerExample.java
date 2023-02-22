@@ -9,7 +9,7 @@ import org.zalando.fahrschein.ExponentialBackoffStrategy;
 import org.zalando.fahrschein.Listener;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.StreamParameters;
-import org.zalando.fahrschein.ZignAccessTokenProvider;
+import org.zalando.fahrschein.domain.PlatformAccessTokenProvider;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.example.domain.MultiEventProcessor;
 import org.zalando.fahrschein.example.domain.OrderEvent;
@@ -60,7 +60,7 @@ public class ConsumerExample {
 
         final NakadiClient nakadiClient = NakadiClient
                 .builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-                .withAccessTokenProvider(new ZignAccessTokenProvider()).build();
+                .withAccessTokenProvider(new PlatformAccessTokenProvider("./fahrschein-example/src/main/resources/meta/credentials","nakadi")).build();
 
         final Set<String> events = new HashSet<>(asList(ORDER_CREATED, ORDER_PAYMENT_STATUS_ACCEPTED));
 

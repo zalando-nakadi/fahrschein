@@ -50,7 +50,7 @@ final Listener<SalesOrderPlaced> listener = events -> {
 // Configure client, defaults to using the high level api with ManagedCursorManger, 
 // using the SimpleRequestFactory without compression
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .build();
 
 // Create subscription using the high level api
@@ -63,6 +63,39 @@ nakadiClient.stream(subscription)
 ```
 
 See [`Main.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/Main.java) for an executable version of the above code.
+
+### OAuth support
+
+#### Default usage of PlatformAccessTokenProvider
+By default fahrschein supports implementation of [Zalando platofrm IAM (OAuth 2.0)](https://kubernetes-on-aws.readthedocs.io/en/latest/user-guide/zalando-iam.html) through `PlatformAccessTokenProvider`. The implementation
+expects a mounted directory with the below structure.
+```
+meta
+└── credentials
+    ├── example-token-secret
+    └── example-token-type
+```
+
+#### Custom authorization
+
+One can override `AuthorizationProvider` interface to support custom authorization flow.
+
+Example:
+```
+//Create custom authorization
+class CustomAuthorization implements AuthorizationProvider{
+
+    @Override
+    public String getAuthorizationHeader() throws IOException {
+        return "null";
+    }
+}
+
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+        .withAccessTokenProvider(new CustomAuthorization())
+        .build();
+```
+
 
 ## Initializing partition offsets
 
@@ -93,7 +126,7 @@ Postgres and Redis cursor managers have been DEPRECATED and removed in version 0
 final CursorManager cursorManager = new InMemoryCursorManager();
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .withCursorManager(cursorManager)
         .build();
 
@@ -213,7 +246,7 @@ final CloseableHttpClient httpClient = HttpClients.custom()
 final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
-        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .build();
 ```
 
@@ -236,7 +269,7 @@ final ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpR
 final RequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.GZIP);
 
 final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
-        .withAccessTokenProvider(new ZignAccessTokenProvider())
+        .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .build();
 
 ```
