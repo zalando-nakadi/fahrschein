@@ -2,7 +2,6 @@ package org.zalando.fahrschein;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.zalando.fahrschein.domain.PlatformAccessTokenProvider;
 
 import java.io.IOException;
 

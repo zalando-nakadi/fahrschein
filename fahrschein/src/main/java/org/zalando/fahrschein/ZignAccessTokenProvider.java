@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
- * @deprecated  As of release 1.0, replaced by {@link  org.zalando.fahrschein.domain.PlatformAccessTokenProvider}
+ * @deprecated  As of release 1.0, replaced by {@link  PlatformAccessTokenProvider}
  */
 @Deprecated
 public class ZignAccessTokenProvider implements AccessTokenProvider {

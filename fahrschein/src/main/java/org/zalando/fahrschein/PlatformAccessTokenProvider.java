@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.domain;
+package org.zalando.fahrschein;
 
 import lombok.AllArgsConstructor;
 import org.zalando.fahrschein.AccessTokenProvider;

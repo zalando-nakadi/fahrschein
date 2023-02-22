@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.domain.Metadata;
-import org.zalando.fahrschein.domain.PlatformAccessTokenProvider;
+import org.zalando.fahrschein.PlatformAccessTokenProvider;
 import org.zalando.fahrschein.example.domain.MultiEventProcessor;
 import org.zalando.fahrschein.example.domain.OrderCreatedEvent;
 import org.zalando.fahrschein.http.api.ContentEncoding;
