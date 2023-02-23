@@ -109,8 +109,8 @@ public class NakadiClient {
             objectMapper.writeValue(body, events);
         }
 
-        eventPublishingHandlers.forEach(requestHandler -> requestHandler.onPublish(eventName, events));
         try (final Response response = request.execute()) {
+            eventPublishingHandlers.forEach(requestHandler -> requestHandler.onPublish(eventName, events));
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
             eventPublishingHandlers.forEach(requestHandler -> requestHandler.afterPublish(response));
         } catch (Throwable t) {
