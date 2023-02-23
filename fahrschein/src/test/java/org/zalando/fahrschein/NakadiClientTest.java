@@ -33,18 +33,6 @@ import static org.mockito.Mockito.verify;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
 
 public class NakadiClientTest {
-    public static class SomeEvent {
-        private final String id;
-
-        public SomeEvent(String id) {
-            this.id = id;
-        }
-
-        public String getId() {
-            return id;
-        }
-    }
-
     private CursorManager cursorManager;
 
     private MockServer server;
@@ -387,7 +375,17 @@ public class NakadiClientTest {
 
         server.verify();
         assertEquals("Event publishing of [some-event] returned status [aborted] in step [publishing] with detail [baz]", expectedException.getMessage());
-
     }
 
+    public static class SomeEvent {
+        private final String id;
+
+        public SomeEvent(String id) {
+            this.id = id;
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
 }
