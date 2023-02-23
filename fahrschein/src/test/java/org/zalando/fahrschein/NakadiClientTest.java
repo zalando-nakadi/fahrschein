@@ -39,6 +39,10 @@ public class NakadiClientTest {
         public SomeEvent(String id) {
             this.id = id;
         }
+
+        public String getId() {
+            return id;
+        }
     }
 
     private CursorManager cursorManager;
