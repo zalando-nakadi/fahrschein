@@ -1,31 +1,42 @@
 package org.zalando.fahrschein.http.api;
 
+import java.util.List;
+
 /**
- * Interface that is offering a way to add additional features around the {@code NakadiClient}
+ * Interface that is offering a way to add additional features around the {@code NakadiClient}.
+ *
+ * As the methods of this class are invoked on every publish request, we shouldn't
+ *
+ * - do heavy computations as it might affect performance significantly
+ * - do modification of requests
  */
 public interface RequestHandler {
 
     /**
-     * This method is called by the {@code NakadiClient} before
-     * a request is going to be executed.
-     * @param request that is going to be executed after the invocation
+     * This method is called by the {@code NakadiClient} when a request towards Nakadi is going to be sent.
+     * For example, it can be used to record things before that.
+     *
+     * @param eventName that is used for the published events
+     * @param events that are published
+     * @param <T> type of events that we publish
      */
-    void beforeExecute(Request request);
+    <T> void onPublish(String eventName, List<T> events);
 
     /**
-     * This method is called by the {@code NakadiClient} after
-     * a request got executed.
-     * @param request that got send to Nakadi
-     * @param response that we received from Nakadi
+     * This method is invoked after the publishing of events has happened.
+     * It can be used to evaluate the given response or others like closing a trace.
+     *
+     * @param response
      */
-    void afterExecute(Request request, Response response);
+    void afterPublish(Response response);
 
     /**
-     * This method is called by the {@code NakadiClient} in case
-     * an exception got thrown while sending the request.
-     * The exception itself is rethrown by the client.
-     * @param request that should be sent to Nakadi
-     * @param t Exception that got thrown
+     * Invoked when publishing of events failed.
+     *
+     * @param events that failed to be published
+     * @param t the throwable we experienced while publishing
+     * @param <T> type of events that we publish
      */
-    void onError(Request request, Throwable t);
+    <T> void onError(List<T> events, Throwable t);
+
 }
