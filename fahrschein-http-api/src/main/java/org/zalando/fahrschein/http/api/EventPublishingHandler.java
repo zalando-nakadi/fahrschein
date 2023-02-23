@@ -3,14 +3,12 @@ package org.zalando.fahrschein.http.api;
 import java.util.List;
 
 /**
- * Interface that is offering a way to add additional features around the {@code NakadiClient}.
- *
+ * Interface that offers a way to add additional features around the {@code NakadiClient}.
  * As the methods of this class are invoked on every publish request, we shouldn't
- *
  * - do heavy computations as it might affect performance significantly
  * - do modification of requests
  */
-public interface RequestHandler {
+public interface EventPublishingHandler {
 
     /**
      * This method is called by the {@code NakadiClient} when a request towards Nakadi is going to be sent.
@@ -26,7 +24,7 @@ public interface RequestHandler {
      * This method is invoked after the publishing of events has happened.
      * It can be used to evaluate the given response or others like closing a trace.
      *
-     * @param response
+     * @param response that was received after publishing
      */
     void afterPublish(Response response);
 

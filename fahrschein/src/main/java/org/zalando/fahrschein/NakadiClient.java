@@ -12,7 +12,7 @@ import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
-import org.zalando.fahrschein.http.api.RequestHandler;
+import org.zalando.fahrschein.http.api.EventPublishingHandler;
 import org.zalando.fahrschein.http.api.Response;
 
 import javax.annotation.Nullable;
@@ -43,7 +43,7 @@ public class NakadiClient {
     private final ObjectMapper internalObjectMapper;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
-    private final List<RequestHandler> requestHandlers;
+    private final List<EventPublishingHandler> eventPublishingHandlers;
 
     /**
      * Returns a new Builder that will make use of the given {@code RequestFactory}.
@@ -62,16 +62,16 @@ public class NakadiClient {
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
-        this.requestHandlers = new ArrayList<>();
+        this.eventPublishingHandlers = new ArrayList<>();
     }
 
-    NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager, List<RequestHandler> requestHandlers) {
+    NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager, List<EventPublishingHandler> eventPublishingHandlers) {
         this.baseUri = baseUri;
         this.requestFactory = requestFactory;
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
-        this.requestHandlers = requestHandlers;
+        this.eventPublishingHandlers = eventPublishingHandlers;
     }
 
 
@@ -109,12 +109,12 @@ public class NakadiClient {
             objectMapper.writeValue(body, events);
         }
 
-        requestHandlers.forEach(requestHandler -> requestHandler.onPublish(eventName, events));
+        eventPublishingHandlers.forEach(requestHandler -> requestHandler.onPublish(eventName, events));
         try (final Response response = request.execute()) {
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
-            requestHandlers.forEach(requestHandler -> requestHandler.afterPublish(response));
+            eventPublishingHandlers.forEach(requestHandler -> requestHandler.afterPublish(response));
         } catch (Throwable t) {
-            requestHandlers.forEach(requestHandler -> requestHandler.onError(events, t));
+            eventPublishingHandlers.forEach(requestHandler -> requestHandler.onError(events, t));
             throw t;
         }
     }

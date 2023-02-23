@@ -4,7 +4,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
-import org.zalando.fahrschein.http.api.RequestHandler;
+import org.zalando.fahrschein.http.api.EventPublishingHandler;
 import org.zalando.fahrschein.http.api.Response;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
 /**
  * Instruments publishing requests to Nakadi by making use of OpenTelemetry.
  */
-public class InstrumentedPublishingHandler implements RequestHandler {
+public class InstrumentedPublishingHandler implements EventPublishingHandler {
 
     private final Tracer tracer;
 
