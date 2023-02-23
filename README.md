@@ -76,6 +76,8 @@ meta
     └── example-token-type
 ```
 
+The resulting token would be "Bearer your-secret-token"
+
 #### Custom authorization
 
 One can override `AuthorizationProvider` interface to support custom authorization flow.
@@ -87,7 +89,7 @@ class CustomAuthorization implements AuthorizationProvider{
 
     @Override
     public String getAuthorizationHeader() throws IOException {
-        return "null";
+        return "your-secret-token";
     }
 }
 
