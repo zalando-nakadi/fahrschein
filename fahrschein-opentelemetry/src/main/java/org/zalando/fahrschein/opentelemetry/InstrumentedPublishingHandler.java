@@ -37,7 +37,7 @@ public class InstrumentedPublishingHandler implements EventPublishingHandler {
         span.makeCurrent();
     }
 
-    public void afterPublish(Response response) {
+    public void afterPublish() {
         Span.current().end();
     }
 

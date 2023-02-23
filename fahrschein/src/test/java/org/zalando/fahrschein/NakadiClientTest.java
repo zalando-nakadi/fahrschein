@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -299,7 +298,7 @@ public class NakadiClientTest {
 
         server.verify();
         verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
-        verify(eventPublishingHandler, Mockito.atMostOnce()).afterPublish(any());
+        verify(eventPublishingHandler, Mockito.atMostOnce()).afterPublish();
     }
 
 

@@ -38,7 +38,7 @@ public class InstrumentedPublishingHandler implements EventPublishingHandler {
     }
 
     @Override
-    public void afterPublish(Response response) {
+    public void afterPublish() {
         tracer.activeSpan().finish();
     }
 

@@ -41,7 +41,7 @@ class InstrumentedPublishingHandlerTest {
     public void successfulPublish() {
         //When
         instrumentedPublishingHandler.onPublish("test_event", Arrays.asList("ev1", "ev2"));
-        instrumentedPublishingHandler.afterPublish(response);
+        instrumentedPublishingHandler.afterPublish();
 
         // then
         assertEquals(1, tracer.finishedSpans().size(), "finished spans");

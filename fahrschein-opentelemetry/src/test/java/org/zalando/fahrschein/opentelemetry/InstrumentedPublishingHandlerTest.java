@@ -9,9 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.zalando.fahrschein.http.api.Response;
 
 
 import java.util.Arrays;
@@ -27,9 +25,6 @@ class InstrumentedPublishingHandlerTest {
 
     private InstrumentedPublishingHandler instrumentedHandler;
 
-    @Mock
-    private Response response;
-
     @BeforeEach
     public void before() {
         instrumentedHandler = new InstrumentedPublishingHandler(tracer);
@@ -43,7 +38,7 @@ class InstrumentedPublishingHandlerTest {
     public void beforePublishTest() {
         // when
         instrumentedHandler.onPublish("test_event", Arrays.asList("ev1", "ev2"));
-        instrumentedHandler.afterPublish(response);
+        instrumentedHandler.afterPublish();
         // then
         otelTesting.assertTraces()
                 .hasTracesSatisfyingExactly(

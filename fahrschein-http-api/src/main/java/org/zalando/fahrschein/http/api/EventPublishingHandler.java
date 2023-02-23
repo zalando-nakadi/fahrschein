@@ -22,11 +22,9 @@ public interface EventPublishingHandler {
 
     /**
      * This method is invoked after the publishing of events has happened.
-     * It can be used to evaluate the given response or others like closing a trace.
      *
-     * @param response that was received after publishing
      */
-    void afterPublish(Response response);
+    void afterPublish();
 
     /**
      * Invoked when publishing of events failed.
