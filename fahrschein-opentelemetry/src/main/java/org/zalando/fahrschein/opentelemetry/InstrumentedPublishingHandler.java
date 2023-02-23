@@ -13,7 +13,7 @@ import java.util.Locale;
 import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
 
 /**
- * Instruments publishing requests to Nakadi.
+ * Instruments publishing requests to Nakadi by making use of OpenTelemetry.
  */
 public class InstrumentedPublishingHandler implements RequestHandler {
 
