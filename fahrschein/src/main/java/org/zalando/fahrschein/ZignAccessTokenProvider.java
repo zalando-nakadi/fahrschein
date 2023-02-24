@@ -14,6 +14,10 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated  As of release 1.0, replaced by {@link  PlatformAccessTokenProvider}
+ */
+@Deprecated
 public class ZignAccessTokenProvider implements AccessTokenProvider {
     private static final Logger LOG = LoggerFactory.getLogger(ZignAccessTokenProvider.class);
     private static final long CACHE_DURATION = 5 * 60 * 1000L;
