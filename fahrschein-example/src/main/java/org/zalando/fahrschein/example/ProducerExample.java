@@ -12,7 +12,7 @@ import org.javamoney.moneta.Money;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.NakadiClient;
-import org.zalando.fahrschein.ZignAccessTokenProvider;
+import org.zalando.fahrschein.PlatformAccessTokenProvider;
 import org.zalando.fahrschein.domain.Metadata;
 import org.zalando.fahrschein.example.domain.MultiEventProcessor;
 import org.zalando.fahrschein.example.domain.OrderCreatedEvent;
@@ -23,6 +23,7 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class ProducerExample {
         final NakadiClient nakadiClient = NakadiClient
                 .builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
                 .withObjectMapper(getObjectMapper())
-                .withAccessTokenProvider(new ZignAccessTokenProvider()).build();
+                .withAccessTokenProvider(new PlatformAccessTokenProvider(Paths.get("./fahrschein-example/src/main/resources/meta/credentials"),"nakadi")).build();
 
         while (true) {
             Span span = tracer.spanBuilder("publish_orders").startSpan();
