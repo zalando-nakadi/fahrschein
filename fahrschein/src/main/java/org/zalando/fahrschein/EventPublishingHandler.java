@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.http.api;
+package org.zalando.fahrschein;
 
 import java.util.List;
 

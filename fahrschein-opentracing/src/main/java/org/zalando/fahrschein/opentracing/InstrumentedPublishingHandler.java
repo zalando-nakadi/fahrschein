@@ -3,8 +3,7 @@ package org.zalando.fahrschein.opentracing;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.tag.Tags;
-import org.zalando.fahrschein.http.api.EventPublishingHandler;
-import org.zalando.fahrschein.http.api.Response;
+import org.zalando.fahrschein.EventPublishingHandler;
 
 import java.util.List;
 import java.util.Locale;

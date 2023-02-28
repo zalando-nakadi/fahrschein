@@ -12,7 +12,6 @@ import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.http.api.ContentType;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
-import org.zalando.fahrschein.http.api.EventPublishingHandler;
 import org.zalando.fahrschein.http.api.Response;
 
 import javax.annotation.Nullable;

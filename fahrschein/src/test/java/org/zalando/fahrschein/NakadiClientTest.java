@@ -8,7 +8,6 @@ import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.http.api.ContentType;
-import org.zalando.fahrschein.http.api.EventPublishingHandler;
 
 import java.io.IOException;
 import java.net.URI;

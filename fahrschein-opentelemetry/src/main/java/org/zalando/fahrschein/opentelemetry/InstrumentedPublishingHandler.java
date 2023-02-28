@@ -4,8 +4,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
-import org.zalando.fahrschein.http.api.EventPublishingHandler;
-import org.zalando.fahrschein.http.api.Response;
+import org.zalando.fahrschein.EventPublishingHandler;
 
 import java.util.List;
 import java.util.Locale;
