@@ -21,7 +21,9 @@ public interface EventPublishingHandler {
     <T> void onPublish(String eventName, List<T> events);
 
     /**
-     * This method is invoked after the publishing of events has happened.
+     * This method is invoked after the publishing of events has happened,
+     * but only if the publishing didn't face an Exception otherwise
+     * onError will be invoked.
      *
      */
     void afterPublish();
@@ -29,7 +31,7 @@ public interface EventPublishingHandler {
     /**
      * Invoked when publishing of events failed.
      *
-     * @param events that failed to be published
+     * @param events original list of events that we tried to publish
      * @param t the throwable we experienced while publishing
      * @param <T> type of events that we publish
      */
