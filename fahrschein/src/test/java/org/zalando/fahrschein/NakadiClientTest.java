@@ -3,6 +3,7 @@ package org.zalando.fahrschein;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
@@ -24,21 +25,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
 
 public class NakadiClientTest {
-    public static class SomeEvent {
-        private final String id;
-
-        public SomeEvent(String id) {
-            this.id = id;
-        }
-
-        public String getId() {
-            return id;
-        }
-    }
+    private CursorManager cursorManager;
 
     private MockServer server;
     private NakadiClient client;
@@ -47,7 +40,7 @@ public class NakadiClientTest {
     public void setup() {
         final MockServer clientHttpRequestFactory = new MockServer();
 
-        final CursorManager cursorManager = mock(CursorManager.class);
+        cursorManager = mock(CursorManager.class);
 
         final NakadiClient nakadiClient = NakadiClient.builder(URI.create("http://example.com/"), clientHttpRequestFactory)
                 .withCursorManager(cursorManager)
@@ -281,6 +274,61 @@ public class NakadiClientTest {
         client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
     }
 
+
+    @Test
+    public void shouldPublishEventsWithRequestHandler() throws IOException {
+        server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
+                .andExpectJsonPath("$[0].id", equalTo("1"))
+                .andExpectJsonPath("$[1].id", equalTo("2"))
+                .andRespondWith(200)
+                .setup();
+
+        EventPublishingHandler eventPublishingHandler = mock(EventPublishingHandler.class);
+
+        client = NakadiClient.builder(URI.create("http://example.com/"), server)
+                .withCursorManager(this.cursorManager)
+                .withRequestHandler(eventPublishingHandler)
+                .build();
+
+        String eventName = "foobar";
+        List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
+
+        client.publish("foobar", someEvents);
+
+        server.verify();
+        verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
+        verify(eventPublishingHandler, Mockito.atMostOnce()).afterPublish();
+    }
+
+
+    @Test
+    public void shouldPublishEventsWithRequestHandlerAndFail() throws IOException {
+        server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
+                .andExpectJsonPath("$[0].id", equalTo("1"))
+                .andExpectJsonPath("$[1].id", equalTo("2"))
+                .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
+                .setup();
+
+        EventPublishingHandler eventPublishingHandler = mock(EventPublishingHandler.class);
+
+        client = NakadiClient.builder(URI.create("http://example.com/"), server)
+                .withCursorManager(this.cursorManager)
+                .withRequestHandler(eventPublishingHandler)
+                .build();
+
+        String eventName = "foobar";
+        List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
+
+        EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
+            client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+        });
+
+        server.verify();
+        assertEquals("Event publishing of [event-one] returned status [failed] in step [validating] with detail [baz]", expectedException.getMessage());
+        verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
+        verify(eventPublishingHandler, Mockito.atMostOnce()).onError(eq(someEvents), eq(expectedException));
+    }
+
     @Test
     public void shouldHandleMultiStatusWhenPublishing() throws IOException {
         server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
@@ -325,7 +373,17 @@ public class NakadiClientTest {
 
         server.verify();
         assertEquals("Event publishing of [some-event] returned status [aborted] in step [publishing] with detail [baz]", expectedException.getMessage());
-
     }
 
+    public static class SomeEvent {
+        private final String id;
+
+        public SomeEvent(String id) {
+            this.id = id;
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
 }

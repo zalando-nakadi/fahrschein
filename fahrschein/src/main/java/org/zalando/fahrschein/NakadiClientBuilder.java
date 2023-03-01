@@ -5,6 +5,9 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 
 import javax.annotation.Nullable;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.zalando.fahrschein.Preconditions.checkNotNull;
 
@@ -19,18 +22,34 @@ public final class NakadiClientBuilder {
     private final RequestFactory clientHttpRequestFactory;
     @Nullable
     private final CursorManager cursorManager;
+    @Nullable
+    private final List<EventPublishingHandler> eventPublishingHandlers;
 
     NakadiClientBuilder(final URI baseUri, RequestFactory requestFactory) {
-        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null);
+        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, Collections.emptyList());
     }
 
-    private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider, @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
+    private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
+                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.authorizationProvider = authorizationProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
+        this.eventPublishingHandlers = new ArrayList<>();
     }
+
+    public NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
+                               @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager,
+                               @Nullable List<EventPublishingHandler> eventPublishingHandlers) {
+        this.objectMapper = objectMapper;
+        this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
+        this.authorizationProvider = authorizationProvider;
+        this.clientHttpRequestFactory = clientHttpRequestFactory;
+        this.cursorManager = cursorManager;
+        this.eventPublishingHandlers = eventPublishingHandlers;
+    }
+
 
     public NakadiClientBuilder withObjectMapper(ObjectMapper objectMapper) {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
@@ -46,6 +65,15 @@ public final class NakadiClientBuilder {
 
     public NakadiClientBuilder withCursorManager(CursorManager cursorManager) {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
+    }
+
+    public NakadiClientBuilder withRequestHandlers(List<EventPublishingHandler> eventPublishingHandlers) {
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers);
+    }
+
+    public NakadiClientBuilder withRequestHandler(EventPublishingHandler eventPublishingHandler) {
+        eventPublishingHandlers.add(eventPublishingHandler);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers);
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
@@ -70,6 +98,6 @@ public final class NakadiClientBuilder {
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
 
-        return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager);
+        return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager, eventPublishingHandlers);
     }
 }

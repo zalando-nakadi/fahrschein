@@ -33,7 +33,6 @@ class ProblemHandlingRequest implements Request {
     @Override
     public Response execute() throws IOException {
         final Response response = request.execute();
-
         try {
             final int statusCode = response.getStatusCode();
             if (statusCode == 207 || statusCode >= 400) {
