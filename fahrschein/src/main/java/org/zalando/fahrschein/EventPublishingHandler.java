@@ -22,14 +22,13 @@ public interface EventPublishingHandler {
 
     /**
      * This method is invoked after the publishing of events has happened,
-     * but only if the publishing didn't face an Exception otherwise
-     * onError will be invoked.
+     * regardless if an error occurred during publishing or not.
      *
      */
     void afterPublish();
 
     /**
-     * Invoked when publishing of events failed.
+     * Invoked when publishing of events failed, before afterPublish.
      *
      * @param events original list of events that we tried to publish
      * @param t the throwable we experienced while publishing

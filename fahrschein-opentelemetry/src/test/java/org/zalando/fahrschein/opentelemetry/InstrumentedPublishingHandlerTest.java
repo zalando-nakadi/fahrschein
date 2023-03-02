@@ -62,6 +62,7 @@ class InstrumentedPublishingHandlerTest {
             // when
             instrumentedHandler.onPublish("test_event", Arrays.asList("ev1", "ev2"));
             instrumentedHandler.onError(Arrays.asList("ev1", "ev2"), somethingIsWrong);
+            instrumentedHandler.afterPublish();
 
             // then
             otelTesting.assertTraces()

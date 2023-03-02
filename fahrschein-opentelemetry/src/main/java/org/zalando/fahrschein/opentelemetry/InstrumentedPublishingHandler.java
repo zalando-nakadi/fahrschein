@@ -42,7 +42,7 @@ public class InstrumentedPublishingHandler implements EventPublishingHandler {
 
     @Override
     public <T> void onError(List<T> events, Throwable t) {
-        Span.current().setStatus(StatusCode.ERROR).recordException(t).end();
+        Span.current().setStatus(StatusCode.ERROR).recordException(t);
     }
 
     // changes must be applied to both OpenTracing and OpenTelemetry implementations.

@@ -44,7 +44,6 @@ public class InstrumentedPublishingHandler implements EventPublishingHandler {
     @Override
     public <T> void onError(List<T> events, Throwable t) {
         tracer.activeSpan().setTag(ERROR, true);
-        tracer.activeSpan().finish();
     }
 
     // changes must be applied to both OpenTracing and OpenTelemetry implementations.
