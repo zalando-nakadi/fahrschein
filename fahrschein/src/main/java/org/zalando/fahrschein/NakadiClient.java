@@ -22,8 +22,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static org.zalando.fahrschein.Preconditions.checkArgument;
 import static org.zalando.fahrschein.Preconditions.checkState;
@@ -113,14 +115,23 @@ public class NakadiClient {
             eventPublishingHandlers.forEach(requestHandler -> requestHandler.onPublish(eventName, events));
             response = request.execute();
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
-            eventPublishingHandlers.forEach(requestHandler -> requestHandler.afterPublish());
+            reverseForEach(EventPublishingHandler::afterPublish);
         } catch (Throwable t) {
-            eventPublishingHandlers.forEach(requestHandler -> requestHandler.onError(events, t));
+            reverseForEach(requestHandler -> requestHandler.onError(events, t));
             throw t;
         } finally {
             if(response != null) {
                 response.close();
             }
+        }
+    }
+
+    void reverseForEach(Consumer<EventPublishingHandler> action) {
+        final ListIterator<EventPublishingHandler> iterator = eventPublishingHandlers
+                .listIterator(eventPublishingHandlers.size());
+
+        while (iterator.hasPrevious()) {
+            action.accept(iterator.previous());
         }
     }
 
