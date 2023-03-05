@@ -26,6 +26,10 @@ public class Subscription {
         this.authorization = authorization;
     }
 
+    public Subscription(String id, String owningApplication, Set<String> eventTypes) {
+        this(id, owningApplication, eventTypes, null, null, null);
+    }
+
 
     public String getId() {
         return id;

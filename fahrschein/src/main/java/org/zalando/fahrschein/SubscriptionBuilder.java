@@ -63,6 +63,21 @@ public class SubscriptionBuilder {
         return new SubscriptionBuilder(nakadiClient, applicationName, eventNames, consumerGroup, readFrom, initialCursors, authorization);
     }
 
+    /**
+     * <p>This method allows clients to stream events on the given subscription ID.</p>
+     *
+     * <p>Note: Since the subscription ID is already provided, fahrschein will not attempt
+     * to create a new subscription for the events and will therefore will only consider applicationName
+     * and eventNames and will ignore other SubscriptionBuilder parameters.
+     *</p>
+     *
+     * @param subscriptionId event(s) subscription ID.
+     * @return
+     */
+    public Subscription subscribe(final String subscriptionId) {
+        return nakadiClient.subscribe(applicationName, eventNames, subscriptionId);
+    }
+
     public Subscription subscribe() throws IOException {
         return nakadiClient.subscribe(applicationName, eventNames, consumerGroup, readFrom, initialCursors, authorization);
     }
