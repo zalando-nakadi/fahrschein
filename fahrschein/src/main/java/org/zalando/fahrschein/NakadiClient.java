@@ -120,13 +120,7 @@ public class NakadiClient {
             if(response != null) {
                 response.close();
             }
-            eventPublishingHandlers.descendingIterator().forEachRemaining(handler -> {
-                try {
-                    handler.afterPublish();
-                } catch (Exception e) {
-                    LOG.warn("Exception occurred during callbacks to eventPublishingHandlers", e);
-                }
-            });
+            eventPublishingHandlers.descendingIterator().forEachRemaining(handler -> handler.afterPublish());
         }
     }
 
