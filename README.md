@@ -64,7 +64,38 @@ nakadiClient.stream(subscription)
 
 See [`Main.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/Main.java) for an executable version of the above code.
 
-### OAuth support
+## Subscribe to events with an existing subscription ID
+One could also use a pre-existing subscription ID to stream events. This will force fahrschein not to create a subscription for the given event and will use the provided subscription ID.
+
+
+```java
+final String eventName = "sales-order-placed";
+
+// Create a Listener for our event
+final Listener<SalesOrderPlaced> listener = events -> {
+        for (SalesOrderPlaced salesOrderPlaced : events) {
+        LOG.info("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
+       }
+};
+
+// Configure client, defaults to using the high level api with ManagedCursorManger, 
+// using the SimpleRequestFactory without compression
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+        .withAccessTokenProvider(new PlatformAccessTokenProvider())
+        .build();
+
+// Create subscription using subscription ID
+final Subscription subscription = nakadiClient
+        .subscription("application-name",eventName)
+        .subscribe("subscription-id");
+
+// Start streaming, the listen call will block and automatically reconnect on IOException
+nakadiClient.stream(subscription)
+        .listen(SalesOrderPlaced.class, listener);
+
+```
+
+## OAuth support
 
 #### Default usage of PlatformAccessTokenProvider
 By default fahrschein supports implementation of [Zalando platofrm IAM (OAuth 2.0)](https://kubernetes-on-aws.readthedocs.io/en/latest/user-guide/zalando-iam.html) through `PlatformAccessTokenProvider`. The implementation
