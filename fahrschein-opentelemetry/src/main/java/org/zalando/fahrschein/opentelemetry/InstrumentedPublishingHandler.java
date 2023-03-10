@@ -4,6 +4,8 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.EventPublishingHandler;
 
 import java.util.List;
@@ -16,6 +18,9 @@ import static io.opentelemetry.api.trace.SpanKind.PRODUCER;
  */
 public class InstrumentedPublishingHandler implements EventPublishingHandler {
 
+
+    private static final Logger LOG = LoggerFactory.getLogger(InstrumentedPublishingHandler.class);
+
     private final Tracer tracer;
 
     public InstrumentedPublishingHandler(Tracer tracer) {
@@ -24,25 +29,37 @@ public class InstrumentedPublishingHandler implements EventPublishingHandler {
 
     @Override
     public <T> void onPublish(String eventName, List<T> events) {
-        Span span = tracer
-                .spanBuilder("send_" + eventName)
-                .setParent(Context.current())
-                .setSpanKind(PRODUCER)
-                .setAttribute("messaging.destination_kind", "topic")
-                .setAttribute("messaging.destination", eventName)
-                .setAttribute("messaging.system", "Nakadi")
-                .setAttribute("messaging.message_payload_size", sizeBucket(events.size()))
-                .startSpan();
-        span.makeCurrent();
+        try {
+            Span span = tracer
+                    .spanBuilder("send_" + eventName)
+                    .setParent(Context.current())
+                    .setSpanKind(PRODUCER)
+                    .setAttribute("messaging.destination_kind", "topic")
+                    .setAttribute("messaging.destination", eventName)
+                    .setAttribute("messaging.system", "Nakadi")
+                    .setAttribute("messaging.message_payload_size", sizeBucket(events.size()))
+                    .startSpan();
+            span.makeCurrent();
+        } catch (Exception e) {
+            LOG.error("Exception during onPublish handling", e);
+        }
     }
 
     public void afterPublish() {
-        Span.current().end();
+        try {
+            Span.current().end();
+        } catch (Exception e) {
+            LOG.error("Exception during afterPublish handling", e);
+        }
     }
 
     @Override
     public <T> void onError(List<T> events, Throwable t) {
-        Span.current().setStatus(StatusCode.ERROR).recordException(t).end();
+        try {
+            Span.current().setStatus(StatusCode.ERROR).recordException(t);
+        } catch (Exception e) {
+            LOG.error("Exception during onError handling", e);
+        }
     }
 
     // changes must be applied to both OpenTracing and OpenTelemetry implementations.

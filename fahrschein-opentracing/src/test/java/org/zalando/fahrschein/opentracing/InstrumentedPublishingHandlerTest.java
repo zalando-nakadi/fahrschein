@@ -57,6 +57,7 @@ class InstrumentedPublishingHandlerTest {
         // when
         instrumentedPublishingHandler.onPublish("test_event", Arrays.asList("ev1", "ev2"));
         instrumentedPublishingHandler.onError(Arrays.asList("ev1", "ev2"), somethingWentWrong);
+        instrumentedPublishingHandler.afterPublish();
 
         // then
         assertEquals(1, tracer.finishedSpans().size(), "finished spans");

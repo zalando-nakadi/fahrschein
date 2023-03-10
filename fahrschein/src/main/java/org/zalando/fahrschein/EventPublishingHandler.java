@@ -14,6 +14,9 @@ public interface EventPublishingHandler {
      * This method is called by the {@code NakadiClient} when a request towards Nakadi is going to be sent.
      * For example, it can be used to record things before that.
      *
+     * Every {@code EventPublishingHandler} implementation is responsible for catching and logging exceptions
+     * happening in this method.
+     *
      * @param eventName that is used for the published events
      * @param events that are published
      * @param <T> type of events that we publish
@@ -22,14 +25,19 @@ public interface EventPublishingHandler {
 
     /**
      * This method is invoked after the publishing of events has happened,
-     * but only if the publishing didn't face an Exception otherwise
-     * onError will be invoked.
+     * regardless if an error occurred during publishing or not.
+     *
+     * Every {@code EventPublishingHandler} implementation is responsible for catching and logging exceptions
+     * happening in this method.
      *
      */
     void afterPublish();
 
     /**
-     * Invoked when publishing of events failed.
+     * Invoked when publishing of events failed, before afterPublish.
+     *
+     * Every {@code EventPublishingHandler} implementation is responsible for catching and logging exceptions
+     * happening in this method.
      *
      * @param events original list of events that we tried to publish
      * @param t the throwable we experienced while publishing

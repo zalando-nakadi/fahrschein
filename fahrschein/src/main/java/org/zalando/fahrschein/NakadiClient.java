@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class NakadiClient {
     private final ObjectMapper internalObjectMapper;
     private final ObjectMapper objectMapper;
     private final CursorManager cursorManager;
-    private final List<EventPublishingHandler> eventPublishingHandlers;
+    private final LinkedList<EventPublishingHandler> eventPublishingHandlers;
 
     /**
      * Returns a new Builder that will make use of the given {@code RequestFactory}.
@@ -61,7 +61,7 @@ public class NakadiClient {
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
-        this.eventPublishingHandlers = new ArrayList<>();
+        this.eventPublishingHandlers = new LinkedList<>();
     }
 
     NakadiClient(URI baseUri, RequestFactory requestFactory, ObjectMapper objectMapper, CursorManager cursorManager, List<EventPublishingHandler> eventPublishingHandlers) {
@@ -70,7 +70,7 @@ public class NakadiClient {
         this.objectMapper = objectMapper;
         this.internalObjectMapper = DefaultObjectMapper.INSTANCE;
         this.cursorManager = cursorManager;
-        this.eventPublishingHandlers = eventPublishingHandlers;
+        this.eventPublishingHandlers = new LinkedList<>(eventPublishingHandlers);
     }
 
 
@@ -110,17 +110,17 @@ public class NakadiClient {
 
         Response response = null;
         try {
-            eventPublishingHandlers.forEach(requestHandler -> requestHandler.onPublish(eventName, events));
+            eventPublishingHandlers.forEach(handler -> handler.onPublish(eventName, events));
             response = request.execute();
             LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
-            eventPublishingHandlers.forEach(requestHandler -> requestHandler.afterPublish());
         } catch (Throwable t) {
-            eventPublishingHandlers.forEach(requestHandler -> requestHandler.onError(events, t));
+            eventPublishingHandlers.descendingIterator().forEachRemaining(handler -> handler.onError(events, t));
             throw t;
         } finally {
             if(response != null) {
                 response.close();
             }
+            eventPublishingHandlers.descendingIterator().forEachRemaining(handler -> handler.afterPublish());
         }
     }
 
