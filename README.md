@@ -65,8 +65,8 @@ nakadiClient.stream(subscription)
 See [`Main.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/Main.java) for an executable version of the above code.
 
 ## Subscribe to events with an existing subscription ID
-One could also use a pre-existing subscription ID to stream events. This will force fahrschein not to create a subscription for the given event and will use the provided subscription ID.
 
+One could also use a pre-existing subscription ID to stream events. This will force fahrschein not to create a subscription for the given event and will use the provided subscription ID.
 
 ```java
 final String eventName = "sales-order-placed";
