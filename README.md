@@ -98,7 +98,7 @@ nakadiClient.stream(subscription)
 By default nakadi will start streaming from the most recent offset. The initial offsets can be changed by requesting data about partitions from Nakadi and using this data to configure the `CursorManager`.
 
 ```java
-final List<Partition> partitions = nakadiClient.getPartitions(eventName);
+List<Partition> partitions = nakadiClient.getPartitions(eventName);
 
 // NakadiClient can be configured to start reading from the oldest available offset in each partition
 nakadiClient.stream(eventName).readFromBegin(partitions);
@@ -165,7 +165,7 @@ class CustomAuthorization implements AuthorizationProvider{
     }
 }
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
         .withAccessTokenProvider(new CustomAuthorization())
         .build();
 ```
@@ -195,20 +195,20 @@ Fahrschein supports different exponential backoff strategies when streaming even
 The stream implementation gracefully handles thread interruption, so it is possible to stop a running thread and resume consuming events by re-submitting the `Runnable`:
 
 ```java
-final ExecutorService executorService = Executors.newSingleThreadExecutor();
+ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-final Runnable runnable = nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
+Runnable runnable = nakadiClient.stream(SALES_ORDER_SERVICE_ORDER_PLACED)
         .runnable(SalesOrderPlaced.class, listener)
         .unchecked();
 
 // start consuming events
-final Future<?> future = executorService.submit(runnable);
+Future<?> future = executorService.submit(runnable);
 
 // stop consuming events
 future.cancel(true);
 
 // resume consuming events
-final Future<?> future2 = executorService.submit(runnable);
+Future<?> future2 = executorService.submit(runnable);
 ```
 
 ## `RequestFactory` implementations
@@ -239,12 +239,12 @@ There is also a version using apache http components named `HttpComponentsReques
 The apache version is useful when you want more control about the number of parallel connections in total or per host. The following example shows how to use a customized `HttpClient`:
 
 ```java
-final RequestConfig config = RequestConfig.custom().setSocketTimeout(readTimeout)
+RequestConfig config = RequestConfig.custom().setSocketTimeout(readTimeout)
                                                    .setConnectTimeout(connectTimeout)
                                                    .setConnectionRequestTimeout(connectTimeout)
                                                    .build();
 
-final CloseableHttpClient httpClient = HttpClients.custom()
+CloseableHttpClient httpClient = HttpClients.custom()
                                                   .setConnectionTimeToLive(readTimeout, TimeUnit.MILLISECONDS)
                                                   .disableAutomaticRetries()
                                                   .setDefaultRequestConfig(config)
@@ -253,9 +253,9 @@ final CloseableHttpClient httpClient = HttpClients.custom()
                                                   .setMaxConnPerRoute(20)
                                                   .build();
 
-final RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
+RequestFactory requestFactory = new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
         .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .build();
 ```
@@ -275,10 +275,10 @@ Example using OkHttp 3.x:
 
 ```java
 
-final ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory();
-final RequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.GZIP);
+ClientHttpRequestFactory clientHttpRequestFactory = new OkHttp3ClientHttpRequestFactory();
+RequestFactory requestFactory = new SpringRequestFactory(clientHttpRequestFactory, ContentEncoding.GZIP);
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
         .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .build();
 
@@ -300,9 +300,9 @@ There is one `CursorManager` implementation left: InMemory.
 Postgres and Redis cursor managers have been DEPRECATED and removed in version 0.22.0 of Fahrschein.
 
 ```java
-final CursorManager cursorManager = new InMemoryCursorManager();
+CursorManager cursorManager = new InMemoryCursorManager();
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
         .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .withCursorManager(cursorManager)
         .build();
@@ -320,12 +320,12 @@ Partitions are locked by one node for a certain time. This requires that every n
 ```java
 @Scheduled(fixedDelay = 60*1000L)
 public void readSalesOrderPlacedEvents() throws IOException {
-    final String lockedBy = ... // host name or another unique identifier for this node
-    final List<Partition> partitions = nakadiClient.getPartitions(eventName);
-    final Optional<Lock> optionalLock = partitionManager.lockPartitions(eventName, partitions, lockedBy);
+    String lockedBy = ... // host name or another unique identifier for this node
+    List<Partition> partitions = nakadiClient.getPartitions(eventName);
+    Optional<Lock> optionalLock = partitionManager.lockPartitions(eventName, partitions, lockedBy);
 
     if (optionalLock.isPresent()) {
-        final Lock lock = optionalLock.get();
+        Lock lock = optionalLock.get();
         try {
             nakadiClient.stream(eventName)
                     .withLock(lock))
