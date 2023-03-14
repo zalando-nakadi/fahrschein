@@ -1,5 +1,7 @@
 package org.zalando.fahrschein.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.annotation.concurrent.Immutable;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
@@ -24,6 +26,13 @@ public class Subscription {
         this.consumerGroup = consumerGroup;
         this.createdAt = createdAt;
         this.authorization = authorization;
+    }
+
+    //Ignoring this constructor from introspection-based serialization and deserialization functionality,so that It doesn't
+    //interfere with default-all-args constructor.
+    @JsonIgnore
+    public Subscription(String id, String owningApplication, Set<String> eventTypes) {
+        this(id, owningApplication, eventTypes, null, null, null);
     }
 
 
