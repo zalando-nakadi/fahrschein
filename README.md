@@ -35,104 +35,67 @@ Fahrschein is available in maven central, so you only have to add the following 
 </dependency>
 ```
 
-## Usage
+## Subscribing to Event Types
+
+### Example
+
+The following code example creates an event listener based on Nakadi's subscription API, which gets a call-back for each batch.
 
 ```java
-final String eventName = "sales-order-placed";
+String eventName = "sales-order-placed";
 
 // Create a Listener for our event
-final Listener<SalesOrderPlaced> listener = events -> {
+Listener<SalesOrderPlaced> listener = events -> {
     for (SalesOrderPlaced salesOrderPlaced : events) {
         LOG.info("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
     }
 };
 
-// Configure client, defaults to using the high level api with ManagedCursorManger, 
-// using the SimpleRequestFactory without compression
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+// Configure client. It is mandatory to choose the RequestFactory implementation (we recommend the JavaNetRequestFactory) and request encoding (we recommend compression via GZIP or ZSTD) 
+// PlatformAccessTokenProvider provides a token by reading from the filesystem's CREDENTIALS_DIR 
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestFactory(ContentEncoding.GZIP))
         .withAccessTokenProvider(new PlatformAccessTokenProvider())
         .build();
 
-// Create subscription using the high level api
-Subscription subscription = nakadiClient.subscription(applicationName, eventName).subscribe();
+// Create subscription using the Subscription API.
+// The authorization section is mandatory. We recommend setting your team as admin
+// and your application as reader.
+Subscription subscription = nakadiClient.subscription(applicationName, eventName)
+        .withAuthorization(authorization()
+            .addAdmin("team", "your_team")
+            .addReader("service", "stups_your_application").build())
+        .subscribe();
 
-// Start streaming, the listen call will block and automatically reconnect on IOException
+// Define stream parameters, like batch size. For more details and defaults see Nakadi's API definition 
+StreamParameters streamParameters = new StreamParameters()
+                .withBatchLimit(25);
+
+// Start streaming. The listen call will block and automatically reconnect on IOException
 nakadiClient.stream(subscription)
+        .withStreamParameters(streamParameters)
         .listen(SalesOrderPlaced.class, listener);
-
 ```
 
 See [`Main.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/Main.java) for an executable version of the above code.
 
-## Subscribe to events with an existing subscription ID
+### Subscribing to events with an existing subscription ID
 
 One could also use a pre-existing subscription ID to stream events. This will force fahrschein not to create a subscription for the given event and will use the provided subscription ID.
 
 ```java
-final String eventName = "sales-order-placed";
-
-// Create a Listener for our event
-final Listener<SalesOrderPlaced> listener = events -> {
-        for (SalesOrderPlaced salesOrderPlaced : events) {
-        LOG.info("Received sales order [{}]", salesOrderPlaced.getSalesOrder().getOrderNumber());
-       }
-};
-
-// Configure client, defaults to using the high level api with ManagedCursorManger, 
-// using the SimpleRequestFactory without compression
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-        .withAccessTokenProvider(new PlatformAccessTokenProvider())
-        .build();
-
-// Create subscription using subscription ID
-final Subscription subscription = nakadiClient
+// Create subscription using an existing subscription ID
+Subscription subscription = nakadiClient
         .subscription("application-name",eventName)
         .subscribe("subscription-id");
 
 // Start streaming, the listen call will block and automatically reconnect on IOException
 nakadiClient.stream(subscription)
         .listen(SalesOrderPlaced.class, listener);
-
 ```
 
-## OAuth support
+### Initializing partition offsets
 
-#### Default usage of PlatformAccessTokenProvider
-By default fahrschein supports implementation of [Zalando platofrm IAM (OAuth 2.0)](https://kubernetes-on-aws.readthedocs.io/en/latest/user-guide/zalando-iam.html) through `PlatformAccessTokenProvider`. The implementation
-expects a mounted directory with the below structure.
-```
-meta
-└── credentials
-    ├── example-token-secret
-    └── example-token-type
-```
-
-The resulting token would be "Bearer your-secret-token"
-
-#### Custom authorization
-
-One can override `AuthorizationProvider` interface to support custom authorization flow.
-
-Example:
-```
-//Create custom authorization
-class CustomAuthorization implements AuthorizationProvider{
-
-    @Override
-    public String getAuthorizationHeader() throws IOException {
-        return "your-secret-token";
-    }
-}
-
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
-        .withAccessTokenProvider(new CustomAuthorization())
-        .build();
-```
-
-
-## Initializing partition offsets
-
-By default nakadi will start streaming from the most recent offset. The initial offsets can be changed by requesting data about partitions from Nakadi and using this data to configure `CursorManager`.
+By default nakadi will start streaming from the most recent offset. The initial offsets can be changed by requesting data about partitions from Nakadi and using this data to configure the `CursorManager`.
 
 ```java
 final List<Partition> partitions = nakadiClient.getPartitions(eventName);
@@ -147,50 +110,64 @@ nakadiClient.stream(eventName).readFromNewestAvailableOffset(partitions);
 nakadiClient.stream(eventName).skipUnavailableOffsets(partitions);
 ```
 
-## Using Nakadi's Low-level API
-
-*Please do not use the Low-level API, as it is deprecated by Nakadi.*
-
-The Low-level API requires local persistence of partition offsets.
-There is one `CursorManager` implementation left: InMemory.
-Postgres and Redis cursor managers have been DEPRECATED and removed in version 0.22.0 of Fahrschein.
+## Publishing Events
 
 ```java
-final CursorManager cursorManager = new InMemoryCursorManager();
+// event types
+String ORDER_CREATED = "order-created";
 
-final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+// Configure client. It is mandatory to choose the RequestFactory implementation (we recommend the JavaNetRequestFactory) and request encoding (we recommend compression via GZIP or ZSTD) 
+// PlatformAccessTokenProvider provides a token by reading from the filesystem's CREDENTIALS_DIR 
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestFactory(ContentEncoding.GZIP))
         .withAccessTokenProvider(new PlatformAccessTokenProvider())
-        .withCursorManager(cursorManager)
         .build();
 
-nakadiClient.stream(eventName)
-        .listen(SalesOrderPlaced.class, listener);
+// Produce events in batches
+while (true) {
+    List<OrderCreatedEvent> events = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+        events.add(new OrderCreatedEvent(metadata, "123", Money.of(123, "EUR"), "1234", "paypal"));
+    }
+    LOG.info("publishing {} events", events.size());
+    // Publish
+    nakadiClient.publish(ORDER_CREATED, events);
+}    
 ```
 
-## Using multiple partitions and multiple consumers
+## OAuth support
 
-With the `PartitionManager` api it is possible to coordinate between multiple nodes of one application, so that only one node is consuming events from a partition at the same time.
+### Default usage of PlatformAccessTokenProvider
+By default fahrschein supports implementation of [Zalando platofrm IAM (OAuth 2.0)](https://kubernetes-on-aws.readthedocs.io/en/latest/user-guide/zalando-iam.html) through `PlatformAccessTokenProvider`. The implementation
+expects a mounted directory with the below structure.
 
-Partitions are locked by one node for a certain time. This requires that every node has a unique name or other identifier.
+```
+meta
+└── credentials
+    ├── example-token-secret
+    └── example-token-type
+```
+
+The resulting token would be "Bearer your-secret-token"
+
+### Custom authorization
+
+One can override `AuthorizationProvider` interface to support custom authorization flow.
+
+Example:
 
 ```java
-@Scheduled(fixedDelay = 60*1000L)
-public void readSalesOrderPlacedEvents() throws IOException {
-    final String lockedBy = ... // host name or another unique identifier for this node
-    final List<Partition> partitions = nakadiClient.getPartitions(eventName);
-    final Optional<Lock> optionalLock = partitionManager.lockPartitions(eventName, partitions, lockedBy);
+//Create custom authorization
+class CustomAuthorization implements AuthorizationProvider{
 
-    if (optionalLock.isPresent()) {
-        final Lock lock = optionalLock.get();
-        try {
-            nakadiClient.stream(eventName)
-                    .withLock(lock))
-                    .listen(SalesOrderPlaced.class, listener);
-        } finally {
-            partitionManager.unlockPartitions(lock);
-        }
+    @Override
+    public String getAuthorizationHeader() throws IOException {
+        return "your-secret-token";
     }
 }
+
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+        .withAccessTokenProvider(new CustomAuthorization())
+        .build();
 ```
 
 ## Exception handling
@@ -312,6 +289,53 @@ final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactor
 **Note:** Regarding sizing and reuse of HTTP client connection pools, make sure to have a connection pool 
 size bigger than the number of subscriptions you're making, because subscriptions use long-polling to
 retrieve events, each effectively blocking one connection.
+
+
+## Using Nakadi's Low-level API
+
+*Please do not use the Low-level API, as it is deprecated by Nakadi.*
+
+The Low-level API requires local persistence of partition offsets.
+There is one `CursorManager` implementation left: InMemory.
+Postgres and Redis cursor managers have been DEPRECATED and removed in version 0.22.0 of Fahrschein.
+
+```java
+final CursorManager cursorManager = new InMemoryCursorManager();
+
+final NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFactory(ContentEncoding.IDENTITY))
+        .withAccessTokenProvider(new PlatformAccessTokenProvider())
+        .withCursorManager(cursorManager)
+        .build();
+
+nakadiClient.stream(eventName)
+        .listen(SalesOrderPlaced.class, listener);
+```
+
+### Using multiple partitions and multiple consumers
+
+With the `PartitionManager` api it is possible to coordinate between multiple nodes of one application, so that only one node is consuming events from a partition at the same time.
+
+Partitions are locked by one node for a certain time. This requires that every node has a unique name or other identifier.
+
+```java
+@Scheduled(fixedDelay = 60*1000L)
+public void readSalesOrderPlacedEvents() throws IOException {
+    final String lockedBy = ... // host name or another unique identifier for this node
+    final List<Partition> partitions = nakadiClient.getPartitions(eventName);
+    final Optional<Lock> optionalLock = partitionManager.lockPartitions(eventName, partitions, lockedBy);
+
+    if (optionalLock.isPresent()) {
+        final Lock lock = optionalLock.get();
+        try {
+            nakadiClient.stream(eventName)
+                    .withLock(lock))
+                    .listen(SalesOrderPlaced.class, listener);
+        } finally {
+            partitionManager.unlockPartitions(lock);
+        }
+    }
+}
+```
 
 ## Dependency compatibility
 
@@ -436,8 +460,6 @@ env "GPG_KEY=$(cat ~/.gnupg/private-key.pgp)" \
 "GPG_PASSPHRASE=$(read -s password ; echo $password)" \
 ./gradlew publishToMavenLocal
 ```
-
-
 
 ## Getting involved
 
