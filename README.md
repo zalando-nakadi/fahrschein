@@ -290,7 +290,6 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
 size bigger than the number of subscriptions you're making, because subscriptions use long-polling to
 retrieve events, each effectively blocking one connection.
 
-
 ## Using Nakadi's Low-level API
 
 *Please do not use the Low-level API, as it is deprecated by Nakadi.*
