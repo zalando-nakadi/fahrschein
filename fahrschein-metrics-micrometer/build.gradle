@@ -1,0 +1,11 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+}
+
+dependencies {
+    api project(':fahrschein')
+    api 'io.micrometer:micrometer-core:1.10.5'
+}
+
+publishing.publications.maven.pom.description = 'Fahrschein Metrics using Micrometer'

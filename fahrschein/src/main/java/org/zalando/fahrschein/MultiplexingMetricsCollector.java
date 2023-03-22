@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.metrics;
+package org.zalando.fahrschein;
 
 import org.zalando.fahrschein.MetricsCollector;
 
