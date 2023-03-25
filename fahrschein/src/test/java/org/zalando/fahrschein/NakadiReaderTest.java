@@ -93,20 +93,18 @@ public class NakadiReaderTest {
     }
 
     @Test
-    public void shouldNotRetryInitialConnection() throws IOException {
+    public void shouldRetryInitialConnection() throws IOException {
         final Request request = mock(Request.class);
         when(request.execute()).thenThrow(new IOException("Initial connection failed"));
 
         when(RequestFactory.createRequest(uri, "GET")).thenReturn(request);
 
-        final NoBackoffStrategy backoffStrategy = new NoBackoffStrategy();
+        final ExponentialBackoffStrategy backoffStrategy = new EqualJitterBackoffStrategy(1, 1, 2, 1);
 
         final NakadiReader<SomeEvent> nakadiReader = new NakadiReader<>(uri, RequestFactory, backoffStrategy, cursorManager, objectMapper, Collections.singleton(EVENT_NAME), Optional.empty(), Optional.empty(), SomeEvent.class, listener);
 
-        IOException expectedException = assertThrows(IOException.class, () -> {
-            nakadiReader.run();
-        });
-        assertThat(expectedException.getMessage(), equalTo("Initial connection failed"));
+        BackoffException expectedException = assertThrows(BackoffException.class, nakadiReader::runInternal);
+        assertBackoffException(expectedException, 1, IOException.class, "Initial connection failed");
     }
 
     @Test

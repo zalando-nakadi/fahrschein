@@ -271,15 +271,17 @@ class NakadiReader<T> implements IORunnable {
     /*
      * @VisibleForTesting
      */
-    void runInternal() throws IOException, BackoffException {
+    void runInternal() throws BackoffException {
         LOG.info("Starting to listen for events for {}", eventNames);
 
-        JsonInput jsonInput = openJsonInput();
-
+        JsonInput jsonInput = null;
         int errorCount = 0;
 
         while (true) {
             try {
+                if (jsonInput == null) {
+                    jsonInput = openJsonInput();
+                }
                 final JsonParser jsonParser = jsonInput.getJsonParser();
 
                 if (Thread.currentThread().isInterrupted()) {
@@ -301,7 +303,7 @@ class NakadiReader<T> implements IORunnable {
                     LOG.info("Got [{}] [{}] while reading events for {}", e.getClass().getSimpleName(), e.getMessage(), eventNames, e);
                 }
 
-                jsonInput.close();
+                closeJsonInput(jsonInput);
 
                 if (wasInterrupted || Thread.currentThread().isInterrupted()) {
                     LOG.warn("Thread was interrupted");
@@ -325,12 +327,18 @@ class NakadiReader<T> implements IORunnable {
                 LOG.warn("Got [{}] [{}] while reading events for {}", e.getClass().getSimpleName(), e.getMessage(), eventNames, e);
 
                 try {
-                    jsonInput.close();
+                    closeJsonInput(jsonInput);
                 } catch (Throwable suppressed) {
                     e.addSuppressed(e);
                 }
                 throw e;
             }
+        }
+    }
+
+    private void closeJsonInput(@Nullable JsonInput jsonInput) {
+        if (jsonInput != null) {
+            jsonInput.close();
         }
     }
 

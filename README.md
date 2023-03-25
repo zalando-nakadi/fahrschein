@@ -174,10 +174,7 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFa
 
 Exception handling while streaming events follows some simple rules
 
- - `IOException` and its subclasses are treated as temporary failures. Library will automatically recover from this 
- type of failure by retrying processing attempt after time interval specified by the `BackoffStrategy`.
- **Special case**: if an `IOException` happens during opening the initial connection, this is treated as configuration 
- problem (wrong host name or missing scopes). In this case processing will be aborted and exception will be re-thrown. 
+ - `IOException` and its subclasses are treated as temporary failures.If an `IOException` occurs while opening the initial connection, it is considered a temporary failure.Library will automatically recover from this type of failure by retrying processing attempt after time interval specified by the `BackoffStrategy`.
  - If `listener` throws `RuntimeException` streaming of events will be aborted. User is responsible for handling these exceptions.
  Library code itself will not throw `RuntimeException`s.
  - Exceptions in other client methods are not automatically retried
