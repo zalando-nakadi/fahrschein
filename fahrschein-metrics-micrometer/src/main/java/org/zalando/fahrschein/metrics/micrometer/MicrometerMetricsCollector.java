@@ -1,53 +1,50 @@
 package org.zalando.fahrschein.metrics.micrometer;
 
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.zalando.fahrschein.MetricsCollector;
+import org.zalando.fahrschein.MultiplexingMetricsCollector;
+
+import java.util.Arrays;
 
 public class MicrometerMetricsCollector implements MetricsCollector {
 
     public static final String DEFAULT_PREFIX = "org.zalando.fahrschein.";
 
-    private final Counter messagesReceivedMeter;
-    private final Counter eventsReceivedMeter;
-    private final Counter errorsWhileConsumingMeter;
-    private final Counter reconnectionsMeter;
-    private final Counter messagesSuccessfullyProcessedMeter;
+    private final MetricsCollector delegate;
 
     public MicrometerMetricsCollector(final MeterRegistry metricRegistry) {
         this(metricRegistry, DEFAULT_PREFIX);
     }
 
     public MicrometerMetricsCollector(final MeterRegistry metricRegistry, final String prefix) {
-        messagesReceivedMeter = metricRegistry.counter(prefix + "messagesReceived");
-        eventsReceivedMeter = metricRegistry.counter(prefix + "eventsReceived");
-        errorsWhileConsumingMeter = metricRegistry.counter(prefix + "errorsWhileConsuming");
-        reconnectionsMeter = metricRegistry.counter(prefix + "reconnections");
-        messagesSuccessfullyProcessedMeter = metricRegistry.counter(prefix + "messagesSuccessfullyProcessed");
+        this.delegate = new MultiplexingMetricsCollector(Arrays.asList(
+                new CountingMetricsCollector(metricRegistry, prefix),
+                new LastActivityMetricsCollector(metricRegistry, prefix)
+        ));
     }
 
     @Override
     public void markMessageReceived() {
-        messagesReceivedMeter.increment();
+        this.delegate.markMessageReceived();
     }
 
     @Override
-    public void markEventsReceived(final int size) {
-        eventsReceivedMeter.increment(size);
+    public void markEventsReceived(int size) {
+        this.delegate.markEventsReceived(size);
     }
 
     @Override
     public void markErrorWhileConsuming() {
-        errorsWhileConsumingMeter.increment();
+        this.delegate.markErrorWhileConsuming();
     }
 
     @Override
     public void markReconnection() {
-        reconnectionsMeter.increment();
+        this.markReconnection();
     }
 
     @Override
     public void markMessageSuccessfullyProcessed() {
-        messagesSuccessfullyProcessedMeter.increment();
+        this.markMessageSuccessfullyProcessed();
     }
 }

@@ -1,5 +1,6 @@
 package org.zalando.fahrschein.metrics.dropwizard;
 
+import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Meter;
 import org.junit.jupiter.api.Test;
@@ -12,16 +13,17 @@ public class DropwizardMetricsCollectorTest {
 
     @Test
     public void shouldCollectMetrics() {
-        String namespace = "test.";
+        String namespace = "test";
         MetricRegistry metricRegistry = new MetricRegistry();
         DropwizardMetricsCollector c = new DropwizardMetricsCollector(metricRegistry, namespace);
         assertEquals(5, metricRegistry.getMeters().entrySet().size());
+        assertEquals(5, metricRegistry.getGauges().entrySet().size());
 
         c.markErrorWhileConsuming();
         Map<String, Meter> meters = metricRegistry.getMeters();
+        Map<String, Gauge> gauges = metricRegistry.getGauges();
         assertEquals(1, meters.get("test.errorsWhileConsuming").getCount());
-
-
+        assertEquals(0, gauges.get("test.lastErrorHappened").getValue());
     }
 
 }

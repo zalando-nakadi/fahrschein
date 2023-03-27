@@ -1,12 +1,13 @@
 package org.zalando.fahrschein.metrics.micrometer;
 
-import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.TimeGauge;
 import org.zalando.fahrschein.MetricsCollector;
 
-import static java.lang.System.currentTimeMillis;
+import java.util.concurrent.TimeUnit;
 
-public class LastActivityMetricsCollector implements MetricsCollector {
+class LastActivityMetricsCollector implements MetricsCollector {
 
     private long lastMessageReceived = 0;
     private long lastMessageSuccessfullyProcessed = 0;
@@ -14,41 +15,49 @@ public class LastActivityMetricsCollector implements MetricsCollector {
     private long lastErrorHappend = 0;
     private long lastReconnect = 0;
 
-    public LastActivityMetricsCollector(final MeterRegistry metricRegistry, final String metricsNamePrefix) {
-        Gauge.builder(metricsNamePrefix + ".lastMessageReceived",
-                () -> (int) ((currentTimeMillis() - lastMessageReceived) / 1000)).baseUnit("s").register(metricRegistry);
-        Gauge.builder(metricsNamePrefix + ".lastMessageSuccessfullyProcessed",
-                () -> (int) ((currentTimeMillis() - lastMessageSuccessfullyProcessed) / 1000)).baseUnit("s").register(metricRegistry);
-        Gauge.builder(metricsNamePrefix + ".lastEventReceived",
-                () -> (int) ((currentTimeMillis() - lastEventReceived) / 1000)).baseUnit("s").register(metricRegistry);
-        Gauge.builder(metricsNamePrefix + ".lastErrorHappened",
-                () -> (int) ((currentTimeMillis() - lastErrorHappend) / 1000)).baseUnit("s").register(metricRegistry);
-        Gauge.builder(metricsNamePrefix + ".lastReconnect",
-                () -> (int) ((currentTimeMillis() - lastReconnect) / 1000)).baseUnit("s").register(metricRegistry);
+
+    LastActivityMetricsCollector(final MeterRegistry metricRegistry) {
+        this(metricRegistry, CountingMetricsCollector.DEFAULT_PREFIX);
+    }
+
+    final Clock clock;
+
+    LastActivityMetricsCollector(final MeterRegistry metricRegistry, final String metricsNamePrefix) {
+        clock = metricRegistry.config().clock();
+        TimeGauge.builder(metricsNamePrefix + "lastMessageReceived",
+                () -> (int) ((clock.wallTime() - lastMessageReceived) / 1000), TimeUnit.SECONDS).register(metricRegistry);
+        TimeGauge.builder(metricsNamePrefix + "lastMessageSuccessfullyProcessed",
+                () -> (int) ((clock.wallTime() - lastMessageSuccessfullyProcessed) / 1000), TimeUnit.SECONDS).register(metricRegistry);
+        TimeGauge.builder(metricsNamePrefix + "lastEventReceived",
+                () -> (int) ((clock.wallTime() - lastEventReceived) / 1000), TimeUnit.SECONDS).register(metricRegistry);
+        TimeGauge.builder(metricsNamePrefix + "lastErrorHappened",
+                () -> (int) ((clock.wallTime() - lastErrorHappend) / 1000), TimeUnit.SECONDS).register(metricRegistry);
+        TimeGauge.builder(metricsNamePrefix + "lastReconnect",
+                () -> (int) ((clock.wallTime() - lastReconnect) / 1000), TimeUnit.SECONDS).register(metricRegistry);
     }
 
     @Override
     public void markMessageReceived() {
-        lastMessageReceived = currentTimeMillis();
+        lastMessageReceived = clock.wallTime();
     }
 
     @Override
     public void markEventsReceived(final int size) {
-        lastEventReceived = currentTimeMillis();
+        lastEventReceived = clock.wallTime();
     }
 
     @Override
     public void markErrorWhileConsuming() {
-        lastErrorHappend = currentTimeMillis();
+        lastErrorHappend = clock.wallTime();
     }
 
     @Override
     public void markReconnection() {
-        lastReconnect = currentTimeMillis();
+        lastReconnect = clock.wallTime();
     }
 
     @Override
     public void markMessageSuccessfullyProcessed() {
-        lastMessageSuccessfullyProcessed = currentTimeMillis();
+        lastMessageSuccessfullyProcessed = clock.wallTime();
     }
 }

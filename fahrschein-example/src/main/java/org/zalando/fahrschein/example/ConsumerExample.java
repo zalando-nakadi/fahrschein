@@ -4,9 +4,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.trace.Tracer;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
 import org.zalando.fahrschein.Listener;
+import org.zalando.fahrschein.MultiplexingMetricsCollector;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.PlatformAccessTokenProvider;
 import org.zalando.fahrschein.StreamParameters;
@@ -15,11 +18,13 @@ import org.zalando.fahrschein.example.domain.MultiEventProcessor;
 import org.zalando.fahrschein.example.domain.OrderEvent;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
+import org.zalando.fahrschein.metrics.micrometer.MicrometerMetricsCollector;
 import org.zalando.jackson.datatype.money.MoneyModule;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -81,8 +86,11 @@ public class ConsumerExample {
                 .readFromBegin()
                 .subscribe();
 
+        MeterRegistry registry = new SimpleMeterRegistry();
+
         nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
+                .withMetricsCollector(new MicrometerMetricsCollector(registry))
                 .withStreamParameters(streamParameters)
                 .withBackoffStrategy(new ExponentialBackoffStrategy())
                 .listen(OrderEvent.class, listener);

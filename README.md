@@ -289,6 +289,20 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
 size bigger than the number of subscriptions you're making, because subscriptions use long-polling to
 retrieve events, each effectively blocking one connection.
 
+## Metrics
+
+Fahrschein has support for metrics using `Dropwizard` and `Micrometer`, at the moment for consuming events only. Each integration has two metrics collector implementations, one for counting, one for last activity timestamps. Multiple metrics integrations can be chained by using the `MultiplexingMetricsCollector`.
+
+Example using Micrometer:
+
+```java
+MeterRegistry registry = new SimpleMeterRegistry();
+
+nakadiClient.stream(subscription)
+ .withMetricsCollector(new MicrometerMetricsCollector(registry))
+```
+
+
 ## Using Nakadi's Low-level API
 
 *Please do not use the Low-level API, as it is deprecated by Nakadi.*

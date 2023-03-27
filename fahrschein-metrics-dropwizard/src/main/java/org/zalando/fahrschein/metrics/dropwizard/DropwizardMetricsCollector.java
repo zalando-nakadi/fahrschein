@@ -1,53 +1,50 @@
 package org.zalando.fahrschein.metrics.dropwizard;
 
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import org.zalando.fahrschein.MetricsCollector;
+import org.zalando.fahrschein.MultiplexingMetricsCollector;
+
+import java.util.Arrays;
 
 public class DropwizardMetricsCollector implements MetricsCollector {
 
-    public static final String DEFAULT_PREFIX = "org.zalando.fahrschein.";
+    public static final String DEFAULT_PREFIX = "org.zalando.fahrschein";
 
-    private final Meter messagesReceivedMeter;
-    private final Meter eventsReceivedMeter;
-    private final Meter errorsWhileConsumingMeter;
-    private final Meter reconnectionsMeter;
-    private final Meter messagesSuccessfullyProcessedMeter;
+    private final MetricsCollector delegate;
 
     public DropwizardMetricsCollector(final MetricRegistry metricRegistry) {
-        this(metricRegistry, DEFAULT_PREFIX);
+       this(metricRegistry, DEFAULT_PREFIX);
     }
 
-    public DropwizardMetricsCollector(final MetricRegistry metricRegistry, final String prefix) {
-        messagesReceivedMeter = metricRegistry.meter(prefix + "messagesReceived");
-        eventsReceivedMeter = metricRegistry.meter(prefix + "eventsReceived");
-        errorsWhileConsumingMeter = metricRegistry.meter(prefix + "errorsWhileConsuming");
-        reconnectionsMeter = metricRegistry.meter(prefix + "reconnections");
-        messagesSuccessfullyProcessedMeter = metricRegistry.meter(prefix + "messagesSuccessfullyProcessed");
+    public DropwizardMetricsCollector(final MetricRegistry metricRegistry, String prefix) {
+        this.delegate = new MultiplexingMetricsCollector(Arrays.asList(
+                new CountingMetricsCollector(metricRegistry, prefix),
+                new LastActivityMetricsCollector(metricRegistry, prefix)
+        ));
     }
 
     @Override
     public void markMessageReceived() {
-        messagesReceivedMeter.mark();
+        this.delegate.markMessageReceived();
     }
 
     @Override
-    public void markEventsReceived(final int size) {
-        eventsReceivedMeter.mark(size);
+    public void markEventsReceived(int size) {
+        this.delegate.markEventsReceived(size);
     }
 
     @Override
     public void markErrorWhileConsuming() {
-        errorsWhileConsumingMeter.mark();
+        this.delegate.markErrorWhileConsuming();
     }
 
     @Override
     public void markReconnection() {
-        reconnectionsMeter.mark();
+        this.markReconnection();
     }
 
     @Override
     public void markMessageSuccessfullyProcessed() {
-        messagesSuccessfullyProcessedMeter.mark();
+        this.markMessageSuccessfullyProcessed();
     }
 }
