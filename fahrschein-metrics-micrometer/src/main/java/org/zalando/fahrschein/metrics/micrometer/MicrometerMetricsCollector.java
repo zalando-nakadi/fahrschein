@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.metrics;
+package org.zalando.fahrschein.metrics.micrometer;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;

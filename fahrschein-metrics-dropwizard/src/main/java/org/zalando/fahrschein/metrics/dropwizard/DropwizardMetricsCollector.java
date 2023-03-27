@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.metrics;
+package org.zalando.fahrschein.metrics.dropwizard;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
