@@ -9,7 +9,6 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.opentelemetry.api.trace.Tracer;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
 import org.zalando.fahrschein.Listener;
-import org.zalando.fahrschein.MultiplexingMetricsCollector;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.PlatformAccessTokenProvider;
 import org.zalando.fahrschein.StreamParameters;
@@ -24,7 +23,6 @@ import org.zalando.jackson.datatype.money.MoneyModule;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 

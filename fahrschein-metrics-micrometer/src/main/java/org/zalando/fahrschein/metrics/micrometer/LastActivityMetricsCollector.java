@@ -15,12 +15,12 @@ class LastActivityMetricsCollector implements MetricsCollector {
     private long lastErrorHappend = 0;
     private long lastReconnect = 0;
 
+    final Clock clock;
 
     LastActivityMetricsCollector(final MeterRegistry metricRegistry) {
         this(metricRegistry, CountingMetricsCollector.DEFAULT_PREFIX);
     }
 
-    final Clock clock;
 
     LastActivityMetricsCollector(final MeterRegistry metricRegistry, final String metricsNamePrefix) {
         clock = metricRegistry.config().clock();
