@@ -364,18 +364,18 @@ Zstandard compression was added in version `0.21.0`.
 
 ## Fahrschein compared to other Nakadi client libraries
 
-|                      | Fahrschein | [nakadi-java](https://github.com/dehora/nakadi-java) |
-| -------------------- | ---------- | ---------------------------------------------------- |
-| Dependencies         | Jackson    | gson, okhttp3, RxJava |
-| Low-level API streaming | yes |  yes |
-| Subscription API streaming | yes |  yes |
-| Compression: consuming | gzip (enabled by default) | gzip (enabled by default) |
-| Compression: publishing | gzip, zstd | none |
-| Error Handling | Automatic retry with exponential backoff | Automatic retry with exponential backoff |
-| OpenTracing | yes | yes |
-| Metrics Collection | yes | yes |
-| Access to Event Metadata | no | yes |
-| Event Type manipulation | no | yes |
+|                      | Fahrschein                               | [nakadi-java](https://github.com/dehora/nakadi-java) |
+| -------------------- |------------------------------------------|------------------------------------------------------|
+| Dependencies         | Jackson                                  | gson, okhttp3, RxJava                                |
+| Low-level API streaming | yes                                      | yes                                                  |
+| Subscription API streaming | yes                                      | yes                                                  |
+| Compression: consuming | gzip (enabled by default)                | gzip (enabled by default)                            |
+| Compression: publishing | gzip, zstd                               | gzip                                                 |
+| Error Handling | Automatic retry with exponential backoff | Automatic retry with exponential backoff             |
+| OpenTracing | yes                                      | yes                                                  |
+| Metrics Collection | yes (dropwizard)                         | yes (dropwizard,micrometer)                          |
+| Access to Event Metadata | no                                       | yes                                                  |
+| Event Type manipulation | no                                       | yes                                                  |
 
 ## Getting help
 
