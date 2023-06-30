@@ -1,0 +1,3 @@
+### Autoconfiguration
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+org.zalando.spring.boot.fahrschein.nakadi.config.NakadiClientAutoConfiguration

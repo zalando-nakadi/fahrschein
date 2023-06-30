@@ -41,7 +41,8 @@ dependencies {
             project(':fahrschein-metrics-dropwizard'),
             project(':fahrschein-typeresolver'),
             project(':fahrschein-opentracing'),
-            project(':fahrschein-opentelemetry')
+            project(':fahrschein-opentelemetry'),
+            project(':fahrschein-spring-boot-starter')
 }
 
 reporting {
