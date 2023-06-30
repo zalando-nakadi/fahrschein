@@ -51,6 +51,6 @@ public class PlatformAccessTokenProvider implements AccessTokenProvider {
         final Path filePath = this.directory.resolve(name + TOKEN_SECRET_SUFFIX);
         final String token = new String(Files.readAllBytes(filePath), UTF_8);
         Preconditions.checkArgument(token.length() != 0, "Secret file cannot be empty");
-        return token;
+        return token.trim();
     }
 }

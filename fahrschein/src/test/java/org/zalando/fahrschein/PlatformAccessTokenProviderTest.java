@@ -28,4 +28,13 @@ public class PlatformAccessTokenProviderTest {
         final PlatformAccessTokenProvider tokenProvider = new PlatformAccessTokenProvider(Paths.get("./src/test/resources/meta/credentials"), "empty");
         Assertions.assertThrows(IllegalArgumentException.class, tokenProvider::getAuthorizationHeader);
     }
+
+    @Test
+    public void shouldTrimAuthorizationToken() throws IOException {
+        final PlatformAccessTokenProvider tokenProvider = new PlatformAccessTokenProvider(Paths.get("./src/test/resources/meta/credentials"), "whitespace-newline");
+        final String[] tokenWithType = tokenProvider.getAuthorizationHeader().split(" ");
+        Assertions.assertNotNull(tokenWithType);
+        Assertions.assertEquals("Bearer", tokenWithType[0]);
+        Assertions.assertEquals("some-secret-token", tokenWithType[1]);
+    }
 }
