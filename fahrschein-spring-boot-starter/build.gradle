@@ -6,29 +6,25 @@ plugins {
 }
 
 def lombok_version = '1.18.28'
-def spring_boot_starter_version = '2.6.6'
 
 dependencies {
     api project(':fahrschein')
     api project(':fahrschein-http-apache')
-    implementation 'org.apache.httpcomponents:httpcore:4.4.15'
-    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.13.2'
-    implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.13.2'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.2'
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
     implementation 'com.google.guava:guava:31.0.1-jre'
-    implementation 'org.slf4j:slf4j-api:1.7.36'
-    compileOnly "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_starter_version}"
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor:${property('springboot.version')}"
     compileOnly 'io.micrometer:micrometer-core:1.8.4'
     compileOnly "org.projectlombok:lombok:${lombok_version}"
     annotationProcessor "org.projectlombok:lombok:${lombok_version}"
-    compileOnly "org.springframework.boot:spring-boot-autoconfigure:${spring_boot_starter_version}"
+    compileOnly "org.springframework.boot:spring-boot-autoconfigure:${property('springboot.version')}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombok_version}"
     testImplementation 'io.micrometer:micrometer-core:1.8.4'
     testImplementation "org.projectlombok:lombok:${lombok_version}"
-    testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_starter_version}"
-    testImplementation 'org.assertj:assertj-core:3.21.0'
-    testImplementation "org.springframework.boot:spring-boot-actuator:${spring_boot_starter_version}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${property('springboot.version')}"
+    testImplementation "org.springframework.boot:spring-boot-actuator:${property('springboot.version')}"
 }
 
 configurations {
