@@ -31,12 +31,6 @@ publishing {
                 }
                 developers {
                     developer {
-                        name = 'Othon Crelier'
-                        email = 'othon.crelier@zalando.de'
-                        organization = 'Zalando SE'
-                        organizationUrl = 'https://tech.zalando.com/'
-                    }
-                    developer {
                         name = 'Malte Pickhan'
                         email = 'malte.pickhan@zalando.de'
                         organization = 'Zalando Payments GmbH'
@@ -45,6 +39,24 @@ publishing {
                     developer {
                         name = 'Oliver Trosien'
                         email = 'oliver.trosien@zalando.de'
+                        organization = 'Zalando SE'
+                        organizationUrl = 'https://tech.zalando.com/'
+                    }
+                    developer {
+                        name = 'Rob Williamson'
+                        email = 'rob.williamson@zalando.de'
+                        organization = 'Zalando SE'
+                        organizationUrl = 'https://tech.zalando.com/'
+                    }
+                    developer {
+                        name = 'Mesut Oezen'
+                        email = 'mesut.oezen@zalando.de'
+                        organization = 'Zalando SE'
+                        organizationUrl = 'https://tech.zalando.com/'
+                    }
+                    developer {
+                        name = 'Ramesh Malla'
+                        email = 'ramesh.malla@zalando.de'
                         organization = 'Zalando SE'
                         organizationUrl = 'https://tech.zalando.com/'
                     }
