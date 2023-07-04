@@ -11,6 +11,8 @@ import org.zalando.spring.boot.fahrschein.nakadi.MeterRegistryAware;
 @Slf4j
 public class MeterRegistryAwareBeanPostProcessor implements BeanPostProcessor, BeanFactoryAware {
 
+    private BeanFactory beanFactory;
+
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         if (bean instanceof MeterRegistryAware) {
@@ -20,8 +22,6 @@ public class MeterRegistryAwareBeanPostProcessor implements BeanPostProcessor, B
         }
         return bean;
     }
-
-    private BeanFactory beanFactory;
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {

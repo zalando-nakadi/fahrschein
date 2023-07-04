@@ -6,7 +6,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
 import static org.zalando.spring.boot.fahrschein.nakadi.config.properties.Merger.merge;
@@ -23,12 +22,12 @@ public class ConsumerConfig extends AbstractConfig {
     void mergeWithDefaultConfig(DefaultConsumerConfig defaultConsumerConfig) {
         this.setApplicationName(merge(this.getApplicationName(), defaultConsumerConfig.getApplicationName()));
         this.setApplicationName(ofNullable(this.getApplicationName()).orElse(defaultConsumerConfig.getApplicationName()));
-        this.setConsumerGroup(Optional.ofNullable(this.getConsumerGroup()).orElse(defaultConsumerConfig.getConsumerGroup()));
-        this.setNakadiUrl(Optional.ofNullable(this.getNakadiUrl()).orElse(defaultConsumerConfig.getNakadiUrl()));
-        this.setAutostartEnabled(Optional.ofNullable(this.getAutostartEnabled()).orElse(defaultConsumerConfig.getAutostartEnabled()));
-        this.setReadFrom(Optional.ofNullable(this.getReadFrom()).orElse(defaultConsumerConfig.getReadFrom()));
-        this.setRecordMetrics(Optional.ofNullable(this.getRecordMetrics()).orElse(defaultConsumerConfig.getRecordMetrics()));
-        this.setObjectMapperRef(Optional.ofNullable(this.getObjectMapperRef()).orElse(defaultConsumerConfig.getObjectMapperRef()));
+        this.setConsumerGroup(ofNullable(this.getConsumerGroup()).orElse(defaultConsumerConfig.getConsumerGroup()));
+        this.setNakadiUrl(ofNullable(this.getNakadiUrl()).orElse(defaultConsumerConfig.getNakadiUrl()));
+        this.setAutostartEnabled(ofNullable(this.getAutostartEnabled()).orElse(defaultConsumerConfig.getAutostartEnabled()));
+        this.setReadFrom(ofNullable(this.getReadFrom()).orElse(defaultConsumerConfig.getReadFrom()));
+        this.setRecordMetrics(ofNullable(this.getRecordMetrics()).orElse(defaultConsumerConfig.getRecordMetrics()));
+        this.setObjectMapperRef(ofNullable(this.getObjectMapperRef()).orElse(defaultConsumerConfig.getObjectMapperRef()));
 
         // oauth
         if(defaultConsumerConfig.getOauth().getEnabled() && !this.getOauth().getEnabled()) {

@@ -11,8 +11,6 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.AbstractConfig;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.HttpConfig;
 
-import java.util.concurrent.TimeUnit;
-
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @Slf4j
@@ -49,7 +47,7 @@ class RequestFactoryFactory {
                     }
 
                     if (httpConfig.getEvictIdleConnections()) {
-                        builder = builder.evictIdleConnections(httpConfig.getMaxIdleTime().longValue(), TimeUnit.MILLISECONDS);
+                        builder = builder.evictIdleConnections(httpConfig.getMaxIdleTime().longValue(), MILLISECONDS);
                     }
 
 
