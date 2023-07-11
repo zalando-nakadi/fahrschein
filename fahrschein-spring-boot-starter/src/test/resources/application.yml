@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: next-generation-fahrschein-config
+
+fahrschein:
+  defaults:
+    autostart-enabled: false #containers will not start, quick switch instead of doing it for every container
+    nakadi-url: https://localhost
+    application-name: parser-test-${PWD}
+    consumer-group: a_consumer_group_name
+    read-from: END
+    authorizations:
+      anyReader: true
+      admins:
+        services:
+          - service_1
+        users:
+          - user_1
+          - user_2
+        teams:
+          - a_team
+      readers:
+        services:
+          - service_2
+        users:
+          - user_3
+        teams:
+          - reading_group
+    stream-parameters:
+      batch-limit: 1
+      streamLimit: 1
+      batchFlushTimeout: 2
+      streamTimeout: 2
+      streamKeepAliveLimit: 2
+      maxUncommittedEvents: 2
+    oauth:
+      enabled: false
+      access-token-id: token_id #same token_id used for all consumers
+    http:
+      connect-timeout: 150 milliseconds
+      connection-time-to-live: 30 seconds
+      max-connections-per-route: 21
+      max-connections-total: 42
+      content-encoding: gzip
+  consumers:
+    example: #consumer-id
+      oauth:
+        enabled: true
+      http:
+        connect-timeout: 300 milliseconds
+        content-encoding: identity
+      topics:
+      - first.first-update

@@ -22,6 +22,8 @@
  - Pluggable HTTP client implementations
  - Gzip encoding support for publishing and consuming events
  - ZStandard compression support for publishing events
+ - Integrated [Spring-Boot-Starter](./fahrschein-spring-boot-starter/README.md)
+ 
 
 ## Installation
 
@@ -337,12 +339,13 @@ public void readSalesOrderPlacedEvents() throws IOException {
 
 Although Fahrschein is using fixed dependency versions, it is integration-tested against the following dependency matrix. We will inform in the release notes in case we bump the compatibility baseline. 
 
-| Dependency | Baseline | Latest |
-| ---------- | -------- | ------ |
-| Jackson | 2.8.0 | 2.+ |
-| Spring Core | 4.3.0.RELEASE | 6.+ |
-| okHttp | 3.3.0 | 4.+ |
-| Apache HttpClient | 4.3 | 4.+ |
+| Dependency        | Baseline      | Latest |
+| ----------------- | ------------- | ------ |
+| Jackson           | 2.8.0         | 2.+    |
+| Spring Core       | 4.3.0.RELEASE | 6.+    |
+| Spring Boot       | 2.6.6         | 3.+    |
+| okHttp            | 3.3.0         | 4.+    |
+| Apache HttpClient | 4.4           | 4.+    |
 
 ## Content-Compression
 
@@ -449,12 +452,10 @@ open build/reports/dependency-check-report.html
 
 Fahrschein uses Github Workflows to [build](.github/workflows/ci.yml) and [publish releases](.github/workflows/maven-publish.yml). This happens automatically whenever a new release is created in Github. After creating a release, please bump the `project.version` property in [gradle.properties](./gradle.properties).
 
-If needed, you can preview the signed release artifacts in your local maven repository.
+If needed, you can preview (unsigned) release artifacts in your local maven repository.
 
 ```sh
-env "GPG_KEY=$(cat ~/.gnupg/private-key.pgp)" \
-"GPG_PASSPHRASE=$(read -s password ; echo $password)" \
-./gradlew publishToMavenLocal
+./gradlew publishToMavenLocal -xsignMavenPublication
 ```
 
 ## Getting involved

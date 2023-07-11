@@ -1,0 +1,42 @@
+plugins {
+    id 'fahrschein.java-conventions'
+    id 'fahrschein.maven-publishing-conventions'
+    id 'org.springframework.boot' version '2.6.6' apply false
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE' apply false
+}
+
+def lombok_version = '1.18.28'
+
+dependencies {
+    api project(':fahrschein')
+    api project(':fahrschein-http-apache')
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
+    implementation 'com.google.guava:guava:31.0.1-jre'
+    compileOnly "org.springframework.boot:spring-boot-configuration-processor:${property('springboot.version')}"
+    compileOnly 'io.micrometer:micrometer-core:1.8.4'
+    compileOnly "org.projectlombok:lombok:${lombok_version}"
+    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
+    compileOnly "org.springframework.boot:spring-boot-autoconfigure:${property('springboot.version')}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombok_version}"
+    testImplementation 'io.micrometer:micrometer-core:1.8.4'
+    testImplementation "org.projectlombok:lombok:${lombok_version}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${property('springboot.version')}"
+    testImplementation "org.springframework.boot:spring-boot-actuator:${property('springboot.version')}"
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
