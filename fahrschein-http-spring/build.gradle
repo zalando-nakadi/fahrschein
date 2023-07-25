@@ -14,7 +14,3 @@ dependencies {
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein HTTP Client using Spring Adapter'
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
-}
