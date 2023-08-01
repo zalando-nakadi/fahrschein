@@ -8,8 +8,4 @@ dependencies {
     testImplementation(testFixtures(project(':fahrschein-http-test-support')))
 }
 
-tasks.withType(JavaCompile).configureEach {
-    options.release = Math.max(Integer.valueOf(project.property("jdk.version")), 11)
-}
-
 publishing.publications.maven.pom.description = "Fahrschein HTTP Client using JDK11's HttpClient"
