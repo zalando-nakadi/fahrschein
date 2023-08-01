@@ -13,10 +13,13 @@ import java.net.URI;
 @Slf4j
 class FahrscheinNakadiClientFactory {
 
+    private static final URI INVALID_NAKADI_URL = URI.create("https://nakadi-url.invalid/");
+
     static NakadiClient create(AbstractConfig config, CursorManager cursorManager, ObjectMapper objectMapper,
             RequestFactory requestFactory) {
 
-        NakadiClientBuilder ncb = NakadiClient.builder(URI.create(config.getNakadiUrl()), requestFactory)
+        URI nakadiUri = config.getNakadiUrl() != null ? URI.create(config.getNakadiUrl()) : INVALID_NAKADI_URL;
+        NakadiClientBuilder ncb = NakadiClient.builder(nakadiUri, requestFactory)
                 .withCursorManager(cursorManager).withObjectMapper(objectMapper);
 
         if (config.getOauth().getEnabled()) {
