@@ -14,3 +14,4 @@ dependencies {
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein HTTP Client using Spring Adapter'
+
