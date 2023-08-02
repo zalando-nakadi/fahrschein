@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 class NakadiListenerContainer implements SmartLifecycle, InitializingBean {
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(NakadiListenerContainer.class);
     private ThreadPoolTaskScheduler scheduler;
 
     private final AtomicReference<ScheduledFuture<?>> scheduledTaskReference = new AtomicReference<>();
@@ -31,6 +33,11 @@ class NakadiListenerContainer implements SmartLifecycle, InitializingBean {
 
     @NonNull
     private final NakadiListener<?> nakadiListener;
+
+    NakadiListenerContainer(@NonNull NakadiConsumer nakadiConsumer, @NonNull NakadiListener<?> nakadiListener) {
+        this.nakadiConsumer = nakadiConsumer;
+        this.nakadiListener = nakadiListener;
+    }
 
     @Override
     public void afterPropertiesSet() {

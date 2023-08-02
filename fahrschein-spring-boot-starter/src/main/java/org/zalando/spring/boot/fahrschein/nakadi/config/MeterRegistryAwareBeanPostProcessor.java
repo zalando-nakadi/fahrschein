@@ -1,16 +1,16 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.zalando.spring.boot.fahrschein.nakadi.MeterRegistryAware;
 
-@Slf4j
 public class MeterRegistryAwareBeanPostProcessor implements BeanPostProcessor, BeanFactoryAware {
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(MeterRegistryAwareBeanPostProcessor.class);
     private BeanFactory beanFactory;
 
     @Override

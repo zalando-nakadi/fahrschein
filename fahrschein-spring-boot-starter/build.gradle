@@ -3,8 +3,6 @@ plugins {
     id 'fahrschein.maven-publishing-conventions'
 }
 
-def lombok_version = '1.18.28'
-
 dependencies {
     api project(':fahrschein')
     implementation project(':fahrschein-http-apache')
@@ -15,17 +13,7 @@ dependencies {
     implementation 'com.google.guava:guava:32.1.2-jre'
     compileOnlyApi "org.springframework.boot:spring-boot-configuration-processor:${property('springboot.version')}"
     implementation 'io.micrometer:micrometer-core:1.11.2'
-    compileOnly "org.projectlombok:lombok:${lombok_version}"
-    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
     compileOnlyApi "org.springframework.boot:spring-boot-autoconfigure:${property('springboot.version')}"
-    testAnnotationProcessor "org.projectlombok:lombok:${lombok_version}"
-    testImplementation "org.projectlombok:lombok:${lombok_version}"
     testImplementation "org.springframework.boot:spring-boot-starter-test:${property('springboot.version')}"
     testImplementation "org.springframework.boot:spring-boot-actuator:${property('springboot.version')}"
-}
-
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
 }

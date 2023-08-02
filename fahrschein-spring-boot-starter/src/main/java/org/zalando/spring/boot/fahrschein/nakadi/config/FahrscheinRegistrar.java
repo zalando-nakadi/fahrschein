@@ -1,8 +1,7 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -16,16 +15,20 @@ import org.zalando.spring.boot.fahrschein.nakadi.config.properties.PublisherConf
 
 import static org.springframework.beans.factory.support.BeanDefinitionBuilder.genericBeanDefinition;
 
-@Slf4j
-@RequiredArgsConstructor
 public class FahrscheinRegistrar implements NakadiClientsRegistrar {
 
     private static final String CREATE = "create";
 
     private static final String LOG_PREFIX = "[{}] - register ";
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(FahrscheinRegistrar.class);
 
     private final Registry registry;
     private final FahrscheinConfigProperties fahrscheinConfigProperties;
+
+    public FahrscheinRegistrar(Registry registry, FahrscheinConfigProperties fahrscheinConfigProperties) {
+        this.registry = registry;
+        this.fahrscheinConfigProperties = fahrscheinConfigProperties;
+    }
 
     @Override
     public void register() {
@@ -70,11 +73,11 @@ public class FahrscheinRegistrar implements NakadiClientsRegistrar {
             log.info(LOG_PREFIX + "NakadiClient ...", consumerConfig.getId());
             final String requestFactoryRef = registerRequestFactory(consumerConfig);
             return genericBeanDefinition(FahrscheinNakadiClientFactory.class)
-                .addConstructorArgValue(consumerConfig)
-                .addConstructorArgReference(registerCursorManager(consumerConfig, requestFactoryRef))
-                .addConstructorArgReference(registerObjectMapper(consumerConfig))
-                .addConstructorArgReference(requestFactoryRef)
-                .setFactoryMethod(CREATE);
+                    .addConstructorArgValue(consumerConfig)
+                    .addConstructorArgReference(registerCursorManager(consumerConfig, requestFactoryRef))
+                    .addConstructorArgReference(registerObjectMapper(consumerConfig))
+                    .addConstructorArgReference(requestFactoryRef)
+                    .setFactoryMethod(CREATE);
         });
     }
 
@@ -82,8 +85,8 @@ public class FahrscheinRegistrar implements NakadiClientsRegistrar {
         return registry.registerIfAbsent(consumerConfig.getId(), RequestFactory.class, () -> {
             log.info(LOG_PREFIX + "RequestFactory ...", consumerConfig.getId());
             return genericBeanDefinition(RequestFactoryFactory.class)
-                .addConstructorArgValue(consumerConfig)
-                .setFactoryMethod(CREATE);
+                    .addConstructorArgValue(consumerConfig)
+                    .setFactoryMethod(CREATE);
         });
     }
 
@@ -99,12 +102,12 @@ public class FahrscheinRegistrar implements NakadiClientsRegistrar {
     }
 
     private String registerCursorManager(AbstractConfig consumerConfig, String requestFactoryRef) {
-        return registry.registerIfAbsent("",  CursorManager.class, () -> {
+        return registry.registerIfAbsent("", CursorManager.class, () -> {
             log.info(LOG_PREFIX + "CursorManager ...", consumerConfig.getId());
             return genericBeanDefinition(CursorManagerFactory.class)
-                .addConstructorArgValue(consumerConfig)
-                .addConstructorArgReference(requestFactoryRef)
-                .setFactoryMethod(CREATE);
+                    .addConstructorArgValue(consumerConfig)
+                    .addConstructorArgReference(requestFactoryRef)
+                    .setFactoryMethod(CREATE);
         });
     }
 

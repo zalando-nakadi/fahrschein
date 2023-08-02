@@ -1,11 +1,11 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.slf4j.Logger;
 import org.zalando.fahrschein.http.apache.HttpComponentsRequestFactory;
 import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.AbstractConfig;
@@ -13,8 +13,9 @@ import org.zalando.spring.boot.fahrschein.nakadi.config.properties.HttpConfig;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-@Slf4j
 class RequestFactoryFactory {
+
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(RequestFactoryFactory.class);
 
     static RequestFactory create(AbstractConfig config) {
         CloseableHttpClient closeableHttpClient = buildCloseableHttpClient(config.getHttp());
@@ -30,25 +31,25 @@ class RequestFactoryFactory {
                 .build();
 
         final ConnectionConfig connectionConfig = ConnectionConfig.custom()
-                    .setBufferSize(httpConfig.getBufferSize())
-                    .build();
+                .setBufferSize(httpConfig.getBufferSize())
+                .build();
 
         HttpClientBuilder builder = HttpClients.custom()
-                    .setDefaultRequestConfig(config)
-                    .setDefaultConnectionConfig(connectionConfig)
-                    .setConnectionTimeToLive(httpConfig.getConnectionTimeToLive().getAmount(), httpConfig.getConnectionTimeToLive().getUnit())
-                    .disableRedirectHandling()
-                    .setMaxConnTotal(httpConfig.getMaxConnectionsTotal())
-                    .setMaxConnPerRoute(httpConfig.getMaxConnectionsPerRoute())
-                    .setUserAgent(httpConfig.getUserAgent());
+                .setDefaultRequestConfig(config)
+                .setDefaultConnectionConfig(connectionConfig)
+                .setConnectionTimeToLive(httpConfig.getConnectionTimeToLive().getAmount(), httpConfig.getConnectionTimeToLive().getUnit())
+                .disableRedirectHandling()
+                .setMaxConnTotal(httpConfig.getMaxConnectionsTotal())
+                .setMaxConnPerRoute(httpConfig.getMaxConnectionsPerRoute())
+                .setUserAgent(httpConfig.getUserAgent());
 
-                    if (httpConfig.getEvictExpiredConnections()) {
-                        builder = builder.evictExpiredConnections();
-                    }
+        if (httpConfig.getEvictExpiredConnections()) {
+            builder = builder.evictExpiredConnections();
+        }
 
-                    if (httpConfig.getEvictIdleConnections()) {
-                        builder = builder.evictIdleConnections(httpConfig.getMaxIdleTime().longValue(), MILLISECONDS);
-                    }
+        if (httpConfig.getEvictIdleConnections()) {
+            builder = builder.evictIdleConnections(httpConfig.getMaxIdleTime().longValue(), MILLISECONDS);
+        }
 
 
         return builder.build();

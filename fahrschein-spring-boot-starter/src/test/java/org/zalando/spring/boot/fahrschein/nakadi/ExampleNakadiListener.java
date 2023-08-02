@@ -1,15 +1,16 @@
 package org.zalando.spring.boot.fahrschein.nakadi;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.zalando.fahrschein.EventAlreadyProcessedException;
 import org.zalando.spring.boot.fahrschein.nakadi.stereotype.NakadiEventListener;
 
 import java.io.IOException;
 import java.util.List;
 
-@Slf4j
 @NakadiEventListener("example")
-public class ExampleNakadiListener implements NakadiListener<ExampleEvent>{
+public class ExampleNakadiListener implements NakadiListener<ExampleEvent> {
+
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ExampleNakadiListener.class);
 
     @Override
     public void accept(List<ExampleEvent> events) throws IOException, EventAlreadyProcessedException {

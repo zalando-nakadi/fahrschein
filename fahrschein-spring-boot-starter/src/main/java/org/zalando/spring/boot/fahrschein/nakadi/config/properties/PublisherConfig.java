@@ -1,12 +1,7 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config.properties;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
 import java.util.Optional;
 
-@Data
-@EqualsAndHashCode(callSuper = false)
 public class PublisherConfig extends AbstractConfig {
 
     public PublisherConfig() {
@@ -20,12 +15,33 @@ public class PublisherConfig extends AbstractConfig {
         this.setObjectMapperRef(Optional.ofNullable(this.getObjectMapperRef()).orElse(defaultConsumerConfig.getObjectMapperRef()));
 
         // oauth
-        if(defaultConsumerConfig.getOauth().getEnabled() && !this.getOauth().getEnabled()) {
+        if (defaultConsumerConfig.getOauth().getEnabled() && !this.getOauth().getEnabled()) {
             this.oauth.setEnabled(defaultConsumerConfig.getOauth().getEnabled());
             this.oauth.setAccessTokenIdIfNotConfigured(defaultConsumerConfig.getOauth().getAccessTokenId());
             this.oauth.setCredentialsDirectoryIfNotConfigured(defaultConsumerConfig.getOauth().getCredentialsDirectory());
         }
 
         this.getHttp().mergeFromDefaults(defaultConsumerConfig.getHttp());
+    }
+
+    public String toString() {
+        return "PublisherConfig()";
+    }
+
+    public boolean equals(final Object o) {
+        if (o == this) return true;
+        if (!(o instanceof PublisherConfig)) return false;
+        final PublisherConfig other = (PublisherConfig) o;
+        if (!other.canEqual((Object) this)) return false;
+        return true;
+    }
+
+    protected boolean canEqual(final Object other) {
+        return other instanceof PublisherConfig;
+    }
+
+    public int hashCode() {
+        int result = 1;
+        return result;
     }
 }

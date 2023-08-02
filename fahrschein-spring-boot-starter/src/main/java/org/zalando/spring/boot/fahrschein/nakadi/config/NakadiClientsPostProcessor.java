@@ -1,7 +1,6 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config;
 
 import com.google.common.collect.Lists;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -17,10 +16,12 @@ import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
 
-@RequiredArgsConstructor
 public class NakadiClientsPostProcessor implements BeanDefinitionRegistryPostProcessor, EnvironmentAware {
 
     private FahrscheinConfigProperties properties;
+
+    public NakadiClientsPostProcessor() {
+    }
 
     @Override
     public void setEnvironment(Environment environment) {

@@ -2,7 +2,6 @@ package org.zalando.spring.boot.fahrschein.nakadi.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 import org.zalando.fahrschein.BackoffStrategy;
 import org.zalando.fahrschein.EqualJitterBackoffStrategy;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
@@ -31,7 +30,6 @@ import java.util.List;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
 import static org.zalando.spring.boot.fahrschein.nakadi.config.properties.Position.END;
 
-@RequiredArgsConstructor
 public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAware {
 
     private static final String SERVICE_DATATYPE = "service";
@@ -48,6 +46,11 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
 
     private MeterRegistry meterRegistry;
 
+    public FahrscheinNakadiConsumer(@NonNull NakadiClient nakadiClient, @NonNull ConsumerConfig consumerConfig) {
+        this.nakadiClient = nakadiClient;
+        this.consumerConfig = consumerConfig;
+    }
+
     @Override
     public ConsumerConfig getConsumerConfig() {
         return this.consumerConfig;
@@ -63,10 +66,10 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
         final Subscription sub = getSubscription();
         final StreamParameters streamParams = getStreamParameters();
         final IORunnable result = nakadiClient.stream(sub)
-                                                .withStreamParameters(streamParams)
-                                                .withBackoffStrategy(getBackoffStrategy(consumerConfig))
-                                                .withMetricsCollector(getMetricsCollector(consumerConfig, meterRegistry))
-                                                .runnable(listener.getEventType(), listener);
+                .withStreamParameters(streamParams)
+                .withBackoffStrategy(getBackoffStrategy(consumerConfig))
+                .withMetricsCollector(getMetricsCollector(consumerConfig, meterRegistry))
+                .runnable(listener.getEventType(), listener);
 
         return result;
     }
@@ -80,15 +83,15 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
     }
 
     protected static BackoffStrategy getBackoffStrategy(ConsumerConfig consumerConfig) {
-        if(consumerConfig.getBackoff().getEnabled()) {
+        if (consumerConfig.getBackoff().getEnabled()) {
             final BackoffConfig c = consumerConfig.getBackoff();
-            if(c.getJitter().getEnabled() && c.getJitter().getType().equals(JitterType.EQUAL)) {
-                return new EqualJitterBackoffStrategy((int)c.getInitialDelay().getUnit().toMillis(c.getInitialDelay().getAmount()), c.getBackoffFactor(), c.getMaxDelay().getUnit().toMillis(c.getMaxDelay().getAmount()), c.getMaxRetries());
+            if (c.getJitter().getEnabled() && c.getJitter().getType().equals(JitterType.EQUAL)) {
+                return new EqualJitterBackoffStrategy((int) c.getInitialDelay().getUnit().toMillis(c.getInitialDelay().getAmount()), c.getBackoffFactor(), c.getMaxDelay().getUnit().toMillis(c.getMaxDelay().getAmount()), c.getMaxRetries());
             }
-            if(c.getJitter().getEnabled() && c.getJitter().getType().equals(JitterType.FULL)) {
-                return new FullJitterBackoffStrategy((int)c.getInitialDelay().getUnit().toMillis(c.getInitialDelay().getAmount()), c.getBackoffFactor(), c.getMaxDelay().getUnit().toMillis(c.getMaxDelay().getAmount()), c.getMaxRetries());
+            if (c.getJitter().getEnabled() && c.getJitter().getType().equals(JitterType.FULL)) {
+                return new FullJitterBackoffStrategy((int) c.getInitialDelay().getUnit().toMillis(c.getInitialDelay().getAmount()), c.getBackoffFactor(), c.getMaxDelay().getUnit().toMillis(c.getMaxDelay().getAmount()), c.getMaxRetries());
             }
-            return new ExponentialBackoffStrategy((int)c.getInitialDelay().getUnit().toMillis(c.getInitialDelay().getAmount()), c.getBackoffFactor(), c.getMaxDelay().getUnit().toMillis(c.getMaxDelay().getAmount()), c.getMaxRetries());
+            return new ExponentialBackoffStrategy((int) c.getInitialDelay().getUnit().toMillis(c.getInitialDelay().getAmount()), c.getBackoffFactor(), c.getMaxDelay().getUnit().toMillis(c.getMaxDelay().getAmount()), c.getMaxRetries());
         }
         return new NoBackoffStrategy();
     }
@@ -97,31 +100,31 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
 
         List<AuthorizationAttribute> adminAttributes = new LinkedList<>();
         consumerConfig.getAuthorizations().getAdmins().getUsers()
-        					.forEach(user -> 
-        						adminAttributes.add(new AuthorizationAttribute(USER_DATATYPE, user))
-    						);
+                .forEach(user ->
+                        adminAttributes.add(new AuthorizationAttribute(USER_DATATYPE, user))
+                );
         consumerConfig.getAuthorizations().getAdmins().getServices()
-        					.forEach(service -> 
-        						adminAttributes.add(new AuthorizationAttribute(SERVICE_DATATYPE, service))
-    						);
+                .forEach(service ->
+                        adminAttributes.add(new AuthorizationAttribute(SERVICE_DATATYPE, service))
+                );
         consumerConfig.getAuthorizations().getAdmins().getTeams()
-              .forEach(team ->
-                    adminAttributes.add(new AuthorizationAttribute(TEAM_DATAYPE, team))
-              );
+                .forEach(team ->
+                        adminAttributes.add(new AuthorizationAttribute(TEAM_DATAYPE, team))
+                );
 
         List<AuthorizationAttribute> readerAttributes = new LinkedList<>();
         consumerConfig.getAuthorizations().getReaders().getUsers()
-        					.forEach(user -> 
-        						readerAttributes.add(new AuthorizationAttribute(USER_DATATYPE, user))
-    						);
+                .forEach(user ->
+                        readerAttributes.add(new AuthorizationAttribute(USER_DATATYPE, user))
+                );
         consumerConfig.getAuthorizations().getReaders().getServices()
-        					.forEach(service -> 
-        						readerAttributes.add(new AuthorizationAttribute(SERVICE_DATATYPE, service))
-    						);
+                .forEach(service ->
+                        readerAttributes.add(new AuthorizationAttribute(SERVICE_DATATYPE, service))
+                );
         consumerConfig.getAuthorizations().getReaders().getTeams()
-              .forEach(team ->
-                    readerAttributes.add(new AuthorizationAttribute(TEAM_DATAYPE, team))
-              );
+                .forEach(team ->
+                        readerAttributes.add(new AuthorizationAttribute(TEAM_DATAYPE, team))
+                );
 
         if (consumerConfig.getAuthorizations().getAnyReader()) {
             readerAttributes.add(AuthorizationAttribute.ANYONE);

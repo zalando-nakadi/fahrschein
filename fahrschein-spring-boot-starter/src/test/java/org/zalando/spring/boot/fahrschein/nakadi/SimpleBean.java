@@ -1,21 +1,21 @@
 package org.zalando.spring.boot.fahrschein.nakadi;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Slf4j
 @Component
 public class SimpleBean implements SmartLifecycle {
-	
+
+	private static final Logger log = org.slf4j.LoggerFactory.getLogger(SimpleBean.class);
 	private final AtomicBoolean running = new AtomicBoolean(false);
 
 	@Override
 	public void start() {
 		log.info("START ....");
-		if(isRunning()) {
+		if (isRunning()) {
 			log.info("ALREADY STARTED, SKIP START ....");
 			return;
 		}
@@ -26,7 +26,7 @@ public class SimpleBean implements SmartLifecycle {
 	@Override
 	public void stop() {
 		log.info("STOP ...");
-		if(!isRunning()) {
+		if (!isRunning()) {
 			log.info("ALREADY STOPPED, SKIP STOP ...");
 			return;
 		}

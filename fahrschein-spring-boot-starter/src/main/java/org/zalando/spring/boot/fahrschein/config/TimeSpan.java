@@ -1,9 +1,5 @@
 package org.zalando.spring.boot.fahrschein.config;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
@@ -16,9 +12,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
-@AllArgsConstructor(staticName = "of")
-@Getter
-@EqualsAndHashCode
 public final class TimeSpan {
 
     private static final Pattern PATTERN = Pattern.compile("(\\d+) (\\w+)");
@@ -36,6 +29,15 @@ public final class TimeSpan {
 
     private TimeSpan(final TimeSpan span) {
         this(span.amount, span.unit);
+    }
+
+    private TimeSpan(long amount, TimeUnit unit) {
+        this.amount = amount;
+        this.unit = unit;
+    }
+
+    public static TimeSpan of(long amount, TimeUnit unit) {
+        return new TimeSpan(amount, unit);
     }
 
     long to(final TimeUnit targetUnit) {
@@ -79,4 +81,32 @@ public final class TimeSpan {
         return unit.name().toLowerCase(Locale.ROOT);
     }
 
+    public long getAmount() {
+        return this.amount;
+    }
+
+    public TimeUnit getUnit() {
+        return this.unit;
+    }
+
+    public boolean equals(final Object o) {
+        if (o == this) return true;
+        if (!(o instanceof TimeSpan)) return false;
+        final TimeSpan other = (TimeSpan) o;
+        if (this.getAmount() != other.getAmount()) return false;
+        final Object this$unit = this.getUnit();
+        final Object other$unit = other.getUnit();
+        if (this$unit == null ? other$unit != null : !this$unit.equals(other$unit)) return false;
+        return true;
+    }
+
+    public int hashCode() {
+        final int PRIME = 59;
+        int result = 1;
+        final long $amount = this.getAmount();
+        result = result * PRIME + (int) ($amount >>> 32 ^ $amount);
+        final Object $unit = this.getUnit();
+        result = result * PRIME + ($unit == null ? 43 : $unit.hashCode());
+        return result;
+    }
 }
