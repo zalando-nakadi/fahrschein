@@ -24,15 +24,15 @@ class LastActivityMetricsCollector implements MetricsCollector {
 
     LastActivityMetricsCollector(final MeterRegistry metricRegistry, final String metricsNamePrefix) {
         clock = metricRegistry.config().clock();
-        TimeGauge.builder(metricsNamePrefix + "lastMessageReceived",
+        TimeGauge.builder(metricsNamePrefix + ".lastMessageReceived",
                 () -> (int) ((clock.wallTime() - lastMessageReceived) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + "lastMessageSuccessfullyProcessed",
+        TimeGauge.builder(metricsNamePrefix + ".lastMessageSuccessfullyProcessed",
                 () -> (int) ((clock.wallTime() - lastMessageSuccessfullyProcessed) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + "lastEventReceived",
+        TimeGauge.builder(metricsNamePrefix + ".lastEventReceived",
                 () -> (int) ((clock.wallTime() - lastEventReceived) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + "lastErrorHappened",
+        TimeGauge.builder(metricsNamePrefix + ".lastErrorHappened",
                 () -> (int) ((clock.wallTime() - lastErrorHappend) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + "lastReconnect",
+        TimeGauge.builder(metricsNamePrefix + ".lastReconnect",
                 () -> (int) ((clock.wallTime() - lastReconnect) / 1000), TimeUnit.SECONDS).register(metricRegistry);
     }
 

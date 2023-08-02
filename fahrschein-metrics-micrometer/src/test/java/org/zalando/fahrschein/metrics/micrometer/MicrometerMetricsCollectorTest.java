@@ -17,7 +17,7 @@ public class MicrometerMetricsCollectorTest {
 
     @Test
     public void shouldCollectMetrics() {
-        String id = "test.";
+        String id = "test";
         MockClock clock = new MockClock();
         MeterRegistry meterRegistry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
         MicrometerMetricsCollector c = new MicrometerMetricsCollector(meterRegistry, id);

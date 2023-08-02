@@ -17,11 +17,11 @@ class CountingMetricsCollector implements MetricsCollector {
     }
 
     public CountingMetricsCollector(final MeterRegistry metricRegistry, final String prefix) {
-        messagesReceivedMeter = metricRegistry.counter(prefix + "messagesReceived");
-        eventsReceivedMeter = metricRegistry.counter(prefix + "eventsReceived");
-        errorsWhileConsumingMeter = metricRegistry.counter(prefix + "errorsWhileConsuming");
-        reconnectionsMeter = metricRegistry.counter(prefix + "reconnections");
-        messagesSuccessfullyProcessedMeter = metricRegistry.counter(prefix + "messagesSuccessfullyProcessed");
+        messagesReceivedMeter = metricRegistry.counter(prefix + ".messagesReceived");
+        eventsReceivedMeter = metricRegistry.counter(prefix + ".eventsReceived");
+        errorsWhileConsumingMeter = metricRegistry.counter(prefix + ".errorsWhileConsuming");
+        reconnectionsMeter = metricRegistry.counter(prefix + ".reconnections");
+        messagesSuccessfullyProcessedMeter = metricRegistry.counter(prefix + ".messagesSuccessfullyProcessed");
     }
 
     @Override
