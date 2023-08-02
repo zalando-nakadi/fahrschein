@@ -7,7 +7,7 @@ def lombok_version = '1.18.28'
 
 dependencies {
     api project(':fahrschein')
-    api project(':fahrschein-http-apache')
+    implementation project(':fahrschein-http-apache')
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
@@ -28,12 +28,4 @@ configurations {
     compileOnly {
         extendsFrom annotationProcessor
     }
-}
-
-test {
-    useJUnitPlatform()
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
 }

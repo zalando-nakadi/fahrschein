@@ -29,6 +29,6 @@ jobs:
           files: ./build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
           flags: unittests
       - name: Test oldest supported library versions
-        run: gradle build -Pjackson.version=2.8.0 -Pspring.version=4.3.0.RELEASE -Pokhttp.version=3.3.0 -Papachehttp.version=4.4
+        run: gradle build -Pjackson.version=2.8.0 -Pspring.version=4.3.0.RELEASE -Pspringboot.version=2.6.6 -Pokhttp.version=3.3.0 -Papachehttp.version=4.4
       - name: Test with latest library (minor) updates
         run: gradle build -Pjackson.version=2.+ -Pspring.version=6.+ -Pspringboot.version=3.+ -Pokhttp.version=4.+ -Papachehttp.version=4.+ -Pjdk.version=17
