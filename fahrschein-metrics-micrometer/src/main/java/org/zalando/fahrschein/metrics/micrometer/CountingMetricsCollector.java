@@ -4,6 +4,8 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.zalando.fahrschein.MetricsCollector;
 
+import static org.zalando.fahrschein.metrics.micrometer.MicrometerMetricsCollector.name;
+
 class CountingMetricsCollector implements MetricsCollector {
 
     private final Counter messagesReceivedMeter;
@@ -17,11 +19,11 @@ class CountingMetricsCollector implements MetricsCollector {
     }
 
     public CountingMetricsCollector(final MeterRegistry metricRegistry, final String prefix) {
-        messagesReceivedMeter = metricRegistry.counter(prefix + ".messagesReceived");
-        eventsReceivedMeter = metricRegistry.counter(prefix + ".eventsReceived");
-        errorsWhileConsumingMeter = metricRegistry.counter(prefix + ".errorsWhileConsuming");
-        reconnectionsMeter = metricRegistry.counter(prefix + ".reconnections");
-        messagesSuccessfullyProcessedMeter = metricRegistry.counter(prefix + ".messagesSuccessfullyProcessed");
+        messagesReceivedMeter = metricRegistry.counter(name(prefix, "messagesReceived"));
+        eventsReceivedMeter = metricRegistry.counter(name(prefix, "eventsReceived"));
+        errorsWhileConsumingMeter = metricRegistry.counter(name(prefix, "errorsWhileConsuming"));
+        reconnectionsMeter = metricRegistry.counter(name(prefix, "reconnections"));
+        messagesSuccessfullyProcessedMeter = metricRegistry.counter(name(prefix, "messagesSuccessfullyProcessed"));
     }
 
     @Override

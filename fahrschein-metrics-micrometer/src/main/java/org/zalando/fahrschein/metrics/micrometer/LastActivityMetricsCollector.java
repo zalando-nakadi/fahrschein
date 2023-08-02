@@ -7,12 +7,14 @@ import org.zalando.fahrschein.MetricsCollector;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.zalando.fahrschein.metrics.micrometer.MicrometerMetricsCollector.name;
+
 class LastActivityMetricsCollector implements MetricsCollector {
 
     private long lastMessageReceived = 0;
     private long lastMessageSuccessfullyProcessed = 0;
     private long lastEventReceived = 0;
-    private long lastErrorHappend = 0;
+    private long lastErrorHappened = 0;
     private long lastReconnect = 0;
 
     final Clock clock;
@@ -24,15 +26,15 @@ class LastActivityMetricsCollector implements MetricsCollector {
 
     LastActivityMetricsCollector(final MeterRegistry metricRegistry, final String metricsNamePrefix) {
         clock = metricRegistry.config().clock();
-        TimeGauge.builder(metricsNamePrefix + ".lastMessageReceived",
+        TimeGauge.builder(name(metricsNamePrefix, "lastMessageReceived"),
                 () -> (int) ((clock.wallTime() - lastMessageReceived) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + ".lastMessageSuccessfullyProcessed",
+        TimeGauge.builder(name(metricsNamePrefix, "lastMessageSuccessfullyProcessed"),
                 () -> (int) ((clock.wallTime() - lastMessageSuccessfullyProcessed) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + ".lastEventReceived",
+        TimeGauge.builder(name(metricsNamePrefix, "lastEventReceived"),
                 () -> (int) ((clock.wallTime() - lastEventReceived) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + ".lastErrorHappened",
-                () -> (int) ((clock.wallTime() - lastErrorHappend) / 1000), TimeUnit.SECONDS).register(metricRegistry);
-        TimeGauge.builder(metricsNamePrefix + ".lastReconnect",
+        TimeGauge.builder(name(metricsNamePrefix, "lastErrorHappened"),
+                () -> (int) ((clock.wallTime() - lastErrorHappened) / 1000), TimeUnit.SECONDS).register(metricRegistry);
+        TimeGauge.builder(name(metricsNamePrefix, "lastReconnect"),
                 () -> (int) ((clock.wallTime() - lastReconnect) / 1000), TimeUnit.SECONDS).register(metricRegistry);
     }
 
@@ -48,7 +50,7 @@ class LastActivityMetricsCollector implements MetricsCollector {
 
     @Override
     public void markErrorWhileConsuming() {
-        lastErrorHappend = clock.wallTime();
+        lastErrorHappened = clock.wallTime();
     }
 
     @Override
