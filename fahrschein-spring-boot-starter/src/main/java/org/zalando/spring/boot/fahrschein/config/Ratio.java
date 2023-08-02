@@ -8,7 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static org.zalando.fahrschein.Preconditions.checkArgument;
 
 @AllArgsConstructor
 @Getter

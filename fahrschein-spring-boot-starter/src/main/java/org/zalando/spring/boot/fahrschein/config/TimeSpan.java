@@ -12,9 +12,9 @@ import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static org.zalando.fahrschein.Preconditions.checkArgument;
 
 @AllArgsConstructor(staticName = "of")
 @Getter
