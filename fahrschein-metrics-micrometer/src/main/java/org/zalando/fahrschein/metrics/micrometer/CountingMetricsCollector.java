@@ -19,11 +19,11 @@ class CountingMetricsCollector implements MetricsCollector {
     }
 
     public CountingMetricsCollector(final MeterRegistry metricRegistry, final String prefix) {
-        messagesReceivedMeter = metricRegistry.counter(name(prefix, "messagesReceived"));
-        eventsReceivedMeter = metricRegistry.counter(name(prefix, "eventsReceived"));
-        errorsWhileConsumingMeter = metricRegistry.counter(name(prefix, "errorsWhileConsuming"));
+        messagesReceivedMeter = metricRegistry.counter(name(prefix, "messages","received"));
+        eventsReceivedMeter = metricRegistry.counter(name(prefix, "events","received"));
+        errorsWhileConsumingMeter = metricRegistry.counter(name(prefix, "errors","while","consuming"));
         reconnectionsMeter = metricRegistry.counter(name(prefix, "reconnections"));
-        messagesSuccessfullyProcessedMeter = metricRegistry.counter(name(prefix, "messagesSuccessfullyProcessed"));
+        messagesSuccessfullyProcessedMeter = metricRegistry.counter(name(prefix, "messages","successfully","processed"));
     }
 
     @Override

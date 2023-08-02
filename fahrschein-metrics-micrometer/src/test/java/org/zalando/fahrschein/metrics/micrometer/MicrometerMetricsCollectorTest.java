@@ -24,8 +24,8 @@ public class MicrometerMetricsCollectorTest {
         assertEquals(10, meterRegistry.getMeters().size());
         c.markErrorWhileConsuming();
         clock.addSeconds(1);
-        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.errorsWhileConsuming").getValue());
-        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.lastErrorHappened").getValue());
+        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.errors.while.consuming").getValue());
+        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.last.error.happened").getValue());
 
     }
 
