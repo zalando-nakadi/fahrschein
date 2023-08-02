@@ -1,9 +1,5 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config;
 
-import lombok.AccessLevel;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.SmartLifecycle;
@@ -15,8 +11,6 @@ import java.time.Duration;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Slf4j
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 class NakadiListenerContainer implements SmartLifecycle, InitializingBean {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(NakadiListenerContainer.class);
@@ -28,13 +22,11 @@ class NakadiListenerContainer implements SmartLifecycle, InitializingBean {
 
     private String consumerId = "CONSUMER_ID_NOT_SET";
 
-    @NonNull
     private final NakadiConsumer nakadiConsumer;
 
-    @NonNull
     private final NakadiListener<?> nakadiListener;
 
-    NakadiListenerContainer(@NonNull NakadiConsumer nakadiConsumer, @NonNull NakadiListener<?> nakadiListener) {
+    NakadiListenerContainer(NakadiConsumer nakadiConsumer, NakadiListener<?> nakadiListener) {
         this.nakadiConsumer = nakadiConsumer;
         this.nakadiListener = nakadiListener;
     }

@@ -3,6 +3,7 @@ plugins {
     id 'fahrschein.maven-publishing-conventions'
 }
 
+
 dependencies {
     api project(':fahrschein')
     implementation project(':fahrschein-http-apache')
@@ -17,3 +18,4 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-starter-test:${property('springboot.version')}"
     testImplementation "org.springframework.boot:spring-boot-actuator:${property('springboot.version')}"
 }
+

@@ -1,7 +1,6 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.NonNull;
 import org.zalando.fahrschein.BackoffStrategy;
 import org.zalando.fahrschein.EqualJitterBackoffStrategy;
 import org.zalando.fahrschein.ExponentialBackoffStrategy;
@@ -38,15 +37,13 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
 
     private static final String TEAM_DATAYPE = "team";
 
-    @NonNull
     private final NakadiClient nakadiClient;
 
-    @NonNull
     private final ConsumerConfig consumerConfig;
 
     private MeterRegistry meterRegistry;
 
-    public FahrscheinNakadiConsumer(@NonNull NakadiClient nakadiClient, @NonNull ConsumerConfig consumerConfig) {
+    public FahrscheinNakadiConsumer(NakadiClient nakadiClient, ConsumerConfig consumerConfig) {
         this.nakadiClient = nakadiClient;
         this.consumerConfig = consumerConfig;
     }
