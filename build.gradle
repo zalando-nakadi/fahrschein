@@ -3,9 +3,9 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'jacoco-report-aggregation'
-    id 'com.github.ben-manes.versions' version '0.44.0'
-    id 'org.owasp.dependencycheck' version '7.4.3'
-    id 'de.thetaphi.forbiddenapis' version '3.4'
+    id 'com.github.ben-manes.versions' version '0.47.0'
+    id 'org.owasp.dependencycheck' version '8.3.1'
+    id 'de.thetaphi.forbiddenapis' version '3.5.1'
 }
 
 // CVE vulnerability scanning
