@@ -18,7 +18,7 @@ class LastActivityMetricsCollector implements MetricsCollector {
     final Clock clock;
 
     LastActivityMetricsCollector(final MeterRegistry metricRegistry) {
-        this(metricRegistry, CountingMetricsCollector.DEFAULT_PREFIX);
+        this(metricRegistry, MicrometerMetricsCollector.DEFAULT_PREFIX);
     }
 
 

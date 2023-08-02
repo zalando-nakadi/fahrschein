@@ -17,15 +17,15 @@ public class MicrometerMetricsCollectorTest {
 
     @Test
     public void shouldCollectMetrics() {
-        String namespace = "test.";
+        String id = "test.";
         MockClock clock = new MockClock();
         MeterRegistry meterRegistry = new SimpleMeterRegistry(SimpleConfig.DEFAULT, clock);
-        MicrometerMetricsCollector c = new MicrometerMetricsCollector(meterRegistry, namespace);
+        MicrometerMetricsCollector c = new MicrometerMetricsCollector(meterRegistry, id);
         assertEquals(10, meterRegistry.getMeters().size());
         c.markErrorWhileConsuming();
         clock.addSeconds(1);
-        assertEquals(1, fetchValue(meterRegistry, "test.errorsWhileConsuming").getValue());
-        assertEquals(1, fetchValue(meterRegistry, "test.lastErrorHappened").getValue());
+        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.errorsWhileConsuming").getValue());
+        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.lastErrorHappened").getValue());
 
     }
 

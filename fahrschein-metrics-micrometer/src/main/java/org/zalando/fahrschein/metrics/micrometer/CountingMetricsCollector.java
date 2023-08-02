@@ -6,8 +6,6 @@ import org.zalando.fahrschein.MetricsCollector;
 
 class CountingMetricsCollector implements MetricsCollector {
 
-    public static final String DEFAULT_PREFIX = "org.zalando.fahrschein";
-
     private final Counter messagesReceivedMeter;
     private final Counter eventsReceivedMeter;
     private final Counter errorsWhileConsumingMeter;
@@ -15,7 +13,7 @@ class CountingMetricsCollector implements MetricsCollector {
     private final Counter messagesSuccessfullyProcessedMeter;
 
     public CountingMetricsCollector(final MeterRegistry metricRegistry) {
-        this(metricRegistry, DEFAULT_PREFIX);
+        this(metricRegistry, MicrometerMetricsCollector.DEFAULT_PREFIX);
     }
 
     public CountingMetricsCollector(final MeterRegistry metricRegistry, final String prefix) {
