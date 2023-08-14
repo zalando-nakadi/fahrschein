@@ -123,16 +123,7 @@ public class ApplicationTest {
         assertThat(dc.getHttp())
                 .hasFieldOrPropertyWithValue("socketTimeout", TimeSpan.of(60, SECONDS))
                 .hasFieldOrPropertyWithValue("connectTimeout", TimeSpan.of(150, MILLISECONDS))
-                .hasFieldOrPropertyWithValue("connectionRequestTimeout", TimeSpan.of(8000, MILLISECONDS))
-                .hasFieldOrPropertyWithValue("contentCompressionEnabled", true)
-                .hasFieldOrPropertyWithValue("bufferSize", 512)
-                .hasFieldOrPropertyWithValue("connectionTimeToLive", TimeSpan.of(30, SECONDS))
-                .hasFieldOrPropertyWithValue("maxConnectionsTotal", 42)
-                .hasFieldOrPropertyWithValue("maxConnectionsPerRoute", 21)
-                .hasFieldOrPropertyWithValue("evictExpiredConnections", true)
-                .hasFieldOrPropertyWithValue("evictIdleConnections", true)
-                .hasFieldOrPropertyWithValue("maxIdleTime", 10000L) // duration???
-                .hasFieldOrPropertyWithValue("userAgent", "fahrschein-spring-boot-starter")
+                .hasFieldOrPropertyWithValue("requestTimeout", TimeSpan.of(60, SECONDS))
                 .hasFieldOrPropertyWithValue("contentEncoding", ContentEncoding.GZIP)
                 .hasNoNullFieldsOrProperties();
 
@@ -168,16 +159,7 @@ public class ApplicationTest {
         assertThat(cc.getHttp())
                 .hasFieldOrPropertyWithValue("socketTimeout", TimeSpan.of(60, SECONDS))
                 .hasFieldOrPropertyWithValue("connectTimeout", TimeSpan.of(300, MILLISECONDS))
-                .hasFieldOrPropertyWithValue("connectionRequestTimeout", TimeSpan.of(8000, MILLISECONDS))
-                .hasFieldOrPropertyWithValue("contentCompressionEnabled", true)
-                .hasFieldOrPropertyWithValue("bufferSize", 512)
-                .hasFieldOrPropertyWithValue("connectionTimeToLive", TimeSpan.of(30, SECONDS))
-                .hasFieldOrPropertyWithValue("maxConnectionsTotal", 42)
-                .hasFieldOrPropertyWithValue("maxConnectionsPerRoute", 21)
-                .hasFieldOrPropertyWithValue("evictExpiredConnections", true)
-                .hasFieldOrPropertyWithValue("evictIdleConnections", true)
-                .hasFieldOrPropertyWithValue("maxIdleTime", 10000L) // duration???
-                .hasFieldOrPropertyWithValue("userAgent", "fahrschein-spring-boot-starter")
+                .hasFieldOrPropertyWithValue("requestTimeout", TimeSpan.of(60, SECONDS))
                 .hasFieldOrPropertyWithValue("contentEncoding", ContentEncoding.IDENTITY)
                 .hasNoNullFieldsOrProperties();
 

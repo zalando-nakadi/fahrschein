@@ -7,7 +7,10 @@ def lombok_version = '1.18.28'
 
 dependencies {
     api project(':fahrschein')
-    implementation project(':fahrschein-http-apache')
+    // optional dependency: will be used if it's found on the classpath.
+    compileOnly project(':fahrschein-http-jdk11')
+    implementation project(':fahrschein-http-spring')
+    implementation "org.springframework:spring-web:${property('spring.version')}"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
