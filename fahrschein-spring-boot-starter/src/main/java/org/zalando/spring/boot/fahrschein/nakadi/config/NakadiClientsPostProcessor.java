@@ -1,6 +1,5 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config;
 
-import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -13,9 +12,9 @@ import org.zalando.spring.boot.fahrschein.config.Registry;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.FahrscheinConfigProperties;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.SettingsParser;
 
-import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.ServiceLoader;
+import java.util.stream.StreamSupport;
 
 @RequiredArgsConstructor
 public class NakadiClientsPostProcessor implements BeanDefinitionRegistryPostProcessor, EnvironmentAware {
@@ -24,14 +23,14 @@ public class NakadiClientsPostProcessor implements BeanDefinitionRegistryPostPro
 
     @Override
     public void setEnvironment(Environment environment) {
-        final Collection<SettingsParser> parsers = Lists.newArrayList(ServiceLoader.load(SettingsParser.class));
+        final Iterable<SettingsParser> parsers = ServiceLoader.load(SettingsParser.class);
         this.properties = parse((ConfigurableEnvironment) environment, parsers);
         this.properties.postProcess();
     }
 
     // visible for testing
-    FahrscheinConfigProperties parse(final ConfigurableEnvironment environment, final Collection<SettingsParser> parsers) {
-        final SettingsParser parser = parsers.stream()
+    FahrscheinConfigProperties parse(final ConfigurableEnvironment environment, final Iterable<SettingsParser> parsers) {
+        final SettingsParser parser = StreamSupport.stream(parsers.spliterator(), false)
                 .filter(SettingsParser::isApplicable)
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No applicable nakadi-clients settings parser available"));

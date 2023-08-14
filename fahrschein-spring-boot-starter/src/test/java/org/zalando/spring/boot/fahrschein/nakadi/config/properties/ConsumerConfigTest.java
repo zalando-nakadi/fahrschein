@@ -3,7 +3,8 @@ package org.zalando.spring.boot.fahrschein.nakadi.config.properties;
 import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 
-import static com.google.common.collect.Lists.newArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsumerConfigTest {
@@ -78,7 +79,7 @@ public class ConsumerConfigTest {
         dc.setObjectMapperRef("jacksonObjectMapper");
         ConsumerConfig cc = new ConsumerConfig();
 
-        cc.getAuthorizations().setAdmins(AuthorizationUserServiceTeamLists.create(newArrayList(USER_5), newArrayList(), newArrayList(TEST_TEAM)));
+        cc.getAuthorizations().setAdmins(AuthorizationUserServiceTeamLists.create(List.of(USER_5), List.of(), List.of(TEST_TEAM)));
         cc.getHttp().setMaxIdleTime(1000L);
 
         cc.mergeWithDefaultConfig(dc);

@@ -16,11 +16,10 @@ import org.zalando.spring.boot.fahrschein.nakadi.stereotype.NakadiEventListener;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import static com.google.common.base.CaseFormat.LOWER_CAMEL;
-import static com.google.common.base.CaseFormat.LOWER_HYPHEN;
-import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static org.springframework.beans.factory.support.BeanDefinitionBuilder.genericBeanDefinition;
 
 public class Registry {
@@ -86,11 +85,18 @@ public class Registry {
     }
 
     public static <T> String generateBeanName(final Class<T> type) {
-        return UPPER_CAMEL.to(LOWER_CAMEL, type.getSimpleName());
+        // convert from upper camel to lower camel case.
+        String input = type.getSimpleName();
+        char firstChar = Character.toLowerCase(input.charAt(0));
+        return firstChar + input.substring(1);
     }
 
     public static <T> String generateBeanName(final String id, final Class<T> type) {
-        return LOWER_HYPHEN.to(LOWER_CAMEL, id) + type.getSimpleName();
+        // convert from lower hyphen to lower camel case.
+        List<String> parts = Arrays.asList(id.split("-"));
+        return parts.get(0) + parts.subList(1, parts.size()).stream()
+                .map(s -> s.isEmpty() ? "" : s.substring(0, 1).toUpperCase(Locale.ENGLISH) + s.substring(1).toLowerCase(Locale.ENGLISH))
+                .collect(Collectors.joining()) + type.getSimpleName();
     }
 
     public static BeanReference ref(final String beanName) {
