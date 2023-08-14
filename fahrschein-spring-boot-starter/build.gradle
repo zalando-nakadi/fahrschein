@@ -12,7 +12,6 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
-    implementation 'com.google.guava:guava:32.1.2-jre'
     compileOnlyApi "org.springframework.boot:spring-boot-configuration-processor:${property('springboot.version')}"
     implementation 'io.micrometer:micrometer-core:1.11.2'
     compileOnly "org.projectlombok:lombok:${lombok_version}"
