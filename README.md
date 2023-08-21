@@ -339,13 +339,13 @@ public void readSalesOrderPlacedEvents() throws IOException {
 
 Although Fahrschein is using fixed dependency versions, it is integration-tested against the following dependency matrix. We will inform in the release notes in case we bump the compatibility baseline. 
 
-| Dependency        | Baseline      | Latest |
-| ----------------- | ------------- | ------ |
-| Jackson           | 2.8.0         | 2.+    |
-| Spring Core       | 4.3.0.RELEASE | 6.+    |
-| Spring Boot       | 2.6.6         | 3.+    |
-| okHttp            | 3.3.0         | 4.+    |
-| Apache HttpClient | 4.4           | 4.+    |
+| Dependency        | Baseline | Latest |
+| ----------------- |----------| ------ |
+| Jackson           | 2.8.0    | 2.+    |
+| Spring Core       | 6.0.0    | 6.+    |
+| Spring Boot       | 3.0.0    | 3.+    |
+| okHttp            | 3.3.0    | 4.+    |
+| Apache HttpClient | 4.4      | 4.+    |
 
 ## Content-Compression
 
