@@ -19,11 +19,6 @@ class LastActivityMetricsCollector implements MetricsCollector {
 
     final Clock clock;
 
-    LastActivityMetricsCollector(final MeterRegistry metricRegistry) {
-        this(metricRegistry, MicrometerMetricsCollector.DEFAULT_PREFIX);
-    }
-
-
     LastActivityMetricsCollector(final MeterRegistry metricRegistry, final String metricsNamePrefix) {
         clock = metricRegistry.config().clock();
         TimeGauge.builder(name(metricsNamePrefix, "last","message","received"),

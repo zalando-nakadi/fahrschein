@@ -20,10 +20,13 @@ public class DropwizardMetricsCollectorTest {
         assertEquals(5, metricRegistry.getGauges().entrySet().size());
 
         c.markErrorWhileConsuming();
+        c.markEventsReceived(10);
+        c.markEventsReceived(10);
         Map<String, Meter> meters = metricRegistry.getMeters();
         Map<String, Gauge> gauges = metricRegistry.getGauges();
         assertEquals(1, meters.get("test.errorsWhileConsuming").getCount());
         assertEquals(0, gauges.get("test.lastErrorHappened").getValue());
+        assertEquals(20, meters.get("test.eventsReceived").getCount());
     }
 
 }

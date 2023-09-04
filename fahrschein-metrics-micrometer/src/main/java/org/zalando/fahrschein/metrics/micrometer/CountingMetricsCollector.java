@@ -14,11 +14,7 @@ class CountingMetricsCollector implements MetricsCollector {
     private final Counter reconnectionsMeter;
     private final Counter messagesSuccessfullyProcessedMeter;
 
-    public CountingMetricsCollector(final MeterRegistry metricRegistry) {
-        this(metricRegistry, MicrometerMetricsCollector.DEFAULT_PREFIX);
-    }
-
-    public CountingMetricsCollector(final MeterRegistry metricRegistry, final String prefix) {
+    CountingMetricsCollector(final MeterRegistry metricRegistry, final String prefix) {
         messagesReceivedMeter = metricRegistry.counter(name(prefix, "messages","received"));
         eventsReceivedMeter = metricRegistry.counter(name(prefix, "events","received"));
         errorsWhileConsumingMeter = metricRegistry.counter(name(prefix, "errors","while","consuming"));
