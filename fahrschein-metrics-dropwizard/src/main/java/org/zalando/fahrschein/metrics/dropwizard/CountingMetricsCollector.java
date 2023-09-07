@@ -1,12 +1,12 @@
-package org.zalando.fahrschein.metrics;
+package org.zalando.fahrschein.metrics.dropwizard;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import org.zalando.fahrschein.MetricsCollector;
 
-public class DropwizardMetricsCollector implements MetricsCollector {
+import static com.codahale.metrics.MetricRegistry.name;
 
-    public static final String DEFAULT_PREFIX = "org.zalando.fahrschein.";
+class CountingMetricsCollector implements MetricsCollector {
 
     private final Meter messagesReceivedMeter;
     private final Meter eventsReceivedMeter;
@@ -14,16 +14,12 @@ public class DropwizardMetricsCollector implements MetricsCollector {
     private final Meter reconnectionsMeter;
     private final Meter messagesSuccessfullyProcessedMeter;
 
-    public DropwizardMetricsCollector(final MetricRegistry metricRegistry) {
-        this(metricRegistry, DEFAULT_PREFIX);
-    }
-
-    public DropwizardMetricsCollector(final MetricRegistry metricRegistry, final String prefix) {
-        messagesReceivedMeter = metricRegistry.meter(prefix + "messagesReceived");
-        eventsReceivedMeter = metricRegistry.meter(prefix + "eventsReceived");
-        errorsWhileConsumingMeter = metricRegistry.meter(prefix + "errorsWhileConsuming");
-        reconnectionsMeter = metricRegistry.meter(prefix + "reconnections");
-        messagesSuccessfullyProcessedMeter = metricRegistry.meter(prefix + "messagesSuccessfullyProcessed");
+    public CountingMetricsCollector(final MetricRegistry metricRegistry, final String prefix) {
+        messagesReceivedMeter = metricRegistry.meter(name(prefix, "messagesReceived"));
+        eventsReceivedMeter = metricRegistry.meter(name(prefix, "eventsReceived"));
+        errorsWhileConsumingMeter = metricRegistry.meter(name ( prefix, "errorsWhileConsuming"));
+        reconnectionsMeter = metricRegistry.meter(name(prefix, "reconnections"));
+        messagesSuccessfullyProcessedMeter = metricRegistry.meter(name(prefix, "messagesSuccessfullyProcessed"));
     }
 
     @Override

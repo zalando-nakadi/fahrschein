@@ -1,4 +1,4 @@
-package org.zalando.fahrschein.metrics;
+package org.zalando.fahrschein.metrics.dropwizard;
 
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
@@ -9,7 +9,7 @@ import java.util.function.LongSupplier;
 import static com.codahale.metrics.MetricRegistry.name;
 import static java.lang.System.currentTimeMillis;
 
-public class LastActivityMetricsCollector implements MetricsCollector {
+class LastActivityMetricsCollector implements MetricsCollector {
 
     private long lastMessageReceived = 0;
     private long lastMessageSuccessfullyProcessed = 0;
@@ -19,19 +19,19 @@ public class LastActivityMetricsCollector implements MetricsCollector {
 
     public LastActivityMetricsCollector(final MetricRegistry metricRegistry, final String metricsNamePrefix) {
         createOrReplaceGauge(metricRegistry,
-                name(this.getClass(), metricsNamePrefix, "lastMessageReceived"),
+                name(metricsNamePrefix, "lastMessageReceived"),
                 () -> ((currentTimeMillis() - lastMessageReceived) / 1000));
         createOrReplaceGauge(metricRegistry,
-                name(this.getClass(), metricsNamePrefix, "lastMessageSuccessfullyProcessed"),
+                name( metricsNamePrefix, "lastMessageSuccessfullyProcessed"),
                 () -> ((currentTimeMillis() - lastMessageSuccessfullyProcessed) / 1000));
         createOrReplaceGauge(metricRegistry,
-                name(this.getClass(), metricsNamePrefix, "lastEventReceived"),
+                name(metricsNamePrefix, "lastEventReceived"),
                 () -> ((currentTimeMillis() - lastEventReceived) / 1000));
         createOrReplaceGauge(metricRegistry,
-                name(this.getClass(), metricsNamePrefix, "lastErrorHappend"),
+                name( metricsNamePrefix, "lastErrorHappened"),
                 () -> ((currentTimeMillis() - lastErrorHappend) / 1000));
         createOrReplaceGauge(metricRegistry,
-                name(this.getClass(), metricsNamePrefix, "lastReconnect"),
+                name(metricsNamePrefix, "lastReconnect"),
                 () -> ((currentTimeMillis() - lastReconnect) / 1000));
     }
 

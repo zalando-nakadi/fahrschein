@@ -1,13 +1,15 @@
-package org.zalando.fahrschein.metrics;
+package org.zalando.fahrschein;
 
-import org.zalando.fahrschein.MetricsCollector;
-
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 
 public class MultiplexingMetricsCollector implements MetricsCollector {
 
-    private final Collection<MetricsCollector> delegates = new LinkedList<>();
+    private final List<MetricsCollector> delegates;
+
+
+    public MultiplexingMetricsCollector(List<MetricsCollector> delegates) {
+        this.delegates = delegates;
+    }
 
     @Override
     public void markMessageReceived() {
@@ -32,11 +34,6 @@ public class MultiplexingMetricsCollector implements MetricsCollector {
     @Override
     public void markMessageSuccessfullyProcessed() {
         delegates.stream().forEach(mc -> mc.markMessageSuccessfullyProcessed());
-    }
-
-    public MultiplexingMetricsCollector register(final MetricsCollector metricsCollector) {
-        delegates.add(metricsCollector);
-        return this;
     }
 
 }

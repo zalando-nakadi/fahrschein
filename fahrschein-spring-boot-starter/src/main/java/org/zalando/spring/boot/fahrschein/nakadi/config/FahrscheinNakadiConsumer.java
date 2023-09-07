@@ -16,6 +16,7 @@ import org.zalando.fahrschein.StreamParameters;
 import org.zalando.fahrschein.SubscriptionBuilder;
 import org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute;
 import org.zalando.fahrschein.domain.Subscription;
+import org.zalando.fahrschein.metrics.micrometer.MicrometerMetricsCollector;
 import org.zalando.spring.boot.fahrschein.nakadi.MeterRegistryAware;
 import org.zalando.spring.boot.fahrschein.nakadi.NakadiListener;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.BackoffConfig;
