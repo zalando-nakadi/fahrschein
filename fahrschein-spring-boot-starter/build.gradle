@@ -10,13 +10,13 @@ dependencies {
     // optional dependency: will be used if it's found on the classpath.
     compileOnly project(':fahrschein-http-jdk11')
     implementation project(':fahrschein-http-spring')
+    implementation project(':fahrschein-metrics-micrometer')
     implementation "org.springframework:spring-web:${property('spring.version')}"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${property('jackson.version')}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${property('jackson.version')}"
     compileOnlyApi "org.springframework.boot:spring-boot-configuration-processor:${property('springboot.version')}"
-    implementation 'io.micrometer:micrometer-core:1.11.2'
     compileOnly "org.projectlombok:lombok:${lombok_version}"
     annotationProcessor "org.projectlombok:lombok:${lombok_version}"
     compileOnlyApi "org.springframework.boot:spring-boot-autoconfigure:${property('springboot.version')}"

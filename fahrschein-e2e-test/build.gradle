@@ -8,6 +8,8 @@ dependencies {
     testImplementation project(':fahrschein-http-simple')
     testImplementation project(':fahrschein-http-apache')
     testImplementation project(':fahrschein-http-spring')
+    testImplementation project(':fahrschein-metrics-dropwizard')
+    testImplementation project(':fahrschein-metrics-micrometer')
     // test with spring 6
     testImplementation "org.springframework:spring-web:6.0.11"
     testImplementation project(':fahrschein-http-jdk11')

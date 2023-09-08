@@ -289,6 +289,23 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, requestFactory)
 size bigger than the number of subscriptions you're making, because subscriptions use long-polling to
 retrieve events, each effectively blocking one connection.
 
+## Metrics
+
+Fahrschein has support for metrics using `Dropwizard` and `Micrometer`, at the moment for consuming events only.
+Each integration has two metrics collector implementations, one for counting, one for last activity timestamps.
+Multiple metrics integrations can be chained by using the `MultiplexingMetricsCollector`.
+In dropwizard, the default metrics prefix is `org.zalando.fahrschein`, for Micrometer it is `fahrschein.listener`.
+
+Example using Micrometer:
+
+```java
+MeterRegistry registry = new SimpleMeterRegistry();
+
+nakadiClient.stream(subscription)
+ .withMetricsCollector(new MicrometerMetricsCollector(registry))
+```
+
+
 ## Using Nakadi's Low-level API
 
 *Please do not use the Low-level API, as it is deprecated by Nakadi.*
@@ -376,7 +393,7 @@ Zstandard compression was added in version `0.21.0`.
 | Compression: publishing | gzip, zstd                               | gzip                                                 |
 | Error Handling | Automatic retry with exponential backoff | Automatic retry with exponential backoff             |
 | OpenTracing | yes                                      | yes                                                  |
-| Metrics Collection | yes (dropwizard)                         | yes (dropwizard,micrometer)                          |
+| Metrics Collection | yes (dropwizard,micrometer)              | yes (dropwizard,micrometer)                          |
 | Access to Event Metadata | no                                       | yes                                                  |
 | Event Type manipulation | no                                       | yes                                                  |
 

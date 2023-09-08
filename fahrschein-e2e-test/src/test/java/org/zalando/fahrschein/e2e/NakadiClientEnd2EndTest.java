@@ -1,5 +1,6 @@
 package org.zalando.fahrschein.e2e;
 
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +8,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -20,6 +23,7 @@ import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.zalando.fahrschein.EventAlreadyProcessedException;
 import org.zalando.fahrschein.IdentityAcceptEncodingRequestFactory;
 import org.zalando.fahrschein.Listener;
+import org.zalando.fahrschein.MultiplexingMetricsCollector;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.StreamBuilder;
 import org.zalando.fahrschein.StreamParameters;
@@ -31,12 +35,15 @@ import org.zalando.fahrschein.http.api.RequestFactory;
 import org.zalando.fahrschein.http.jdk11.JavaNetRequestFactory;
 import org.zalando.fahrschein.http.simple.SimpleRequestFactory;
 import org.zalando.fahrschein.http.spring.SpringRequestFactory;
+import org.zalando.fahrschein.metrics.dropwizard.DropwizardMetricsCollector;
+import org.zalando.fahrschein.metrics.micrometer.MicrometerMetricsCollector;
 
 import java.io.IOException;
 import java.net.http.HttpClient;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -57,6 +64,9 @@ import static org.mockito.Mockito.timeout;
 public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
 
     private static final Logger logger = LoggerFactory.getLogger("okhttp3.wire");
+
+    private final MetricRegistry dropwMetrics = new MetricRegistry();
+    private final MeterRegistry micrometerMetrics = new SimpleMeterRegistry();
     private static final HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(logger::debug);
 
     static {
@@ -161,6 +171,10 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
                 .subscribe();
         StreamBuilder b = nakadiClient.stream(subscription)
                 .withObjectMapper(objectMapper)
+                .withMetricsCollector(new MultiplexingMetricsCollector(Arrays.asList(
+                        new DropwizardMetricsCollector(dropwMetrics),
+                        new MicrometerMetricsCollector(micrometerMetrics)
+                )))
                 .withStreamParameters(new StreamParameters()
                         .withBatchFlushTimeout(1)
                         .withStreamLimit(1)
