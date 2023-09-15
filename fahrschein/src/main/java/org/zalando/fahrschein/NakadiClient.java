@@ -92,6 +92,22 @@ public class NakadiClient {
 
     /**
      * Writes the given events to the endpoint provided by the eventName.
+     *
+     * In case of a partial success (or also in cases like validation errors, which are complete failures), Fahrschein
+     * will throw an EventPublishingException with the BatchItemResponses (as returned from Nakadi) for the failed
+     * items in the responses property.
+     * These objects have the eid of the failed event, a publishingStatus (failed/aborted/submitted - but these are
+     * filtered out)), the step where it failed and a detail string.
+     * If the application sets the eids itself (i.e. doesn't let Nakadi do it) and keeps track of them, this allows it
+     * to resend only the failed items later.
+     * It also allows differentiating between validation errors (which likely don't need to be retried, as they are
+     * unlikely to succeed the next time, unless the event type definition is changed) and publishing errors
+     * (which should be retried, possibly with some back-off).
+     *
+     * Recommendation: Implement a retry-with-backoff handler for {{EventPublishingException}}s, which, depending on
+     * your ordering consistency requirements, either retries the full batch, or retries the failed events based
+     * on the event-ids.
+     *
      * @param eventName where the event should be written to
      * @param events that should be written
      * @param <T> Type of the Event
