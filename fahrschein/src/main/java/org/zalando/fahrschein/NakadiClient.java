@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.domain.Authorization;
+import org.zalando.fahrschein.domain.BatchItemResponse;
 import org.zalando.fahrschein.domain.Cursor;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
@@ -92,6 +93,22 @@ public class NakadiClient {
 
     /**
      * Writes the given events to the endpoint provided by the eventName.
+     *
+     * <p>In case of a partial success (or also in cases like validation errors, which are complete failures), Fahrschein
+     * will throw an {@link EventPublishingException} with the {@link BatchItemResponse}s (as returned from Nakadi) for the failed
+     * items in the responses property.
+     * These objects have the eid of the failed event, a publishingStatus (failed/aborted/submitted - but successful items are
+     * filtered out), the step where it failed and a detail string.
+     * If the application sets the eids itself (i.e. doesn't let Nakadi do it) and keeps track of them, this allows it
+     * to resend only the failed items later.
+     * It also allows differentiating between validation errors, which likely don't need to be retried, as they are
+     * unlikely to succeed the next time, unless the event type definition is changed, and publishing errors
+     * which should be retried with some back-off.</p>
+     *
+     * <p>Recommendation: Implement a retry-with-backoff handler for {@link EventPublishingException}s, which, depending on
+     * your ordering consistency requirements, either retries the full batch, or retries the failed events based
+     * on the event-ids.</p>
+     *
      * @param eventName where the event should be written to
      * @param events that should be written
      * @param <T> Type of the Event

@@ -172,7 +172,7 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFa
         .build();
 ```
 
-## Exception handling
+## Retries and exception handling for event consumption
 
 Exception handling while streaming events follows some simple rules
 
@@ -188,6 +188,29 @@ Fahrschein supports different exponential backoff strategies when streaming even
 * `ExponentialBackoffStrategy` - Base implementation for exponential backoff without jitter. Initial delay is 500ms, backoff factor 1.5, maximum delay 10min, with no limit on the maximum number of retries.
 * `EqualJitterBackoffStrategy` (default) - extends `ExponentialBackoffStrategy` with the same defaults. For each delay it takes half of the delay value and adds the other half multiplied by a random factor [0..1).
 * `FullJitterBackoffStrategy` - extends `ExponentialBackoffStrategy` with the same defaults and multiplies each delay by a random factor [0..1).
+
+## Retries and exception handling for event publishing
+
+Fahrschein does not have sophisticated mechanisms for retry handling when publishing to Nakadi yet. The recommended way
+to handle exceptions when publishing is to create a retry-wrapper around the `NakadiClient.publish` method.
+
+In case of a partial success or also in cases like validation errors, which are complete failures, Fahrschein
+will throw an `EventPublishingException` with the `BatchItemResponse`s (as returned from Nakadi) for the failed
+ items in the responses property.
+
+These objects have the eid of the failed event, a `publishingStatus` (failed/aborted/submitted - but successful itemes are
+filtered out), the step where it failed and a detail string.
+
+If the application sets the eids itself (i.e. doesn't let Nakadi do it) and keeps track of them, this allows it
+to resend only the failed items later.
+
+It also allows differentiating between validation errors, which likely don't need to be retried, as they are
+unlikely to succeed the next time, unless the event type definition is changed, and publishing errors
+which should be retried with some back-off.
+
+Recommendation: Implement a retry-with-backoff handler for `EventPublishingException`s, which, depending on
+your ordering consistency requirements, either retries the full batch, or retries the failed events based
+on the event-ids.
 
 ## Stopping and resuming streams
 
