@@ -7,6 +7,7 @@ import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MetadataTest {
@@ -32,5 +33,22 @@ public class MetadataTest {
         assertTrue(metadata.toString().contains(metadata.getPublishedBy()));
         assertTrue(metadata.toString().contains(metadata.getReceivedAt().toString()));
         assertTrue(metadata.toString().contains(metadata.getFlowId()));
+    }
+
+    @Test
+    public void shouldHaveProperIdentity() {
+        final String eventType = "TEST-EVENT-TYPE";
+        final String eid = "a3e25946-5ae9-3964-91fa-26ecb7588d67";
+        final String partition = "partition1";
+        final String version = "v1";
+        final String publishedBy = "unauthenticated";
+        final OffsetDateTime occurredAt = OffsetDateTime.now(ZoneOffset.UTC);
+        final OffsetDateTime receivedAt = OffsetDateTime.now(ZoneOffset.UTC);
+        final String flowId = UUID.randomUUID().toString();
+
+        final Metadata metadata1 = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, Collections.emptyMap());
+        final Metadata metadata2 = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, Collections.emptyMap());
+
+        assertEquals(metadata1, metadata2);
     }
 }
