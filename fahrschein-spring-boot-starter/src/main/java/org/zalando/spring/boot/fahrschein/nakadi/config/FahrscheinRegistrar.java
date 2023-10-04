@@ -81,8 +81,8 @@ public class FahrscheinRegistrar implements NakadiClientsRegistrar {
     private String registerRequestFactory(AbstractConfig consumerConfig) {
         return registry.registerIfAbsent(consumerConfig.getId(), RequestFactory.class, () -> {
             log.info(LOG_PREFIX + "RequestFactory ...", consumerConfig.getId());
-            return genericBeanDefinition(RequestFactoryFactory.class)
-                .addConstructorArgValue(consumerConfig)
+            return genericBeanDefinition(RequestFactories.class)
+                .addConstructorArgValue(consumerConfig.getHttp())
                 .setFactoryMethod(CREATE);
         });
     }

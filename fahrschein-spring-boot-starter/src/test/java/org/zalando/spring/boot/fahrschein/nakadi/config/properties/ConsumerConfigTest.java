@@ -80,7 +80,6 @@ public class ConsumerConfigTest {
         ConsumerConfig cc = new ConsumerConfig();
 
         cc.getAuthorizations().setAdmins(AuthorizationUserServiceTeamLists.create(List.of(USER_5), List.of(), List.of(TEST_TEAM)));
-        cc.getHttp().setMaxIdleTime(1000L);
 
         cc.mergeWithDefaultConfig(dc);
 
@@ -106,9 +105,6 @@ public class ConsumerConfigTest {
         assertThat(cc.getStreamParameters().getStreamLimit()).isEqualTo(STREAM_LIMIT);
         assertThat(cc.getStreamParameters().getStreamTimeout()).isEqualTo(STREAM_TIMEOUT);
 
-        assertThat(cc.getHttp().getMaxConnectionsTotal()).isEqualTo(42);
-        assertThat(cc.getHttp().getMaxIdleTime()).isEqualTo(1000L);
-        assertThat(cc.getHttp().getMaxIdleTime()).isNotEqualTo(dc.getHttp().getMaxIdleTime());
         assertThat(cc.getHttp().getContentEncoding()).isEqualTo(ContentEncoding.GZIP);
     }
 
@@ -124,7 +120,6 @@ public class ConsumerConfigTest {
         dc.setAutostartEnabled(Boolean.FALSE);
         dc.setConsumerGroup(CONSUMER_GROUP);
 
-        dc.getHttp().setMaxConnectionsTotal(42);
 
         dc.setId("testId");
 

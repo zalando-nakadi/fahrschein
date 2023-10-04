@@ -38,9 +38,6 @@ fahrschein:
       access-token-id: token_id #same token_id used for all consumers
     http:
       connect-timeout: 150 milliseconds
-      connection-time-to-live: 30 seconds
-      max-connections-per-route: 21
-      max-connections-total: 42
       content-encoding: gzip
   consumers:
     example: #consumer-id
