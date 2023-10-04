@@ -108,6 +108,7 @@ public final class Metadata {
                 ", publishedBy='" + publishedBy + '\'' +
                 ", receivedAt=" + receivedAt +
                 ", flowId='" + flowId + '\'' +
+                ", spanCtx=" + spanCtx.toString() +
                 '}';
     }
 }
