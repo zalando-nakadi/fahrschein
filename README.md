@@ -199,10 +199,7 @@ will throw an `EventPublishingException` with the `BatchItemResponse`s (as retur
  items in the responses property.
 
 These objects have the eid of the failed event, a `publishingStatus` (failed/aborted/submitted - but successful itemes are
-filtered out), the step where it failed and a detail string.
-
-If the application sets the eids itself (i.e. doesn't let Nakadi do it) and keeps track of them, this allows it
-to resend only the failed items later.
+filtered out), the step where it failed and a detail string. If the application keeps track of eids, this allows it to resend only the failed items later.
 
 It also allows differentiating between validation errors, which likely don't need to be retried, as they are
 unlikely to succeed the next time, unless the event type definition is changed, and publishing errors
