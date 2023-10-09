@@ -321,7 +321,7 @@ public class NakadiClientTest {
         List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
 
         EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
-            client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+            client.publish("foobar", someEvents);
         });
 
         server.verify();
@@ -351,7 +351,7 @@ public class NakadiClientTest {
         List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
 
         EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
-            client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+            client.publish("foobar", someEvents);
         });
 
         server.verify();
