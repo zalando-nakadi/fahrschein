@@ -195,11 +195,9 @@ Fahrschein does not have sophisticated mechanisms for retry handling when publis
 to handle exceptions when publishing is to create a retry-wrapper around the `NakadiClient.publish` method.
 
 In case of a partial success or also in cases like validation errors, which are complete failures, Fahrschein
-will throw an `EventPublishingException` with the `BatchItemResponse`s (as returned from Nakadi) for the failed
- items in the responses property.
+will throw an `EventPublishingException` with the `BatchItemResponse`s included, as returned from Nakadi in the same order as your input.
 
-These objects have the eid of the failed event, a `publishingStatus` (failed/aborted/submitted - but successful itemes are
-filtered out), the step where it failed and a detail string. If the application keeps track of eids, this allows it to resend only the failed items later.
+These objects have the eid of the failed event, a `publishingStatus` (failed/aborted/submitted), the step where it failed and a detail string. If your application keeps track of eids, this allows it to resend only the failed items later. Otherwise, you can correlate the failed events based on their position in the sequence.
 
 It also allows differentiating between validation errors, which likely don't need to be retried, as they are
 unlikely to succeed the next time, unless the event type definition is changed, and publishing errors
