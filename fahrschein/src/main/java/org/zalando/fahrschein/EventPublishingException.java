@@ -7,9 +7,12 @@ import java.util.Formatter;
 import java.util.Locale;
 
 /**
- * Thrown in case the client wasn't able to publish the given batch of events to Nakadi.
+ * Thrown in case the client wasn't able to publish full batch of events to Nakadi.
  *
- * The response will contain an array of {@code BatchItemResponse}.
+ * The response will contain an array of all {@code BatchItemResponse}s, independent of their status.
+ * There is an ordering guarantee from Nakadi, so that you can correlate the elements in the response
+ * with your input batch, and potentially retry only the failed events.
+ *
  */
 public class EventPublishingException extends IOException {
     private final BatchItemResponse[] responses;

@@ -113,15 +113,15 @@ class ProblemHandlingRequest implements Request {
 
     private void handleBatchItemResponse(JsonNode rootNode) throws IOException {
         final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
-        final List<BatchItemResponse> failed = new ArrayList<>(responses.length);
+        boolean partiallyFailed = false;
         for (BatchItemResponse batchItemResponse : responses) {
-            if (batchItemResponse.getPublishingStatus() != BatchItemResponse.PublishingStatus.SUBMITTED) {
-                failed.add(batchItemResponse);
+            if(batchItemResponse.getPublishingStatus() != BatchItemResponse.PublishingStatus.SUBMITTED) {
+               partiallyFailed = true;
+               break;
             }
         }
-        if (!failed.isEmpty()) {
-            // TODO: attach corresponding events?
-            throw new EventPublishingException(failed.toArray(new BatchItemResponse[failed.size()]));
+        if (partiallyFailed) {
+            throw new EventPublishingException(responses);
         }
     }
 
