@@ -11,7 +11,7 @@ import java.util.Locale;
  *
  * The response will contain an array of all {@code BatchItemResponse}s, independent of their status.
  * There is an ordering guarantee from Nakadi, so that you can correlate the elements in the response
- * with your input batch, and potentially retry only the failed events.
+ * with your input batch, and potentially retry only the failed events. Every record includes the eid (event id) which can be used to identify the event.
  *
  */
 public class EventPublishingException extends IOException {
