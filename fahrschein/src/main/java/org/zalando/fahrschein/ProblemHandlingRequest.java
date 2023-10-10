@@ -115,7 +115,8 @@ class ProblemHandlingRequest implements Request {
         final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
         boolean partiallyFailed = false;
         for (BatchItemResponse batchItemResponse : responses) {
-            if(batchItemResponse.getPublishingStatus() != BatchItemResponse.PublishingStatus.SUBMITTED) {
+            if(batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.FAILED ||
+                batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.ABORTED) {
                partiallyFailed = true;
                break;
             }
