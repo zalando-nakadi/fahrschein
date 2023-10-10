@@ -11,8 +11,6 @@ import org.zalando.fahrschein.http.api.Response;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.zalando.fahrschein.http.api.ContentType.APPLICATION_JSON;
 import static org.zalando.fahrschein.http.api.ContentType.APPLICATION_PROBLEM_JSON;
@@ -113,16 +111,11 @@ class ProblemHandlingRequest implements Request {
 
     private void handleBatchItemResponse(JsonNode rootNode) throws IOException {
         final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
-        boolean partiallyFailed = false;
         for (BatchItemResponse batchItemResponse : responses) {
             if(batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.FAILED ||
                 batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.ABORTED) {
-               partiallyFailed = true;
-               break;
+                throw new EventPublishingException(responses);
             }
-        }
-        if (partiallyFailed) {
-            throw new EventPublishingException(responses);
         }
     }
 
