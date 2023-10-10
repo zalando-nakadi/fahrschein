@@ -43,7 +43,7 @@ class ProblemHandlingRequest implements Request {
                     final JsonNode json = objectMapper.readTree(response.getBody());
 
                     if (isBatchItemResponse(json)) {
-                        handleBatchItemResponse(json);
+                        handleBatchItemResponse(json, statusCode == 207);
                     } else if (isAuthError(json)) {
                         handleAuthError(json, statusCode);
                     } else if (isProblem(json)) {
@@ -109,12 +109,12 @@ class ProblemHandlingRequest implements Request {
         throw new IOProblem(DEFAULT_PROBLEM_TYPE, error, statusCode, description);
     }
 
-    private void handleBatchItemResponse(JsonNode rootNode) throws IOException {
+    private void handleBatchItemResponse(JsonNode rootNode, boolean retryable) throws IOException {
         final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
         for (BatchItemResponse batchItemResponse : responses) {
             if(batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.FAILED ||
                 batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.ABORTED) {
-                throw new EventPublishingException(responses);
+                throw new EventPublishingException(responses, retryable);
             }
         }
     }

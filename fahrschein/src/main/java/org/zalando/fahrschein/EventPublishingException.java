@@ -13,13 +13,20 @@ import java.util.Locale;
  * There is an ordering guarantee from Nakadi, so that you can correlate the elements in the response
  * with your input batch, and potentially retry only the failed events. Every record includes the eid (event id) which can be used to identify the event.
  *
+ * Based on the HTTP response code, the EventPublishingException will be retryable or not. Partially
+ * successfully published batches are retryable, while unprocessable entities are not.
+ *
  */
 public class EventPublishingException extends IOException {
+
     private final BatchItemResponse[] responses;
 
-    public EventPublishingException(BatchItemResponse[] responses) {
+    private final boolean retryable;
+
+    public EventPublishingException(BatchItemResponse[] responses, boolean retryable) {
         super(formatMessage(responses));
         this.responses = responses;
+        this.retryable = retryable;
     }
 
     private static String formatMessage(BatchItemResponse[] responses) {
@@ -36,7 +43,17 @@ public class EventPublishingException extends IOException {
         return fmt.toString();
     }
 
+    /**
+     * @return individual responses for each item in the batch.
+     */
     public BatchItemResponse[] getResponses() {
         return responses;
+    }
+
+    /**
+     * @return true, if the batch can be retried.
+     */
+    public boolean isRetryable() {
+        return retryable;
     }
 }

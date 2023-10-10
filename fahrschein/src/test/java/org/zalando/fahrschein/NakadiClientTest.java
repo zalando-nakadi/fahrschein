@@ -23,8 +23,10 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -303,11 +305,11 @@ public class NakadiClientTest {
 
 
     @Test
-    public void shouldPublishEventsWithRequestHandlerAndFail() throws IOException {
+    public void shouldPublishEventsWithRequestHandlerAndFailWithUnprocessableEntity() throws IOException {
         server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
-                .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
+                .andRespondWith(422, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
         EventPublishingHandler eventPublishingHandler = mock(EventPublishingHandler.class);
@@ -326,6 +328,7 @@ public class NakadiClientTest {
 
         server.verify();
         assertEquals("Event publishing of [event-one] returned status [failed] in step [validating] with detail [baz]", expectedException.getMessage());
+        assertFalse(expectedException.isRetryable());
         verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
         verify(eventPublishingHandler, Mockito.atMostOnce()).onError(eq(someEvents), eq(expectedException));
     }
@@ -356,6 +359,7 @@ public class NakadiClientTest {
 
         server.verify();
         assertEquals(2, expectedException.getResponses().length);
+        assertTrue(expectedException.isRetryable());
         assertEquals(expectedException.getResponses()[0].getPublishingStatus(), BatchItemResponse.PublishingStatus.FAILED);
         assertEquals(expectedException.getResponses()[1].getPublishingStatus(), BatchItemResponse.PublishingStatus.SUBMITTED);
         verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
