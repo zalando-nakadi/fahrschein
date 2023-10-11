@@ -3,7 +3,7 @@ package org.zalando.fahrschein;
 import org.zalando.fahrschein.domain.BatchItemResponse;
 
 /**
- * <p>Exception thrown for server-side (partial) failures of event publishing.</p>
+ * <p>Exception thrown for server-side (partial) failures of event persistence, e.g. an event can not be stored due to Kafka unavailability.</p>
  *
  * <p>The exception contains an array of all {@link BatchItemResponse}s, independent of their status.
  * There is an ordering guarantee from Nakadi, so that you can correlate the elements in the response
