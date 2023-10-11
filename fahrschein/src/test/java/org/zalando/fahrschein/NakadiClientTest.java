@@ -337,7 +337,7 @@ public class NakadiClientTest {
                 .andExpectJsonPath("$[1].id", equalTo("2"))
                 .andRespondWith(207, ContentType.APPLICATION_JSON,
                         "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"publishing\",\"detail\":\"baz\"},"
-                 + "{\"eid\":\"event-two\",\"publishing_status\":\"submitted\",\"step\":\"none\",\"detail\":\"\"}]")
+                 + "{\"eid\":\"event-two\",\"publishing_status\":\"submitted\",\"step\":\"publishing\",\"detail\":\"\"}]")
                 .setup();
 
         EventPublishingHandler eventPublishingHandler = mock(EventPublishingHandler.class);
