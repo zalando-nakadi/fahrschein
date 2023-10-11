@@ -8,6 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Immutable
 public final class Metadata {
@@ -84,6 +85,19 @@ public final class Metadata {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Metadata metadata = (Metadata) o;
+        return Objects.equals(eventType, metadata.eventType) && Objects.equals(eid, metadata.eid) && Objects.equals(partition, metadata.partition) && Objects.equals(version, metadata.version) && Objects.equals(publishedBy, metadata.publishedBy) && Objects.equals(occurredAt, metadata.occurredAt) && Objects.equals(receivedAt, metadata.receivedAt) && Objects.equals(flowId, metadata.flowId) && Objects.equals(spanCtx, metadata.spanCtx);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(eventType, eid, partition, version, publishedBy, occurredAt, receivedAt, flowId, spanCtx);
+    }
+
+    @Override
     public String toString() {
         return "Metadata{" +
                 "eventType='" + eventType + '\'' +
@@ -94,6 +108,7 @@ public final class Metadata {
                 ", publishedBy='" + publishedBy + '\'' +
                 ", receivedAt=" + receivedAt +
                 ", flowId='" + flowId + '\'' +
+                ", spanCtx=" + spanCtx.toString() +
                 '}';
     }
 }
