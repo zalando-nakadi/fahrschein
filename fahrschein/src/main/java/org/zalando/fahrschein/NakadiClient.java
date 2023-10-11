@@ -94,28 +94,24 @@ public class NakadiClient {
     /**
      * Writes the given events to the endpoint provided by the eventName.
      *
-     * <p>In case of a partial success (or also in cases like validation errors, which are complete failures), Fahrschein
-     * will throw an {@link EventPublishingException} with the {@link BatchItemResponse}s (as returned from Nakadi) for the failed
-     * items in the responses property.
-     * These objects have the eid of the failed event, a publishingStatus (failed/aborted/submitted - but successful items are
-     * filtered out), the step where it failed and a detail string.
-     * If the application sets the eids itself (i.e. doesn't let Nakadi do it) and keeps track of them, this allows it
-     * to resend only the failed items later.
-     * It also allows differentiating between validation errors, which likely don't need to be retried, as they are
-     * unlikely to succeed the next time, unless the event type definition is changed, and publishing errors
-     * which should be retried with some back-off.</p>
+     * <p>In case of a partial success, Fahrschein will throw an {@link EventPersistenceException}`, which is retryable.
+     * In case of validation errors, which are complete failures, and should not be retried, it will throw an {@link EventValidationException}.
+     * The exceptions contain a list of individual {@link BatchItemResponse}s in order of the batch items sent to Nakadi.
+     * </p>
+     * <p>These objects have the event-ids of the failed event, a publishingStatus (failed/aborted/submitted), the step where it failed and a detail string.
+     * </p>
      *
-     * <p>Recommendation: Implement a retry-with-backoff handler for {@link EventPublishingException}s, which, depending on
-     * your ordering consistency requirements, either retries the full batch, or retries the failed events based
-     * on the event-ids.</p>
+     * <p>Recommendation: Implement a retry-with-backoff handler for {@link EventPersistenceException}s, for which, depending on
+     * strong ordering consistency requirements, you either retry the full batch, or retry only the failed/aborted events.</p>
      *
      * @param eventName where the event should be written to
      * @param events that should be written
      * @param <T> Type of the Event
-     * @throws IOException in case we fail to reach Nakadi
-     * @throws EventPublishingException In case Nakadi returns an Erroneous response
+     * @throws IOException in case of network errors when calling Nakadi.
+     * @throws EventValidationException in case Nakadi rejects the batch in event validation phase - should not be retried until either the event type schema or the event payload has been corrected.
+     * @throws EventPersistenceException in case Nakadi fails to persist the batch (partially). Retryable (see recommendation above).
      */
-    public <T> void publish(String eventName, List<T> events) throws EventPublishingException, IOException {
+    public <T> void publish(String eventName, List<T> events) throws EventValidationException, EventPersistenceException, IOException {
         final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/events", eventName));
         final Request request = requestFactory.createRequest(uri, "POST");
 

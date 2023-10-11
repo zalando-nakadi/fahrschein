@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zalando.fahrschein.domain.BatchItemResponse;
@@ -43,7 +44,7 @@ class ProblemHandlingRequest implements Request {
                     final JsonNode json = objectMapper.readTree(response.getBody());
 
                     if (isBatchItemResponse(json)) {
-                        handleBatchItemResponse(json, statusCode == 207);
+                        handleBatchItemResponse(json, statusCode >= 400);
                     } else if (isAuthError(json)) {
                         handleAuthError(json, statusCode);
                     } else if (isProblem(json)) {
@@ -109,12 +110,15 @@ class ProblemHandlingRequest implements Request {
         throw new IOProblem(DEFAULT_PROBLEM_TYPE, error, statusCode, description);
     }
 
-    private void handleBatchItemResponse(JsonNode rootNode, boolean retryable) throws IOException {
+    private void handleBatchItemResponse(JsonNode rootNode, boolean clientError) throws EventValidationException, EventPersistenceException, JsonProcessingException {
         final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
         for (BatchItemResponse batchItemResponse : responses) {
             if(batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.FAILED ||
                 batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.ABORTED) {
-                throw new EventPublishingException(responses, retryable);
+                if (clientError) {
+                    throw new EventValidationException(responses);
+                }
+                throw new EventPersistenceException(responses);
             }
         }
     }

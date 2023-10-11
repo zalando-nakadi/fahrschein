@@ -194,19 +194,13 @@ Fahrschein supports different exponential backoff strategies when streaming even
 Fahrschein does not have sophisticated mechanisms for retry handling when publishing to Nakadi yet. The recommended way
 to handle exceptions when publishing is to create a retry-wrapper around the `NakadiClient.publish` method.
 
-In case of a partial success or also in cases like validation errors, which are complete failures, Fahrschein
-will throw an `EventPublishingException`. 
-
-You should first call `isRetryable()` on the exception, to identify if it would be allowed to retry publishing the batch.
+In case of a partial success, Fahrschein will throw an `EventPersistenceException`, which is allowed to be retried.
+In case of validation errors - which are complete failures, and should not be retried - it will throw an `EventValidationException`.
 
 The exception also has the `BatchItemResponse`s included, as returned from Nakadi in the same order as your input. They also contain the event-ids of the failed events, a `publishingStatus` (failed/aborted/submitted), the step where they failed and a detail string. If your application keeps track of event-ids, this allows it to resend only the failed items later. Otherwise, you can correlate the failed events based on their position in the sequence.
 
-It also allows differentiating between validation errors, which likely don't need to be retried, as they are
-unlikely to succeed the next time, unless the event type definition is changed, and publishing errors
-which should be retried with some back-off.
-
-Recommendation: Implement a retry-with-backoff handler for `EventPublishingException`s, which, depending on
-your ordering consistency requirements, either retries the full batch, or retries the failed events. But, ensure to not retry events that failed in the `validating` step.
+Recommendation: Implement a retry-with-backoff handler for `EventPersistenceException`s, which, depending on
+your ordering consistency requirements, either retries the full batch, or retries only the non-successful events.
 
 ## Stopping and resuming streams
 

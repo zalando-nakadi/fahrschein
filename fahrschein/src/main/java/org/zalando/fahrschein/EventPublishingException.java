@@ -7,26 +7,25 @@ import java.util.Formatter;
 import java.util.Locale;
 
 /**
- * Thrown in case the client wasn't able to publish full batch of events to Nakadi.
+ * <p>Base class for exceptions thrown when publishing events to Nakadi.</p>
  *
- * The response will contain an array of all {@code BatchItemResponse}s, independent of their status.
+ * <p>The exception will contain an array of all {@link BatchItemResponse}s, independent of their status.
  * There is an ordering guarantee from Nakadi, so that you can correlate the elements in the response
- * with your input batch, and potentially retry only the failed events. Every record includes the eid (event id) which can be used to identify the event.
+ * with your input batch, and potentially retry only the failed or aborted events. Every record includes the eid (event id)
+ * which can also be used to identify the event.</p>
  *
- * Based on the HTTP response code, the EventPublishingException will be retryable or not. Partially
- * successfully published batches are retryable, while unprocessable entities are not.
- *
+ * <p>Based on the exception, the batch can be retried or not. Partially successfully published batches are
+ * retryable (see {@link EventPersistenceException}), while batches rejected as unprocessable entities are not
+ * (see {@link EventValidationException}).
+ * </p>
  */
-public class EventPublishingException extends IOException {
+public abstract class EventPublishingException extends IOException {
 
     private final BatchItemResponse[] responses;
 
-    private final boolean retryable;
-
-    public EventPublishingException(BatchItemResponse[] responses, boolean retryable) {
+    public EventPublishingException(BatchItemResponse[] responses) {
         super(formatMessage(responses));
         this.responses = responses;
-        this.retryable = retryable;
     }
 
     private static String formatMessage(BatchItemResponse[] responses) {
@@ -50,10 +49,4 @@ public class EventPublishingException extends IOException {
         return responses;
     }
 
-    /**
-     * @return true, if the batch can be retried.
-     */
-    public boolean isRetryable() {
-        return retryable;
-    }
 }

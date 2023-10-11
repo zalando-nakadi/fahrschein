@@ -23,10 +23,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -309,7 +307,7 @@ public class NakadiClientTest {
         server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
-                .andRespondWith(422, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
+                .andRespondWith(422, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"aborted\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
         EventPublishingHandler eventPublishingHandler = mock(EventPublishingHandler.class);
@@ -322,13 +320,12 @@ public class NakadiClientTest {
         String eventName = "foobar";
         List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
 
-        EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
+        EventValidationException expectedException = assertThrows(EventValidationException.class, () -> {
             client.publish("foobar", someEvents);
         });
 
         server.verify();
-        assertEquals("Event publishing of [event-one] returned status [failed] in step [validating] with detail [baz]", expectedException.getMessage());
-        assertFalse(expectedException.isRetryable());
+        assertEquals("Event publishing of [event-one] returned status [aborted] in step [validating] with detail [baz]", expectedException.getMessage());
         verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
         verify(eventPublishingHandler, Mockito.atMostOnce()).onError(eq(someEvents), eq(expectedException));
     }
@@ -353,13 +350,12 @@ public class NakadiClientTest {
         String eventName = "foobar";
         List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
 
-        EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
+        EventPersistenceException expectedException = assertThrows(EventPersistenceException.class, () -> {
             client.publish("foobar", someEvents);
         });
 
         server.verify();
         assertEquals(2, expectedException.getResponses().length);
-        assertTrue(expectedException.isRetryable());
         assertEquals(expectedException.getResponses()[0].getPublishingStatus(), BatchItemResponse.PublishingStatus.FAILED);
         assertEquals(expectedException.getResponses()[1].getPublishingStatus(), BatchItemResponse.PublishingStatus.SUBMITTED);
         verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
@@ -374,7 +370,7 @@ public class NakadiClientTest {
                 .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
-        EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
+        EventPersistenceException expectedException = assertThrows(EventPersistenceException.class, () -> {
             client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
         });
         server.verify();
@@ -404,7 +400,7 @@ public class NakadiClientTest {
                 .setup();
 
 
-        Throwable expectedException = assertThrows(EventPublishingException.class, () -> {
+        Throwable expectedException = assertThrows(EventValidationException.class, () -> {
             client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
         });
 
