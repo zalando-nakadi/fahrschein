@@ -7,11 +7,20 @@ import java.util.Formatter;
 import java.util.Locale;
 
 /**
- * Thrown in case the client wasn't able to publish the given batch of events to Nakadi.
+ * <p>Base class for exceptions thrown when publishing events to Nakadi.</p>
  *
- * The response will contain an array of {@code BatchItemResponse}.
+ * <p>The exception will contain an array of all {@link BatchItemResponse}s, independent of their status.
+ * There is an ordering guarantee from Nakadi, so that you can correlate the elements in the response
+ * with your input batch, and potentially retry only the failed or aborted events. Every record includes the eid (event id)
+ * which can also be used to identify the event.</p>
+ *
+ * <p>Based on the exception, the batch can be retried or not. Partially successfully published batches are
+ * retryable (see {@link EventPersistenceException}), while batches rejected as unprocessable entities are not
+ * (see {@link EventValidationException}).
+ * </p>
  */
-public class EventPublishingException extends IOException {
+public abstract class EventPublishingException extends IOException {
+
     private final BatchItemResponse[] responses;
 
     public EventPublishingException(BatchItemResponse[] responses) {
@@ -33,7 +42,11 @@ public class EventPublishingException extends IOException {
         return fmt.toString();
     }
 
+    /**
+     * @return individual responses for each item in the batch.
+     */
     public BatchItemResponse[] getResponses() {
         return responses;
     }
+
 }

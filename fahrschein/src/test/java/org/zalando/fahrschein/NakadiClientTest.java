@@ -4,6 +4,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.zalando.fahrschein.domain.BatchItemResponse;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
@@ -302,11 +303,11 @@ public class NakadiClientTest {
 
 
     @Test
-    public void shouldPublishEventsWithRequestHandlerAndFail() throws IOException {
+    public void shouldPublishEventsWithRequestHandlerAndFailWithUnprocessableEntity() throws IOException {
         server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
                 .andExpectJsonPath("$[0].id", equalTo("1"))
                 .andExpectJsonPath("$[1].id", equalTo("2"))
-                .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
+                .andRespondWith(422, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
         EventPublishingHandler eventPublishingHandler = mock(EventPublishingHandler.class);
@@ -319,12 +320,44 @@ public class NakadiClientTest {
         String eventName = "foobar";
         List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
 
-        EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
-            client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
+        EventValidationException expectedException = assertThrows(EventValidationException.class, () -> {
+            client.publish("foobar", someEvents);
         });
 
         server.verify();
         assertEquals("Event publishing of [event-one] returned status [failed] in step [validating] with detail [baz]", expectedException.getMessage());
+        verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
+        verify(eventPublishingHandler, Mockito.atMostOnce()).onError(eq(someEvents), eq(expectedException));
+    }
+
+    @Test
+    public void shouldPublishEventsWithRequestHandlerAndFailPartially() throws IOException {
+        server.expectRequestTo("http://example.com/event-types/foobar/events", "POST")
+                .andExpectJsonPath("$[0].id", equalTo("1"))
+                .andExpectJsonPath("$[1].id", equalTo("2"))
+                .andRespondWith(207, ContentType.APPLICATION_JSON,
+                        "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"publishing\",\"detail\":\"baz\"},"
+                 + "{\"eid\":\"event-two\",\"publishing_status\":\"submitted\",\"step\":\"publishing\",\"detail\":\"\"}]")
+                .setup();
+
+        EventPublishingHandler eventPublishingHandler = mock(EventPublishingHandler.class);
+
+        client = NakadiClient.builder(URI.create("http://example.com/"), server)
+                .withCursorManager(this.cursorManager)
+                .withRequestHandler(eventPublishingHandler)
+                .build();
+
+        String eventName = "foobar";
+        List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
+
+        EventPersistenceException expectedException = assertThrows(EventPersistenceException.class, () -> {
+            client.publish("foobar", someEvents);
+        });
+
+        server.verify();
+        assertEquals(2, expectedException.getResponses().length);
+        assertEquals(expectedException.getResponses()[0].getPublishingStatus(), BatchItemResponse.PublishingStatus.FAILED);
+        assertEquals(expectedException.getResponses()[1].getPublishingStatus(), BatchItemResponse.PublishingStatus.SUBMITTED);
         verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
         verify(eventPublishingHandler, Mockito.atMostOnce()).onError(eq(someEvents), eq(expectedException));
     }
@@ -337,7 +370,7 @@ public class NakadiClientTest {
                 .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
-        EventPublishingException expectedException = assertThrows(EventPublishingException.class, () -> {
+        EventPersistenceException expectedException = assertThrows(EventPersistenceException.class, () -> {
             client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
         });
         server.verify();
@@ -367,7 +400,7 @@ public class NakadiClientTest {
                 .setup();
 
 
-        Throwable expectedException = assertThrows(EventPublishingException.class, () -> {
+        Throwable expectedException = assertThrows(EventValidationException.class, () -> {
             client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
         });
 

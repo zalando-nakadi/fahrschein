@@ -55,6 +55,9 @@ public final class BatchItemResponse {
         this.detail = detail;
     }
 
+    /**
+     * @return the event id
+     */
     public String getEid() {
         return eid;
     }

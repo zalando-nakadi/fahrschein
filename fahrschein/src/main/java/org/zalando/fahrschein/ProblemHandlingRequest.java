@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.zalando.fahrschein.domain.BatchItemResponse;
@@ -11,8 +12,6 @@ import org.zalando.fahrschein.http.api.Response;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.zalando.fahrschein.http.api.ContentType.APPLICATION_JSON;
 import static org.zalando.fahrschein.http.api.ContentType.APPLICATION_PROBLEM_JSON;
@@ -45,7 +44,7 @@ class ProblemHandlingRequest implements Request {
                     final JsonNode json = objectMapper.readTree(response.getBody());
 
                     if (isBatchItemResponse(json)) {
-                        handleBatchItemResponse(json);
+                        handleBatchItemResponse(json, statusCode >= 400);
                     } else if (isAuthError(json)) {
                         handleAuthError(json, statusCode);
                     } else if (isProblem(json)) {
@@ -111,17 +110,16 @@ class ProblemHandlingRequest implements Request {
         throw new IOProblem(DEFAULT_PROBLEM_TYPE, error, statusCode, description);
     }
 
-    private void handleBatchItemResponse(JsonNode rootNode) throws IOException {
+    private void handleBatchItemResponse(JsonNode rootNode, boolean clientError) throws EventValidationException, EventPersistenceException, JsonProcessingException {
         final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
-        final List<BatchItemResponse> failed = new ArrayList<>(responses.length);
         for (BatchItemResponse batchItemResponse : responses) {
-            if (batchItemResponse.getPublishingStatus() != BatchItemResponse.PublishingStatus.SUBMITTED) {
-                failed.add(batchItemResponse);
+            if(batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.FAILED ||
+                batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.ABORTED) {
+                if (clientError) {
+                    throw new EventValidationException(responses);
+                }
+                throw new EventPersistenceException(responses);
             }
-        }
-        if (!failed.isEmpty()) {
-            // TODO: attach corresponding events?
-            throw new EventPublishingException(failed.toArray(new BatchItemResponse[failed.size()]));
         }
     }
 
