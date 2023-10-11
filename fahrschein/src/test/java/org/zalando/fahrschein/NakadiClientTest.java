@@ -325,7 +325,7 @@ public class NakadiClientTest {
         });
 
         server.verify();
-        assertEquals("Event publishing of [event-one] returned status [aborted] in step [validating] with detail [baz]", expectedException.getMessage());
+        assertEquals("Event publishing of [event-one] returned status [failed] in step [validating] with detail [baz]", expectedException.getMessage());
         verify(eventPublishingHandler, Mockito.atMostOnce()).onPublish(eq(eventName), eq(someEvents));
         verify(eventPublishingHandler, Mockito.atMostOnce()).onError(eq(someEvents), eq(expectedException));
     }
