@@ -38,4 +38,7 @@ public abstract class AbstractConfig {
 
     protected ThreadConfig threads = new ThreadConfig();
 
+    @NestedConfigurationProperty
+    protected SubscriptionConfig subscription = SubscriptionConfig.defaultSubscriptionConfig();
+
 }

@@ -36,6 +36,11 @@ public class ConsumerConfig extends AbstractConfig {
             this.oauth.setCredentialsDirectoryIfNotConfigured(defaultConsumerConfig.getOauth().getCredentialsDirectory());
         }
 
+        if(defaultConsumerConfig.getSubscription().getEnabled() && !this.getSubscription().getEnabled()) {
+            this.subscription.setEnabled(defaultConsumerConfig.getSubscription().getEnabled());
+            this.subscription.setSubscriptionId(defaultConsumerConfig.getSubscription().getSubscriptionId());
+        }
+
         this.getHttp().mergeFromDefaults(defaultConsumerConfig.getHttp());
 
         this.getBackoff().mergeFromDefaults(defaultConsumerConfig.getBackoff());

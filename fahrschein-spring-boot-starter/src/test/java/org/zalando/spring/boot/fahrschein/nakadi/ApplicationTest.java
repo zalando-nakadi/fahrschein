@@ -163,6 +163,11 @@ public class ApplicationTest {
                 .hasFieldOrPropertyWithValue("contentEncoding", ContentEncoding.IDENTITY)
                 .hasNoNullFieldsOrProperties();
 
+        // consumer subscription config
+        assertThat(cc.getSubscription())
+                .hasFieldOrPropertyWithValue("enabled", true)
+                .hasFieldOrPropertyWithValue("subscriptionId", "test-id");
+
         // publisher config
         PublisherConfig pc = configProperties.getPublisher();
         assertThat(pc)
