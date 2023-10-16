@@ -25,34 +25,38 @@ public final class NakadiClientBuilder {
     @Nullable
     private final List<EventPublishingHandler> eventPublishingHandlers;
 
+    private final BackoffStrategy backoffStrategy;
+
     NakadiClientBuilder(final URI baseUri, RequestFactory requestFactory) {
-        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, Collections.emptyList());
+        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, Collections.emptyList(),null);
     }
 
     private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
-                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager) {
+                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager, final BackoffStrategy backoffStrategy) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.authorizationProvider = authorizationProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
         this.eventPublishingHandlers = new ArrayList<>();
+        this.backoffStrategy = backoffStrategy;
     }
 
     public NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager,
-                               @Nullable List<EventPublishingHandler> eventPublishingHandlers) {
+                               @Nullable List<EventPublishingHandler> eventPublishingHandlers, @Nullable final BackoffStrategy backoffStrategy) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.authorizationProvider = authorizationProvider;
         this.clientHttpRequestFactory = clientHttpRequestFactory;
         this.cursorManager = cursorManager;
         this.eventPublishingHandlers = eventPublishingHandlers;
+        this.backoffStrategy = backoffStrategy;
     }
 
 
     public NakadiClientBuilder withObjectMapper(ObjectMapper objectMapper) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy);
     }
 
     public NakadiClientBuilder withAccessTokenProvider(AccessTokenProvider accessTokenProvider) {
@@ -60,20 +64,24 @@ public final class NakadiClientBuilder {
     }
 
     public NakadiClientBuilder withAuthorizationProvider(AuthorizationProvider authorizationProvider) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy);
     }
 
     public NakadiClientBuilder withCursorManager(CursorManager cursorManager) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy);
     }
 
     public NakadiClientBuilder withRequestHandlers(List<EventPublishingHandler> eventPublishingHandlers) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers,backoffStrategy);
     }
 
     public NakadiClientBuilder withRequestHandler(EventPublishingHandler eventPublishingHandler) {
         eventPublishingHandlers.add(eventPublishingHandler);
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers,backoffStrategy);
+    }
+
+    public NakadiClientBuilder withBackoffStrategy(final BackoffStrategy backoffStrategy){
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers, backoffStrategy);
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
@@ -98,6 +106,13 @@ public final class NakadiClientBuilder {
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
 
-        return new NakadiClient(baseUri, clientHttpRequestFactory, objectMapper, cursorManager, eventPublishingHandlers);
+        return new NakadiClient(
+                baseUri,
+                clientHttpRequestFactory,
+                objectMapper,
+                cursorManager,
+                eventPublishingHandlers,
+                backoffStrategy
+        );
     }
 }

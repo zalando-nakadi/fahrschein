@@ -42,7 +42,7 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
     }
 
     protected long calculateDelay(double count) {
-        return Math.min((long)(initialDelay*Math.pow(backoffFactor, count)), maxDelay);
+        return Math.min((long) (initialDelay * Math.pow(backoffFactor, count)), maxDelay);
     }
 
     private void sleepForRetries(final int count) throws InterruptedException {
@@ -81,4 +81,39 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
             }
         }
     }
+
+    @Override
+    public <T> T call(final EventPersistenceException lastException, final int retryCount,
+            final ExceptionAwareCallable<T> callable) throws BackoffException, InterruptedException {
+
+        checkMaxRetries(lastException, retryCount);
+
+        int count = retryCount;
+        EventPersistenceException lastRetryException = lastException;
+
+
+        if (count > 0) {
+            sleepForRetries(count);
+        }
+
+        while (true) {
+            try {
+                LOG.warn("Retrying publishing events. Retry count [{}]", count);
+                return callable.call(count, lastRetryException);
+            } catch (IOException e) {
+                LOG.warn("Retry [{}] failed, will retry again.", count);
+                count++;
+
+                checkMaxRetries(e, count);
+                sleepForRetries(count);
+                if (e instanceof EventPersistenceException) {
+                    lastRetryException = (EventPersistenceException) e;
+                } else {
+                    throw new BackoffException(e, count);
+                }
+
+            }
+        }
+    }
+
 }
