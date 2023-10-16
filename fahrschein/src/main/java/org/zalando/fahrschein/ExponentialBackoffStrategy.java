@@ -98,20 +98,16 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
 
         while (true) {
             try {
-                LOG.warn("Retrying publishing events. Retry count [{}]", count);
+                LOG.warn("Retrying to publish events. Retry count [{}]", count);
                 return callable.call(count, lastRetryException);
-            } catch (IOException e) {
-                LOG.warn("Retry [{}] failed, will retry again.", count);
+            } catch (EventPersistenceException ex) {
+                LOG.warn("Retry on publishing [{}] failed, will retry again.", count);
                 count++;
-
-                checkMaxRetries(e, count);
+                checkMaxRetries(ex, count);
                 sleepForRetries(count);
-                if (e instanceof EventPersistenceException) {
-                    lastRetryException = (EventPersistenceException) e;
-                } else {
-                    throw new BackoffException(e, count);
-                }
-
+                lastRetryException = ex;
+            } catch (IOException e) {
+                throw new BackoffException(e, count);
             }
         }
     }

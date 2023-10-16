@@ -14,7 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
-import org.mockserver.matchers.Times;
 import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.domain.Metadata;
 import org.zalando.fahrschein.http.api.ContentEncoding;
@@ -33,7 +32,7 @@ import static org.zalando.fahrschein.ExponentialBackoffStrategy.DEFAULT_BACKOFF_
 import static org.zalando.fahrschein.ExponentialBackoffStrategy.DEFAULT_INITIAL_DELAY;
 import static org.zalando.fahrschein.ExponentialBackoffStrategy.DEFAULT_MAX_DELAY;
 
-class NakadiClientIT {
+class NakadiClientIntegrationTest {
 
     private ClientAndServer clientAndServer;
 
@@ -171,7 +170,7 @@ class NakadiClientIT {
     }
 
     @Test
-    public void shouldRetryPublishingFullBatchWithBackoff() throws IOException, BackoffException {
+    public void shouldRetryPublishingFullBatchWithBackoff() {
         clientAndServer
                 .when(
                         request()

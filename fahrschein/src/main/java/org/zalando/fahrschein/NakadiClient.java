@@ -181,17 +181,7 @@ public class NakadiClient {
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
-        // If partialRetry is enabled and there are failed events, filter the events to include only the failed ones
-        if (partialRetry != null && partialRetry && ex != null) {
-            final List<String> eids = Arrays.stream(ex.getResponses())
-                    .filter(r -> !r.getPublishingStatus().equals(BatchItemResponse.PublishingStatus.SUBMITTED))
-                    .map(BatchItemResponse::getEid)
-                    .toList();
-            events = events.stream()
-                    .filter(e -> eids.contains(((Event) e).getMetadata().getEid()))
-                    .toList();
-        }
-        final List<T> finalEvents = events;
+        final List<T> finalEvents = getFailedEvents(events, partialRetry, ex);
         try (final OutputStream body = request.getBody()) {
             objectMapper.writeValue(body, finalEvents);
         }
@@ -204,6 +194,23 @@ public class NakadiClient {
                 response.close();
             }
         }
+    }
+
+    /**
+     * If partialRetry is enabled and there are failed events, filter the events to include only the failed ones
+     */
+    private static <T> List<T> getFailedEvents(final List<T> events, final Boolean partialRetry,
+            final EventPersistenceException ex) {
+        if (partialRetry != null && partialRetry & ex != null) {
+            final List<String> eids = Arrays.stream(ex.getResponses())
+                    .filter(r -> !BatchItemResponse.PublishingStatus.SUBMITTED.equals(r.getPublishingStatus()))
+                    .map(BatchItemResponse::getEid)
+                    .toList();
+            return events.stream()
+                    .filter(e -> eids.contains(((Event) e).getMetadata().getEid()))
+                    .toList();
+        }
+        return events;
     }
 
 
