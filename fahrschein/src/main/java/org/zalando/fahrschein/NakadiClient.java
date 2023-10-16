@@ -142,7 +142,6 @@ public class NakadiClient {
      * @throws BackoffException If the retry limit is exhausted or the thread is interrupted during the retry process.
      */
     public <T> void publishWithRetry(String eventName, List<T> events, boolean partialRetry) throws IOException, BackoffException {
-        checkState(backoffStrategy != null, "BackoffStrategy is required for retry");
         try {
             try {
                 send(eventName, events, partialRetry,null );

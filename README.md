@@ -136,6 +136,11 @@ while (true) {
 }    
 ```
 
+## Publishing Batch of Events with Retry
+
+
+
+
 ## OAuth support
 
 ### Default usage of PlatformAccessTokenProvider
