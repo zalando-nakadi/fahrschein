@@ -150,8 +150,7 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestF
         .build();
 ```
 
-
-#### Publish With Full Retry
+### Publish With Full Retry
 
 Depending on the requirements for maintaining strong ordering consistency with the events, Fahrschein has the capability to retry the entire batch, 
 irrespective of the specific events within the batch that may have encountered failures.
@@ -164,7 +163,7 @@ irrespective of the specific events within the batch that may have encountered f
         );
 ```
 
-#### Publish With Partial Retry
+### Publish With Partial Retry
 
 To retry only the events within a batch that have failed or been aborted.
 
@@ -175,7 +174,6 @@ To retry only the events within a batch that have failed or been aborted.
           new SomeEvent("eid3",new Metadata("eid3",OffsetDateTime.now())))
           );
 ```
-
 
 ## OAuth support
 
