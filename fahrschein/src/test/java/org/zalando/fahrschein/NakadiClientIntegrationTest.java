@@ -159,11 +159,10 @@ class NakadiClientIntegrationTest {
                 );
 
 
-        client.publishWithRetry("foobar", asList(
+        client.publishWithPartialRetry("foobar", asList(
                         new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())),
                         new SomeEvent("eid2", new Metadata("eid2", OffsetDateTime.now())),
-                        new SomeEvent("eid3", new Metadata("eid3", OffsetDateTime.now()))),
-                true
+                        new SomeEvent("eid3", new Metadata("eid3", OffsetDateTime.now())))
         );
 
         clientAndServer.verify(request().withPath("/event-types/foobar/events"), exactly(3));
@@ -210,11 +209,10 @@ class NakadiClientIntegrationTest {
                 );
 
         assertThrows(BackoffException.class, () -> {
-            client.publishWithRetry("foobar", List.of(
+            client.publishWithFullRetry("foobar", List.of(
                             new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())),
                             new SomeEvent("eid2", new Metadata("eid2", OffsetDateTime.now())),
-                            new SomeEvent("eid3", new Metadata("eid3", OffsetDateTime.now()))),
-                    false
+                            new SomeEvent("eid3", new Metadata("eid3", OffsetDateTime.now())))
             );
         });
         clientAndServer.verify(request().withPath("/event-types/foobar/events"), exactly(4));
@@ -248,9 +246,8 @@ class NakadiClientIntegrationTest {
 
 
         assertThrows(BackoffException.class, () -> {
-            client.publishWithRetry("foobar", List.of(
-                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now()))),
-                    true
+            client.publishWithPartialRetry("foobar", List.of(
+                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
             );
         });
         clientAndServer.verify(request().withPath("/event-types/foobar/events"), exactly(4));
@@ -275,9 +272,8 @@ class NakadiClientIntegrationTest {
 
 
         Throwable expectedException = assertThrows(HttpRetryException.class, () -> {
-            client.publishWithRetry("foobar", List.of(
-                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now()))),
-                    true
+            client.publishWithPartialRetry("foobar", List.of(
+                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
             );
         });
 
@@ -303,9 +299,8 @@ class NakadiClientIntegrationTest {
 
 
         Throwable expectedException = assertThrows(IOException.class, () -> {
-            client.publishWithRetry("foobar", List.of(
-                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now()))),
-                    true
+            client.publishWithPartialRetry("foobar", List.of(
+                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
             );
         });
 
@@ -331,9 +326,8 @@ class NakadiClientIntegrationTest {
                 );
 
 
-        client.publishWithRetry("foobar", List.of(
-                        new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now()))),
-                true
+        client.publishWithPartialRetry("foobar", List.of(
+                        new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
         );
         clientAndServer.verify(request().withPath("/event-types/foobar/events"), exactly(1));
     }
@@ -356,9 +350,8 @@ class NakadiClientIntegrationTest {
 
 
         Throwable expectedException = assertThrows(FileNotFoundException.class, () -> {
-            client.publishWithRetry("foobar", List.of(
-                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now()))),
-                    true
+            client.publishWithPartialRetry("foobar", List.of(
+                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
             );
         });
 
@@ -385,9 +378,8 @@ class NakadiClientIntegrationTest {
 
 
         Throwable expectedException = assertThrows(IOException.class, () -> {
-            client.publishWithRetry("foobar", List.of(
-                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now()))),
-                    true
+            client.publishWithPartialRetry("foobar", List.of(
+                            new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
             );
         });
 

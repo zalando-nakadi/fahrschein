@@ -130,18 +130,38 @@ public class NakadiClient {
     }
 
     /**
-     * Writes a batch of events to the specified endpoint using Nakadi, with support for retry and backoff.
-     *
-     * This method sends a batch of events to the given event endpoint while providing options for retry behavior and backoff in case of failures.
+     * Sends a batch of events to the given event endpoint with full retry. In case of EventPersistenceException
+     * which indicates a partial success, the method will retry the whole batch with backoff strategy (default {@link ExponentialBackoffStrategy}) until full success of the whole batch.
+     * Retry the full batch might helpful for strong ordering consistence.
      *
      * @param eventName The name of the event to which the batch should be written.
      * @param events A list of events to be included in the batch.
-     * @param partialRetry A flag indicating whether to retry the entire batch or only the failed/aborted events.
      * @param <T> The type of the events being published.
      * @throws IOException If an IO error occurs while interacting with Nakadi.
      * @throws BackoffException If the retry limit is exhausted or the thread is interrupted during the retry process.
      */
-    public <T> void publishWithRetry(String eventName, List<T> events, boolean partialRetry) throws IOException, BackoffException {
+    public <T> void publishWithFullRetry(String eventName, List<T> events) throws BackoffException, IOException {
+        this.publishWithRetry(eventName, events, false);
+    }
+
+    /**
+     * Sends a batch of events to the given event endpoint with partial retry. In case of EventPersistenceException
+     * which indicates a partial success, the method will retry only the failed/aborted event with backoff strategy (default {@link ExponentialBackoffStrategy}) until there are no aborted/failed events.
+     *
+     * @param eventName The name of the event to which the batch should be written.
+     * @param events    A list of events to be included in the batch.
+     * @param <T>       The type of the events being published.
+     * @throws IOException      If an IO error occurs while interacting with Nakadi.
+     * @throws BackoffException If the retry limit is exhausted or the thread is interrupted during the retry process.
+     */
+    public <T> void publishWithPartialRetry(String eventName, List<T> events) throws BackoffException, IOException {
+        this.publishWithRetry(eventName, events, true);
+    }
+
+    /**
+     * This method sends a batch of events to the given event endpoint while providing options for retry behavior and backoff in case of failures.
+     */
+    private <T> void publishWithRetry(String eventName, List<T> events, boolean partialRetry) throws IOException, BackoffException {
         try {
             try {
                 send(eventName, events, partialRetry,null );

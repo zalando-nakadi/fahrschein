@@ -112,7 +112,7 @@ nakadiClient.stream(eventName).readFromNewestAvailableOffset(partitions);
 nakadiClient.stream(eventName).skipUnavailableOffsets(partitions);
 ```
 
-## Publishing Events
+## Publishing Events Without Retry
 
 ```java
 // event types
@@ -135,10 +135,46 @@ while (true) {
     nakadiClient.publish(ORDER_CREATED, events);
 }    
 ```
+## Publishing Events With Retry
 
-## Publishing Batch of Events with Retry
+Nakadi publishing API accepts events in batches. It can fail to publish some events from the batch to underlying storage.
+In that case Nakadi publishing API will return error that batch was partially successful.
+Fahrschein offers retry mechanism complemented by customizable backoff strategies, allowing clients to make a choice between retrying the entire batch or opting for a partial retry as needed. 
+
+For added flexibility, NakadiClient allows configuration of various [backoff strategies](https://github.com/zalando-nakadi/fahrschein#backoff-strategies) for handling event publishing retries. 
+The default backoff strategy for event publishing retries is the [ExponentialBackoffStrategy](https://github.com/zalando-nakadi/fahrschein/blob/3cd7dbcb9d5f6ec67820c209ab66f848d9fd74e5/fahrschein/src/main/java/org/zalando/fahrschein/ExponentialBackoffStrategy.java#L11).
+
+```java
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestFactory(ContentEncoding.GZIP))
+        .withBackoffStrategy(new ExponentialBackoffStrategy())
+        .build();
+```
 
 
+#### Publish With Full Retry
+
+Depending on the requirements for maintaining strong ordering consistency with the events, Fahrschein has the capability to retry the entire batch, 
+irrespective of the specific events within the batch that may have encountered failures.
+
+```java
+    nakadiClient.publishWithFullRetry("foobar",List.of(
+        new SomeEvent("eid1",new Metadata("eid1",OffsetDateTime.now())),
+        new SomeEvent("eid2",new Metadata("eid2",OffsetDateTime.now())),
+        new SomeEvent("eid3",new Metadata("eid3",OffsetDateTime.now())))
+        );
+```
+
+#### Publish With Partial Retry
+
+To retry only the events within a batch that have failed or been aborted.
+
+```java
+    nakadiClient.publishWithPartialRetry("foobar",List.of(
+          new SomeEvent("eid1",new Metadata("eid1",OffsetDateTime.now())),
+          new SomeEvent("eid2",new Metadata("eid2",OffsetDateTime.now())),
+          new SomeEvent("eid3",new Metadata("eid3",OffsetDateTime.now())))
+          );
+```
 
 
 ## OAuth support
