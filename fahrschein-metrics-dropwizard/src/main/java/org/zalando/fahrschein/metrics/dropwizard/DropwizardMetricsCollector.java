@@ -40,11 +40,11 @@ public class DropwizardMetricsCollector implements MetricsCollector {
 
     @Override
     public void markReconnection() {
-        this.markReconnection();
+        this.delegate.markReconnection();
     }
 
     @Override
     public void markMessageSuccessfullyProcessed() {
-        this.markMessageSuccessfullyProcessed();
+        this.delegate.markMessageSuccessfullyProcessed();
     }
 }
