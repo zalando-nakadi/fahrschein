@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 
 public class StreamParameters {
 
-    private static final int DEFAULT_BATCH_LIMIT = 1;
-
     @Nullable
     private final Integer batchLimit;
     @Nullable
@@ -25,9 +23,11 @@ public class StreamParameters {
     private final Integer maxUncommittedEvents;
     @Nullable
     private final Integer commitTimeout;
+    @Nullable
+    private final Integer batchTimespan;
 
 
-    private StreamParameters(@Nullable Integer batchLimit, @Nullable Integer streamLimit, @Nullable Integer batchFlushTimeout, @Nullable Integer streamTimeout, @Nullable Integer streamKeepAliveLimit, @Nullable Integer maxUncommittedEvents, @Nullable Integer commitTimeout) {
+    private StreamParameters(@Nullable Integer batchLimit, @Nullable Integer streamLimit, @Nullable Integer batchFlushTimeout, @Nullable Integer streamTimeout, @Nullable Integer streamKeepAliveLimit, @Nullable Integer maxUncommittedEvents, @Nullable Integer commitTimeout, @Nullable Integer batchTimespan) {
         this.batchLimit = batchLimit;
         this.streamLimit = streamLimit;
         this.batchFlushTimeout = batchFlushTimeout;
@@ -35,14 +35,15 @@ public class StreamParameters {
         this.streamKeepAliveLimit = streamKeepAliveLimit;
         this.maxUncommittedEvents = maxUncommittedEvents;
         this.commitTimeout = commitTimeout;
+        this.batchTimespan = batchTimespan;
     }
 
     public StreamParameters() {
-        this(null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null);
     }
 
     String toQueryString() {
-        final List<String> params = new ArrayList<>(6);
+        final List<String> params = new ArrayList<>(8);
 
         if (batchLimit != null) {
             params.add("batch_limit=" + batchLimit);
@@ -65,96 +66,85 @@ public class StreamParameters {
         if (commitTimeout != null) {
             params.add("commit_timeout=" + commitTimeout);
         }
+        if (batchTimespan != null) {
+            params.add("batch_timespan=" + batchTimespan);
+        }
 
         return params.stream().collect(Collectors.joining("&"));
     }
 
     /**
      *
-     * Maximum number of Events in each chunk (and therefore per partition) of the stream.
-     *
-     *
-     * <p>
-     *  Note 2017/05/19: the API definition says if the value is  0 or unspecified the server will
-     *  buffer events indefinitely and flush on reaching of {@link StreamParameters#batchFlushTimeout}.
-     *  This is incorrect - if the server receives a value of '0' it will not send events at
-     *  all (effectively it's a silent bug). Because of this if value is set to 0 (or less than 1)
-     *  client raise an exception.
-     * </p>
+     * Maximum number of events in each chunk (and therefore per partition) of the stream.
      *
      * @param batchLimit
-     *          batch_limit must be lower or equal to stream_limit
-     * @throws IllegalArgumentException
+     *          Nakadi's default value (at the time of writing): 1.
+     *          batchLimit must be lower or equal to streamLimit. A value of 0 (or less than 1) is rejected by Nakadi.
      */
     public StreamParameters withBatchLimit(int batchLimit) throws IllegalArgumentException {
-        if(streamLimit != null && streamLimit < batchLimit){
-            throw new IllegalArgumentException("streamLimit is lower than batch_limit.");
-        }
-        if(batchLimit < DEFAULT_BATCH_LIMIT){
-            throw new IllegalArgumentException("batch_limit can't be lower than 1.");
-        }
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
     }
 
     /**
      *
-     * Maximum number of Events in this stream (over all partitions being streamed in this connection).
+     * Maximum number of events in this stream (over all partitions being streamed in this connection).
      *
      * @param streamLimit
      *          If 0 or undefined, will stream batches indefinitely.
-     *          Stream initialization will fail if stream_limit is lower than batch_limit.
-     *
-     * @throws IllegalArgumentException
+     *          Stream initialization will fail if streamLimit is lower than batchLimit.
      */
     public StreamParameters withStreamLimit(int streamLimit) throws IllegalArgumentException {
-        if(batchLimit != null && batchLimit > streamLimit){
-            throw new IllegalArgumentException("streamLimit is lower than batch_limit.");
-        }
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
     }
 
     /**
-     * Maximum time in seconds to wait for the flushing of each chunk (per partition).
+     * <p>Maximum time in seconds to wait for the flushing of each chunk (per partition).</p>
      *
-     * @param batchFlushTimeout
-     *          If the amount of buffered Events reaches batch_limit before this batch_flush_timeout is reached,
-     *          the messages are immediately flushed to the client and batch flush timer is reset.
-     *          If 0 or undefined, will assume 30 seconds.
+     * <p>If the amount of buffered Events reaches batchLimit before this batchFlushTimeout
+     * is reached, the messages are immediately flushed to the client and batch flush timer is reset.</p>
      *
-     * @throws IllegalArgumentException
+     * <p>If 0 or undefined, will assume 30 seconds.</p>
+     *
+     * <p>Value is treated as a recommendation. Nakadi may flush chunks with a smaller timeout.</p>
+     *
+     * @param batchFlushTimeout Maximum time in seconds to wait for the flushing of each chunk (per partition).
+     *                          Nakadi's default value (at the time of writing): 30
+     *
      */
     public StreamParameters withBatchFlushTimeout(int batchFlushTimeout) throws IllegalArgumentException {
-        if (streamTimeout != null && streamTimeout < batchFlushTimeout){
-            throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
-        }
-
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
     }
 
     /**
-     * Maximum time in seconds a stream will live before connection is closed by the server. If 0 or unspecified will stream indefinitely.
-     * If this timeout is reached, any pending messages (in the sense of stream_limit) will be flushed to the client.
+     * <p>Maximum time in seconds a stream will live before connection is closed by the server.
+     * If 0 or unspecified will stream for 1h ±10min.</p>
      *
-     * @param streamTimeout
-     *          Stream initialization will fail if stream_timeout is lower than batch_flush_timeout
-     * @throws IllegalArgumentException
+     * <p>If this timeout is reached, any pending messages (in the sense of stream_limit) will be flushed
+     * to the client.</p>
+     *
+     * <p>Stream initialization will fail if streamTimeout is lower than batchFlushTimeout.
+     * If the streamTimeout is greater than max value (4200 seconds) - Nakadi will treat this as not
+     * specifying streamTimeout (this is done due to backwards compatibility).</p>
+     *
+     * @param streamTimeout Maximum time in seconds a stream will live before connection is closed by the server.
+     *                      Nakadi's default value (at the time of writing): 0
+     *          Stream initialization will fail if streamTimeout is lower than batchFlushTimeout
      */
     public StreamParameters withStreamTimeout(int streamTimeout) throws IllegalArgumentException {
-        if(batchFlushTimeout != null && batchFlushTimeout > streamTimeout){
-            throw new IllegalArgumentException("stream_timeout is lower than batch_flush_timeout.");
-        }
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
     }
 
     /**
-     * Maximum amount of seconds that nakadi will be waiting for commit after sending a batch to a client.
-     * If the commit does not come within this timeout, nakadi will initialize stream termination, no
+     * Maximum amount of seconds that Nakadi will be waiting for commit after sending a batch to a client.
+     * In case if commit does not come within this timeout, Nakadi will initialize stream termination, no
      * new data will be sent. Partitions from this stream will be assigned to other streams.
+     * Setting commitTimeout to 0 is equal to setting it to the maximum allowed value: 60 seconds.
      *
-     * @param commitTimeout
+     * @param commitTimeout Maximum amount of seconds that Nakadi will be waiting for commit after sending a
+     *                      batch to a client.
      */
     public StreamParameters withCommitTimeout(int commitTimeout) {
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
     }
 
     /**
@@ -163,41 +153,97 @@ public class StreamParameters {
      *
      * @param streamKeepAliveLimit
      *          If 0 or undefined will send keep alive messages indefinitely.
+     *          Nakadi's default value (at the time of writing): 0
      */
     public StreamParameters withStreamKeepAliveLimit(int streamKeepAliveLimit) {
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
     }
 
+    /**
+     * The maximum number of uncommitted events that Nakadi will stream before pausing the stream. When in
+     * paused state and commit comes - the stream will resume.
+     *
+     * @param maxUncommittedEvents Nakadi's default value (at the time of writing): 10
+     */
     public StreamParameters withMaxUncommittedEvents(int maxUncommittedEvents) {
-        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout);
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
     }
 
+    /**
+     *  Useful for batching events based on their received_at timestamp. Nakadi would flush a batch as soon as the
+     *  difference in time between the first and the last event in the batch exceeds the batchTimespan.
+     *
+     * @param batchTimespan
+     *   Nakadi's default (at the time of writing): 0, meaning "do not inspect timestamps".
+     */
+    public StreamParameters withBatchTimespan(int batchTimespan) {
+        return new StreamParameters(batchLimit, streamLimit, batchFlushTimeout, streamTimeout, streamKeepAliveLimit, maxUncommittedEvents, commitTimeout, batchTimespan);
+    }
+
+    /**
+     * @return
+     * Maximum number of events in each chunk (and therefore per partition) of the stream.
+     */
     public Optional<Integer> getBatchLimit() {
         return Optional.ofNullable(batchLimit);
     }
 
+    /**
+     * @return
+     * Maximum number of events in this stream (over all partitions being streamed in this connection).
+     */
     public Optional<Integer> getStreamLimit() {
         return Optional.ofNullable(streamLimit);
     }
 
+    /**
+     * @return
+     * Maximum time in seconds to wait for the flushing of each chunk (per partition).
+     */
     public Optional<Integer> getBatchFlushTimeout() {
         return Optional.ofNullable(batchFlushTimeout);
     }
 
+    /**
+     * @return
+     * Maximum time in seconds a stream will live before connection is closed by the server.
+     */
     public Optional<Integer> getStreamTimeout() {
         return Optional.ofNullable(streamTimeout);
     }
 
+    /**
+     * @return
+     * Maximum number of empty keep alive batches to get in a row before closing the connection.
+     */
     public Optional<Integer> getStreamKeepAliveLimit() {
         return Optional.ofNullable(streamKeepAliveLimit);
     }
 
+    /**
+     * @return
+     * The maximum number of uncommitted events that Nakadi will stream before pausing the stream.
+     */
     public Optional<Integer> getMaxUncommittedEvents() {
         return Optional.ofNullable(maxUncommittedEvents);
     }
 
+    /**
+     * @return
+     * Maximum amount of seconds that Nakadi will be waiting for commit after sending a
+     *                      batch to a client
+     */
     public Optional<Integer> getCommitTimeout() {
         return Optional.ofNullable(commitTimeout);
+    }
+
+    /**
+     * @return
+     *  Nakadi would flush a batch as soon as the
+     *  difference in time between the first and the last event in the batch exceeds the batchTimespan.
+     */
+    public Optional<Integer> getBatchTimespan() {
+        return Optional.ofNullable(batchTimespan);
     }
 
 }
