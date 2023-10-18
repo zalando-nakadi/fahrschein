@@ -14,7 +14,7 @@ version = project.property('project.version') + (project.hasProperty('release') 
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
