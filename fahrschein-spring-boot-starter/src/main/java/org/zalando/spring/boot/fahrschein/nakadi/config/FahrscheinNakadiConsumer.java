@@ -17,6 +17,7 @@ import org.zalando.fahrschein.SubscriptionBuilder;
 import org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.micrometer.MicrometerMetricsCollector;
+import org.zalando.spring.boot.fahrschein.config.TimeSpan;
 import org.zalando.spring.boot.fahrschein.nakadi.MeterRegistryAware;
 import org.zalando.spring.boot.fahrschein.nakadi.NakadiListener;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.BackoffConfig;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
 import static org.zalando.spring.boot.fahrschein.nakadi.config.properties.Position.END;
@@ -152,7 +154,7 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
 
             StreamParameters sp = new StreamParameters();
             if (config.getBatchFlushTimeout() != null) {
-                sp = sp.withBatchFlushTimeout((int) config.getBatchFlushTimeout());
+                sp = sp.withBatchFlushTimeout(timeUnitToSeconds(config.getBatchFlushTimeout()));
             }
 
             if (config.getBatchLimit() != null) {
@@ -164,17 +166,30 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
             }
 
             if (config.getStreamKeepAliveLimit() != null) {
-                sp = sp.withStreamKeepAliveLimit((int) config.getStreamKeepAliveLimit());
+                sp = sp.withStreamKeepAliveLimit(timeUnitToSeconds(config.getStreamKeepAliveLimit()));
             }
 
             if (config.getStreamLimit() != null) {
                 sp = sp.withStreamLimit((int) config.getStreamLimit());
             }
+
             if (config.getStreamTimeout() != null) {
-                sp = sp.withStreamTimeout((int) config.getStreamTimeout());
+                sp = sp.withStreamTimeout(timeUnitToSeconds(config.getStreamTimeout()));
+            }
+
+            if (config.getCommitTimeout() != null) {
+                sp = sp.withCommitTimeout(timeUnitToSeconds(config.getCommitTimeout()));
+            }
+
+            if (config.getBatchTimespan() != null) {
+                sp = sp.withBatchTimespan(timeUnitToSeconds(config.getBatchTimespan()));
             }
             return sp;
         }
+    }
+
+    private static int timeUnitToSeconds(TimeSpan t) {
+        return (int) t.getUnit().toSeconds(t.getAmount());
     }
 
 }

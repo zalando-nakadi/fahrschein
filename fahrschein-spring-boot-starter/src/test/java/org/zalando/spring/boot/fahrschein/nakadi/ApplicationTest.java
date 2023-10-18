@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -108,8 +109,8 @@ public class ApplicationTest {
         assertThat(dc.getStreamParameters())
                 .hasFieldOrPropertyWithValue("batchLimit", 1)
                 .hasFieldOrPropertyWithValue("streamLimit", 1)
-                .hasFieldOrPropertyWithValue("batchFlushTimeout", 2)
-                .hasFieldOrPropertyWithValue("streamTimeout", 2)
+                .hasFieldOrPropertyWithValue("batchFlushTimeout", TimeSpan.of(2, SECONDS))
+                .hasFieldOrPropertyWithValue("streamTimeout", TimeSpan.of(2, SECONDS))
                 .hasFieldOrPropertyWithValue("maxUncommittedEvents", 2)
                 .hasNoNullFieldsOrProperties();
 

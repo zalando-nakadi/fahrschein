@@ -33,6 +33,8 @@ fahrschein:
       streamTimeout: 2
       streamKeepAliveLimit: 2
       maxUncommittedEvents: 2
+      commit-timeout: 30 seconds
+      batch-timespan: 10 seconds
     oauth:
       enabled: false
       access-token-id: token_id #same token_id used for all consumers

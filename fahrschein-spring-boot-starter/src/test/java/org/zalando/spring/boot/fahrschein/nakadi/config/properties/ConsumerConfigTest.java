@@ -2,19 +2,21 @@ package org.zalando.spring.boot.fahrschein.nakadi.config.properties;
 
 import org.junit.jupiter.api.Test;
 import org.zalando.fahrschein.http.api.ContentEncoding;
+import org.zalando.spring.boot.fahrschein.config.TimeSpan;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsumerConfigTest {
 
-    private static final int STREAM_TIMEOUT = 5;
+    private static final TimeSpan STREAM_TIMEOUT = TimeSpan.of(5, TimeUnit.SECONDS);
     private static final int STREAM_LIMIT = 23;
-    private static final int STREAM_KEEP_ALIVE_LIMIT = 34;
+    private static final TimeSpan STREAM_KEEP_ALIVE_LIMIT = TimeSpan.of(34, TimeUnit.SECONDS);
     private static final int MAX_UNCOMMITTED_EVENTS = 9000;
     private static final int BATCH_LIMIT = 1000;
-    private static final int BATCH_FLUSH_TIMEOUT = 12;
+    private static final TimeSpan BATCH_FLUSH_TIMEOUT = TimeSpan.of(12, TimeUnit.SECONDS);
     private static final String USER_4 = "user_4";
     private static final String USER_5 = "user_5";
     private static final String TEST_TEAM = "team";

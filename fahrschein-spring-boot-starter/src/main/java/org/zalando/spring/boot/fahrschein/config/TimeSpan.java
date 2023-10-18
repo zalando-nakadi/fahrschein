@@ -3,6 +3,7 @@ package org.zalando.spring.boot.fahrschein.config;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -19,6 +20,7 @@ import static org.zalando.fahrschein.Preconditions.checkArgument;
 @AllArgsConstructor(staticName = "of")
 @Getter
 @EqualsAndHashCode
+@Slf4j
 public final class TimeSpan {
 
     private static final Pattern PATTERN = Pattern.compile("(\\d+) (\\w+)");
@@ -33,6 +35,9 @@ public final class TimeSpan {
     public TimeSpan(final String value) {
         this(TimeSpan.valueOf(value));
     }
+
+    // used by SnakeYAML
+    public TimeSpan(final Integer value) { this(TimeSpan.valueOf(value)); }
 
     private TimeSpan(final TimeSpan span) {
         this(span.amount, span.unit);
@@ -49,6 +54,11 @@ public final class TimeSpan {
     @Override
     public String toString() {
         return amount + " " + toName(unit);
+    }
+
+    static TimeSpan valueOf(final int value) {
+       log.warn("TimeSpan without unit found. Assuming seconds.", value);
+       return new TimeSpan(value, TimeUnit.SECONDS);
     }
 
     static TimeSpan valueOf(final String value) {
