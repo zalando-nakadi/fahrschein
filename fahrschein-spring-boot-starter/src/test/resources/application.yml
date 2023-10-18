@@ -31,9 +31,9 @@ fahrschein:
       streamLimit: 1
       batchFlushTimeout: 2
       streamTimeout: 2
-      streamKeepAliveLimit: 2
+      streamKeepAliveLimit: 5
       maxUncommittedEvents: 2
-      commit-timeout: 30 seconds
+      commit-timeout: 1 minute
       batch-timespan: 10 seconds
     oauth:
       enabled: false

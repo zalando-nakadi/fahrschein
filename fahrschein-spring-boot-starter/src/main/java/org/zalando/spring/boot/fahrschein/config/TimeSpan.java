@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
@@ -19,7 +20,6 @@ import static org.zalando.fahrschein.Preconditions.checkArgument;
 
 @AllArgsConstructor(staticName = "of")
 @Getter
-@EqualsAndHashCode
 @Slf4j
 public final class TimeSpan {
 
@@ -43,7 +43,7 @@ public final class TimeSpan {
         this(span.amount, span.unit);
     }
 
-    long to(final TimeUnit targetUnit) {
+    public long to(final TimeUnit targetUnit) {
         return targetUnit.convert(amount, unit);
     }
 
@@ -89,4 +89,16 @@ public final class TimeSpan {
         return unit.name().toLowerCase(Locale.ROOT);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TimeSpan timeSpan = (TimeSpan) o;
+        return to(TimeUnit.MILLISECONDS) == timeSpan.to(TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(to(TimeUnit.MILLISECONDS));
+    }
 }

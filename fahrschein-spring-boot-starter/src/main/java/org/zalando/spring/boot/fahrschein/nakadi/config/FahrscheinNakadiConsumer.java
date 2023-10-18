@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
 import static org.zalando.spring.boot.fahrschein.nakadi.config.properties.Position.END;
 
@@ -154,7 +155,7 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
 
             StreamParameters sp = new StreamParameters();
             if (config.getBatchFlushTimeout() != null) {
-                sp = sp.withBatchFlushTimeout(timeUnitToSeconds(config.getBatchFlushTimeout()));
+                sp = sp.withBatchFlushTimeout((int) config.getBatchFlushTimeout().to(SECONDS));
             }
 
             if (config.getBatchLimit() != null) {
@@ -166,7 +167,7 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
             }
 
             if (config.getStreamKeepAliveLimit() != null) {
-                sp = sp.withStreamKeepAliveLimit(timeUnitToSeconds(config.getStreamKeepAliveLimit()));
+                sp = sp.withStreamKeepAliveLimit(config.getStreamKeepAliveLimit());
             }
 
             if (config.getStreamLimit() != null) {
@@ -174,22 +175,17 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
             }
 
             if (config.getStreamTimeout() != null) {
-                sp = sp.withStreamTimeout(timeUnitToSeconds(config.getStreamTimeout()));
+                sp = sp.withStreamTimeout((int)config.getStreamTimeout().to(SECONDS));
             }
 
             if (config.getCommitTimeout() != null) {
-                sp = sp.withCommitTimeout(timeUnitToSeconds(config.getCommitTimeout()));
+                sp = sp.withCommitTimeout((int) config.getCommitTimeout().to(SECONDS));
             }
 
             if (config.getBatchTimespan() != null) {
-                sp = sp.withBatchTimespan(timeUnitToSeconds(config.getBatchTimespan()));
+                sp = sp.withBatchTimespan((int) config.getBatchTimespan().to(SECONDS));
             }
             return sp;
         }
     }
-
-    private static int timeUnitToSeconds(TimeSpan t) {
-        return (int) t.getUnit().toSeconds(t.getAmount());
-    }
-
 }

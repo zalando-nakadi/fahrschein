@@ -13,7 +13,7 @@ public class ConsumerConfigTest {
 
     private static final TimeSpan STREAM_TIMEOUT = TimeSpan.of(5, TimeUnit.SECONDS);
     private static final int STREAM_LIMIT = 23;
-    private static final TimeSpan STREAM_KEEP_ALIVE_LIMIT = TimeSpan.of(34, TimeUnit.SECONDS);
+    private static final int STREAM_KEEP_ALIVE_LIMIT = 34;
     private static final int MAX_UNCOMMITTED_EVENTS = 9000;
     private static final int BATCH_LIMIT = 1000;
     private static final TimeSpan BATCH_FLUSH_TIMEOUT = TimeSpan.of(12, TimeUnit.SECONDS);

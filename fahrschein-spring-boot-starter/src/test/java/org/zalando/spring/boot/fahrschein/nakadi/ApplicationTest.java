@@ -111,6 +111,8 @@ public class ApplicationTest {
                 .hasFieldOrPropertyWithValue("streamLimit", 1)
                 .hasFieldOrPropertyWithValue("batchFlushTimeout", TimeSpan.of(2, SECONDS))
                 .hasFieldOrPropertyWithValue("streamTimeout", TimeSpan.of(2, SECONDS))
+                .hasFieldOrPropertyWithValue("commitTimeout", TimeSpan.of(60, SECONDS))
+                .hasFieldOrPropertyWithValue("streamKeepAliveLimit", 5)
                 .hasFieldOrPropertyWithValue("maxUncommittedEvents", 2)
                 .hasNoNullFieldsOrProperties();
 

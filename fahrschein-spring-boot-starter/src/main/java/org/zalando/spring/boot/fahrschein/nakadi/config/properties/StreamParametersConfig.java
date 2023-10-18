@@ -11,7 +11,7 @@ public class StreamParametersConfig {
     private Integer streamLimit;
     private TimeSpan batchFlushTimeout;
     private TimeSpan streamTimeout;
-    private TimeSpan streamKeepAliveLimit;
+    private Integer streamKeepAliveLimit;
     private TimeSpan commitTimeout;
     private TimeSpan batchTimespan;
 
