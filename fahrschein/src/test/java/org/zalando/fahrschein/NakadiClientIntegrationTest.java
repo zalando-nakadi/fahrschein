@@ -402,6 +402,39 @@ class NakadiClientIntegrationTest {
 
     }
 
+    @Test
+    void shouldThrowExceptionWithoutRetryingIfRetryStrategyConfigured() {
+        clientAndServer
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath("/event-types/foobar/events")
+                                .withBody(jsonPath("$[*].metadata[?(@.size() == 1)]"))
+                                .withBody(jsonPath("$[0].metadata[?(@.eid == 'eid1')]"))
+
+                ).respond(
+                        response()
+                                .withStatusCode(422)
+                );
+
+
+        client = NakadiClient.builder(URI.create("http://localhost:1080/"),
+                        new ProblemHandlingRequestFactory(new SimpleRequestFactory(ContentEncoding.GZIP)))
+                .withCursorManager(mock(CursorManager.class))
+                .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.NONE, new NoBackoffStrategy())
+                .build();
+
+        Throwable expectedException = assertThrows(IOException.class, () -> client.publish("foobar", List.of(
+                new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
+        ));
+
+        assertEquals(
+                "Server returned HTTP response code: 422 for URL: http://localhost:1080/event-types/foobar/events",
+                expectedException.getMessage()
+        );
+        clientAndServer.verify(request().withPath("/event-types/foobar/events"), exactly(1));
+    }
+
     public static class SomeEvent implements Event {
         private final String id;
         private Metadata metadata;

@@ -136,6 +136,9 @@ public class NakadiClient {
                 send(eventName, events, null);
                 LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
             } catch (final EventPersistenceException ex) {
+                if (backoffStrategy instanceof NoBackoffStrategy) {
+                    throw ex;
+                }
                 ExceptionAwareCallable<Void> retryableOperation = (retryCount, exception) -> {
                     send(eventName, events, exception);
                     return null;
