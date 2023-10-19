@@ -27,12 +27,14 @@ public final class NakadiClientBuilder {
 
     private final BackoffStrategy backoffStrategy;
 
+    private final PublishingRetryStrategy publishingRetryStrategy;
+
     NakadiClientBuilder(final URI baseUri, RequestFactory requestFactory) {
-        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, Collections.emptyList(),null);
+        this(baseUri, DefaultObjectMapper.INSTANCE, null, requestFactory, null, Collections.emptyList(), null, null);
     }
 
     private NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
-                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager, final BackoffStrategy backoffStrategy) {
+                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager, final BackoffStrategy backoffStrategy, final PublishingRetryStrategy publishingRetryStrategy) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.authorizationProvider = authorizationProvider;
@@ -40,11 +42,13 @@ public final class NakadiClientBuilder {
         this.cursorManager = cursorManager;
         this.eventPublishingHandlers = new ArrayList<>();
         this.backoffStrategy = backoffStrategy;
+        this.publishingRetryStrategy = publishingRetryStrategy;
     }
 
     public NakadiClientBuilder(URI baseUri, @Nullable ObjectMapper objectMapper, @Nullable AuthorizationProvider authorizationProvider,
                                @Nullable RequestFactory clientHttpRequestFactory, @Nullable CursorManager cursorManager,
-                               @Nullable List<EventPublishingHandler> eventPublishingHandlers, @Nullable final BackoffStrategy backoffStrategy) {
+                               @Nullable List<EventPublishingHandler> eventPublishingHandlers, @Nullable final BackoffStrategy backoffStrategy,
+                            final PublishingRetryStrategy publishingRetryStrategy) {
         this.objectMapper = objectMapper;
         this.baseUri = checkNotNull(baseUri, "Base URI should not be null");
         this.authorizationProvider = authorizationProvider;
@@ -52,11 +56,12 @@ public final class NakadiClientBuilder {
         this.cursorManager = cursorManager;
         this.eventPublishingHandlers = eventPublishingHandlers;
         this.backoffStrategy = backoffStrategy;
+        this.publishingRetryStrategy = publishingRetryStrategy;
     }
 
 
     public NakadiClientBuilder withObjectMapper(ObjectMapper objectMapper) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy, publishingRetryStrategy);
     }
 
     public NakadiClientBuilder withAccessTokenProvider(AccessTokenProvider accessTokenProvider) {
@@ -64,24 +69,24 @@ public final class NakadiClientBuilder {
     }
 
     public NakadiClientBuilder withAuthorizationProvider(AuthorizationProvider authorizationProvider) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy,publishingRetryStrategy);
     }
 
     public NakadiClientBuilder withCursorManager(CursorManager cursorManager) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, backoffStrategy,publishingRetryStrategy);
     }
 
     public NakadiClientBuilder withRequestHandlers(List<EventPublishingHandler> eventPublishingHandlers) {
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers,backoffStrategy);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers,backoffStrategy,publishingRetryStrategy);
     }
 
     public NakadiClientBuilder withRequestHandler(EventPublishingHandler eventPublishingHandler) {
         eventPublishingHandlers.add(eventPublishingHandler);
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers,backoffStrategy);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers,backoffStrategy,publishingRetryStrategy);
     }
 
-    public NakadiClientBuilder withBackoffStrategy(final BackoffStrategy backoffStrategy){
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers, backoffStrategy);
+    public NakadiClientBuilder withPublishingRetryStrategyAndBackoff(final PublishingRetryStrategy publishingRetryStrategy,final BackoffStrategy backoffStrategy){
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers, backoffStrategy,publishingRetryStrategy);
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
@@ -106,6 +111,7 @@ public final class NakadiClientBuilder {
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
         final BackoffStrategy backoffStrategy = this.backoffStrategy != null ? this.backoffStrategy : new ExponentialBackoffStrategy();
+        final PublishingRetryStrategy publishingRetryStrategy = this.publishingRetryStrategy != null ? this.publishingRetryStrategy : PublishingRetryStrategy.PARTIAL;
 
         return new NakadiClient(
                 baseUri,
@@ -113,7 +119,8 @@ public final class NakadiClientBuilder {
                 objectMapper,
                 cursorManager,
                 eventPublishingHandlers,
-                backoffStrategy
+                backoffStrategy,
+                publishingRetryStrategy
         );
     }
 }
