@@ -3,7 +3,7 @@ plugins {
     id 'fahrschein.maven-publishing-conventions'
 }
 
-def lombok_version = '1.18.28'
+def lombok_version = '1.18.30'
 
 dependencies {
     api project(':fahrschein')
