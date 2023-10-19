@@ -168,7 +168,7 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestF
         .build();
 ```
 
-* `PublishingRetryStrategy.FULL` - To retry the entire batch regardless of which events in the batch has failed
+* `PublishingRetryStrategy.FULL` - To retry the entire batch regardless of which events in the batch have failed
 * `PublishingRetryStrategy.PARTIAL` - To retry the events within a batch that have failed or been aborted
 * `PublishingRetryStrategy.NONE` - No retry
 
