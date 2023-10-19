@@ -149,9 +149,15 @@ Fahrschein has the capability to retry the entire batch or only the events withi
 
 ```java
 
-NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestFactory(ContentEncoding.GZIP))
-        .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.PARTIAL, new ExponentialBackoffStrategy()) //default retry configuration
+NakadiClient nakadiClient=NakadiClient.builder(NAKADI_URI,new JavaNetRequestFactory(ContentEncoding.GZIP))
+        .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.PARTIAL,new ExponentialBackoffStrategy()) //default retry configuration
         .build();
+
+nakadiClient.publishWithFullRetry("foobar",List.of(
+        new SomeEvent("eid1",new Metadata("eid1",OffsetDateTime.now())),
+        new SomeEvent("eid2",new Metadata("eid2",OffsetDateTime.now())),
+        new SomeEvent("eid3",new Metadata("eid3",OffsetDateTime.now())))
+);
 ```
 
 To disable retry on publishing 
