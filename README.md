@@ -146,7 +146,6 @@ The default backoff strategy for event publishing retries is the [ExponentialBac
 
 Fahrschein has the capability to retry the entire batch or only the events within a batch that have failed or been aborted.
 
-
 ```java
 
 NakadiClient nakadiClient=NakadiClient.builder(NAKADI_URI,new JavaNetRequestFactory(ContentEncoding.GZIP))
@@ -168,9 +167,9 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestF
         .build();
 ```
 
-* `PublishingRetryStrategy.FULL` - To retry the entire batch regardless of which events in the batch have failed
-* `PublishingRetryStrategy.PARTIAL` - To retry the events within a batch that have failed or been aborted
-* `PublishingRetryStrategy.NONE` - No retry
+- `PublishingRetryStrategy.FULL` To retry the entire batch regardless of which events in the batch have failed
+- `PublishingRetryStrategy.PARTIAL` (default) To retry the events within a batch that have failed or been aborted
+- `PublishingRetryStrategy.NONE` No retry
 
 ## OAuth support
 
