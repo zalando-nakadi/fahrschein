@@ -17,7 +17,6 @@ import org.zalando.fahrschein.SubscriptionBuilder;
 import org.zalando.fahrschein.domain.Authorization.AuthorizationAttribute;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.metrics.micrometer.MicrometerMetricsCollector;
-import org.zalando.spring.boot.fahrschein.config.TimeSpan;
 import org.zalando.spring.boot.fahrschein.nakadi.MeterRegistryAware;
 import org.zalando.spring.boot.fahrschein.nakadi.NakadiListener;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.BackoffConfig;
@@ -29,7 +28,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
