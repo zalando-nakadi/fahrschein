@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.domain.Authorization;
 import org.zalando.fahrschein.domain.BatchItemResponse;
 import org.zalando.fahrschein.domain.Cursor;
-import org.zalando.fahrschein.domain.Event;
 import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
@@ -29,7 +27,6 @@ import org.zalando.fahrschein.http.api.Response;
 
 import static org.zalando.fahrschein.Preconditions.checkArgument;
 import static org.zalando.fahrschein.Preconditions.checkState;
-import static org.zalando.fahrschein.PublishingRetryStrategies.*;
 
 /**
  * General implementation of the Nakadi Client used within this Library.
@@ -135,7 +132,6 @@ public class NakadiClient {
         try {
             try {
                 send(eventName, events);
-                LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
             } catch (final EnrichedEventPersistenceException ex) {
                 if (backoffStrategy instanceof NoBackoffStrategy) {
                     throw ex;
@@ -180,6 +176,7 @@ public class NakadiClient {
         try {
             eventPublishingHandlers.forEach(handler -> handler.onPublish(eventName, events));
             response = request.execute();
+            LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
         } catch (EventPersistenceException e) {
             throw new EnrichedEventPersistenceException(events, e);
         } finally {

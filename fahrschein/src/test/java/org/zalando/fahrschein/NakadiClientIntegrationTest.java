@@ -287,7 +287,7 @@ class NakadiClientIntegrationTest {
                 );
 
 
-        Throwable expectedException = assertThrows(IOException.class, () -> {
+        assertThrows(IOException.class, () -> {
             client.publish("foobar", List.of(
                     new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
             );
