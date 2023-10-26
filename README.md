@@ -142,20 +142,23 @@ In that case Nakadi publishing API will return error that batch was partially su
 Fahrschein offers retry mechanism complemented by customizable backoff strategies, allowing clients to make a choice between retrying the entire batch or opting for a partial retry as needed. 
 
 For added flexibility, NakadiClient allows configuration of various [backoff strategies](https://github.com/zalando-nakadi/fahrschein#backoff-strategies) for handling event publishing retries. 
-The default backoff strategy for event publishing retries is the [ExponentialBackoffStrategy](https://github.com/zalando-nakadi/fahrschein/blob/3cd7dbcb9d5f6ec67820c209ab66f848d9fd74e5/fahrschein/src/main/java/org/zalando/fahrschein/ExponentialBackoffStrategy.java#L11).
+The default backoff strategy for event publishing retries is the [ExponentialBackoffStrategy](https://github.com/zalando-nakadi/fahrschein/blob/main/fahrschein/src/main/java/org/zalando/fahrschein/ExponentialBackoffStrategy.java).
 
-Fahrschein has the capability to retry the entire batch or only the events within a batch that have failed or been aborted.
+Fahrschein has the capability to retry the entire batch or only the events within a batch that have failed
+(see [available publishing retry strategies below](#available-publishing-retry-strategies)). It will not
+retry aborted events, as they failed the event schema validation, and retrying without either changing the event or the 
+schema would be futile.
 
 ```java
 
-NakadiClient nakadiClient=NakadiClient.builder(NAKADI_URI,new JavaNetRequestFactory(ContentEncoding.GZIP))
-        .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategies.FAILED_ONLY,new ExponentialBackoffStrategy()) //default retry configuration
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI,new JavaNetRequestFactory(ContentEncoding.GZIP))
+        .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.FAILED_ONLY, new ExponentialBackoffStrategy()) //default retry configuration
         .build();
 
-nakadiClient.publish("foobar",List.of(
-        new SomeEvent("eid1",new Metadata("eid1",OffsetDateTime.now())),
-        new SomeEvent("eid2",new Metadata("eid2",OffsetDateTime.now())),
-        new SomeEvent("eid3",new Metadata("eid3",OffsetDateTime.now())))
+nakadiClient.publish("foobar", List.of(
+        new SomeEvent("eid1", new Metadata("eid1",OffsetDateTime.now())),
+        new SomeEvent("eid2", new Metadata("eid2",OffsetDateTime.now())),
+        new SomeEvent("eid3", new Metadata("eid3",OffsetDateTime.now())))
 );
 ```
 
@@ -163,7 +166,7 @@ To disable retry on publishing
 ```java
 
 NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestFactory(ContentEncoding.GZIP))
-        .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategies.NONE, new NoBackoffStrategy())
+        .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.NONE, new NoBackoffStrategy())
         .build();
 ```
 
