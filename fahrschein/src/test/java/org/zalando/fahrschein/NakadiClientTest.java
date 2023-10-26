@@ -44,7 +44,7 @@ public class NakadiClientTest {
 
         final NakadiClient nakadiClient = NakadiClient.builder(URI.create("http://example.com/"), clientHttpRequestFactory)
                 .withCursorManager(cursorManager)
-                .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.NONE, new NoBackoffStrategy())
+                .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.NONE, new NoBackoffStrategy())
                 .build();
 
         this.server = clientHttpRequestFactory;
@@ -345,7 +345,7 @@ public class NakadiClientTest {
         client = NakadiClient.builder(URI.create("http://example.com/"), server)
                 .withCursorManager(this.cursorManager)
                 .withRequestHandler(eventPublishingHandler)
-                .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.NONE, new NoBackoffStrategy())
+                .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.NONE, new NoBackoffStrategy())
                 .build();
 
         String eventName = "foobar";

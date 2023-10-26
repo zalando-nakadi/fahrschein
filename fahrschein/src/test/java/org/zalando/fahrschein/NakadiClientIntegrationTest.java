@@ -44,7 +44,7 @@ class NakadiClientIntegrationTest {
         client = NakadiClient.builder(URI.create("http://localhost:1080/"),
                         new ProblemHandlingRequestFactory(new SimpleRequestFactory(ContentEncoding.GZIP)))
                 .withCursorManager(mock(CursorManager.class))
-                .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.PARTIAL, new ExponentialBackoffStrategy(
+                .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.FAILED_ONLY, new ExponentialBackoffStrategy(
                         DEFAULT_INITIAL_DELAY,
                         DEFAULT_BACKOFF_FACTOR,
                         DEFAULT_MAX_DELAY,
@@ -77,7 +77,7 @@ class NakadiClientIntegrationTest {
                                 .withBody("[\n" +
                                         "  {\n" +
                                         "    \"eid\": \"eid1\",\n" +
-                                        "    \"publishing_status\": \"aborted\",\n" +
+                                        "    \"publishing_status\": \"failed\",\n" +
                                         "    \"step\": \"publishing\",\n" +
                                         "    \"detail\": \"baz\"\n" +
                                         "  },\n" +
@@ -95,8 +95,6 @@ class NakadiClientIntegrationTest {
                                         "    \"detail\": \"baz\"\n" +
                                         "  }\n" +
                                         "]")
-
-
                 );
 
 
@@ -116,7 +114,7 @@ class NakadiClientIntegrationTest {
                                 .withBody("[\n" +
                                         "  {\n" +
                                         "    \"eid\": \"eid1\",\n" +
-                                        "    \"publishing_status\": \"aborted\",\n" +
+                                        "    \"publishing_status\": \"failed\",\n" +
                                         "    \"step\": \"publishing\",\n" +
                                         "    \"detail\": \"baz\"\n" +
                                         "  },\n" +
@@ -153,8 +151,6 @@ class NakadiClientIntegrationTest {
                                         "  }" +
                                         "\n" +
                                         "]")
-
-
                 );
 
 
@@ -187,7 +183,7 @@ class NakadiClientIntegrationTest {
                                 .withBody("[\n" +
                                         "  {\n" +
                                         "    \"eid\": \"eid1\",\n" +
-                                        "    \"publishing_status\": \"aborted\",\n" +
+                                        "    \"publishing_status\": \"failed\",\n" +
                                         "    \"step\": \"publishing\",\n" +
                                         "    \"detail\": \"baz\"\n" +
                                         "  },\n" +
@@ -211,7 +207,7 @@ class NakadiClientIntegrationTest {
         client = NakadiClient.builder(URI.create("http://localhost:1080/"),
                         new ProblemHandlingRequestFactory(new SimpleRequestFactory(ContentEncoding.GZIP)))
                 .withCursorManager(mock(CursorManager.class))
-                .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.FULL, new ExponentialBackoffStrategy(
+                .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.ALL, new ExponentialBackoffStrategy(
                         DEFAULT_INITIAL_DELAY,
                         DEFAULT_BACKOFF_FACTOR,
                         DEFAULT_MAX_DELAY,
@@ -246,7 +242,7 @@ class NakadiClientIntegrationTest {
                                 .withBody("[\n" +
                                         "  {\n" +
                                         "    \"eid\": \"eid1\",\n" +
-                                        "    \"publishing_status\": \"aborted\",\n" +
+                                        "    \"publishing_status\": \"failed\",\n" +
                                         "    \"step\": \"publishing\",\n" +
                                         "    \"detail\": \"baz\"\n" +
                                         "  }\n" +
@@ -255,12 +251,49 @@ class NakadiClientIntegrationTest {
                 );
 
 
-        assertThrows(EventPersistenceException.class, () -> {
+        assertThrows(EnrichedEventPersistenceException.class, () -> {
             client.publish("foobar", List.of(
                             new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
             );
         });
         clientAndServer.verify(request().withPath("/event-types/foobar/events"), exactly(4));
+
+    }
+
+    @Test
+    void shouldNotRetryForEventValidationErrors() {
+
+        clientAndServer
+                .when(
+                        request()
+                                .withMethod("POST")
+                                .withPath("/event-types/foobar/events")
+                                .withBody(jsonPath("$[*].metadata[?(@.size() == 1)]"))
+                                .withBody(jsonPath("$[0].metadata[?(@.eid == 'eid1')]"))
+
+                ).respond(
+                        response()
+                                .withStatusCode(422)
+                                .withContentType(APPLICATION_JSON)
+                                .withBody("[\n" +
+                                        "  {\n" +
+                                        "    \"eid\": \"eid1\",\n" +
+                                        "    \"publishing_status\": \"aborted\",\n" +
+                                        "    \"step\": \"validating\",\n" +
+                                        "    \"detail\": \"baz\"\n" +
+                                        "  }\n" +
+                                        "\n" +
+                                        "]")
+                );
+
+
+        Throwable expectedException = assertThrows(IOException.class, () -> {
+            client.publish("foobar", List.of(
+                    new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())))
+            );
+        });
+
+        clientAndServer.verify(request().withPath("/event-types/foobar/events"), exactly(1));
 
     }
 
@@ -420,7 +453,7 @@ class NakadiClientIntegrationTest {
         client = NakadiClient.builder(URI.create("http://localhost:1080/"),
                         new ProblemHandlingRequestFactory(new SimpleRequestFactory(ContentEncoding.GZIP)))
                 .withCursorManager(mock(CursorManager.class))
-                .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategy.NONE, new NoBackoffStrategy())
+                .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.NONE, new NoBackoffStrategy())
                 .build();
 
         Throwable expectedException = assertThrows(IOException.class, () -> client.publish("foobar", List.of(

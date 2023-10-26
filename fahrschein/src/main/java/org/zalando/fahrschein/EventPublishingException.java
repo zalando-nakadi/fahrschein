@@ -4,6 +4,7 @@ import org.zalando.fahrschein.domain.BatchItemResponse;
 
 import java.io.IOException;
 import java.util.Formatter;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -20,6 +21,7 @@ import java.util.Locale;
  * </p>
  */
 public abstract class EventPublishingException extends IOException {
+
 
     private final BatchItemResponse[] responses;
 

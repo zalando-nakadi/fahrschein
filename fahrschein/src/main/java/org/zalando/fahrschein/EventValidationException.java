@@ -2,6 +2,8 @@ package org.zalando.fahrschein;
 
 import org.zalando.fahrschein.domain.BatchItemResponse;
 
+import java.util.List;
+
 /**
  * <p>Exception thrown during publishing of events, in case the batch fails the validation phase.
  * </p>

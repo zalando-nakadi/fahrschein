@@ -1,6 +1,7 @@
 package org.zalando.fahrschein;
 
-public enum PublishingRetryStrategy {
-    FULL, PARTIAL, NONE
+import java.util.List;
 
+public interface PublishingRetryStrategy {
+    <T> List<T> getEventsForRetry(final EnrichedEventPersistenceException ex);
 }

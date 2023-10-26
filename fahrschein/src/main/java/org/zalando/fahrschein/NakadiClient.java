@@ -29,6 +29,7 @@ import org.zalando.fahrschein.http.api.Response;
 
 import static org.zalando.fahrschein.Preconditions.checkArgument;
 import static org.zalando.fahrschein.Preconditions.checkState;
+import static org.zalando.fahrschein.PublishingRetryStrategies.*;
 
 /**
  * General implementation of the Nakadi Client used within this Library.
@@ -133,28 +134,26 @@ public class NakadiClient {
             EventPersistenceException, IOException {
         try {
             try {
-                send(eventName, events, null);
+                send(eventName, events);
                 LOG.debug("Successfully published [{}] events for [{}]", events.size(), eventName);
-            } catch (final EventPersistenceException ex) {
+            } catch (final EnrichedEventPersistenceException ex) {
                 if (backoffStrategy instanceof NoBackoffStrategy) {
                     throw ex;
                 }
                 ExceptionAwareCallable<Void> retryableOperation = (retryCount, exception) -> {
-                    send(eventName, events, exception);
+                    send(eventName, publishingRetryStrategy.getEventsForRetry(exception));
                     return null;
                 };
-                try {
-                    backoffStrategy.call(ex, 0, retryableOperation);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                backoffStrategy.call(ex, 0, retryableOperation);
             }
         } catch (Throwable t) {
-            eventPublishingHandlers.descendingIterator().forEachRemaining(handler -> handler.onError(List.of(), t));
+            eventPublishingHandlers.descendingIterator().forEachRemaining(handler -> handler.onError(Collections.emptyList(), t));
             try {
                 throw t;
             } catch (BackoffException e) {
                 throw e.getCause();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         } finally {
             eventPublishingHandlers.descendingIterator().forEachRemaining(EventPublishingHandler::afterPublish);
@@ -166,48 +165,29 @@ public class NakadiClient {
      *
      * @param eventName    The name of the event to which the batch should be sent.
      * @param events       A list of events to be included in the batch.
-     * @param partialRetry A flag indicating whether to retry only the failed/aborted events (if true).
-     * @param ex           An exception containing information about the failed events (used when partialRetry is true).
      * @throws IOException If an IO error occurs during the communication with Nakadi.
      */
-    private <T> void send(final String eventName, List<T> events, final EventPersistenceException ex) throws IOException {
+    private <T> void send(final String eventName, List<T> events) throws IOException {
         final URI uri = baseUri.resolve(String.format(Locale.ENGLISH, "/event-types/%s/events", eventName));
         final Request request = requestFactory.createRequest(uri, "POST");
 
         request.getHeaders().setContentType(ContentType.APPLICATION_JSON);
 
-        final List<T> finalEvents = getEvents(events, ex);
         try (final OutputStream body = request.getBody()) {
-            objectMapper.writeValue(body, finalEvents);
+            objectMapper.writeValue(body, events);
         }
         Response response = null;
         try {
-            eventPublishingHandlers.forEach(handler -> handler.onPublish(eventName, finalEvents));
+            eventPublishingHandlers.forEach(handler -> handler.onPublish(eventName, events));
             response = request.execute();
+        } catch (EventPersistenceException e) {
+            throw new EnrichedEventPersistenceException(events, e);
         } finally {
             if (response != null) {
                 response.close();
             }
         }
     }
-
-    /**
-     * If {@link PublishingRetryStrategy.PARTIAL} is configured and there are failed events in the batch, filter the
-     * events to include only the failed/aborted ones
-     */
-    private <T> List<T> getEvents(final List<T> events, final EventPersistenceException ex) {
-        if (ex != null && this.publishingRetryStrategy == PublishingRetryStrategy.PARTIAL) {
-            final List<String> eids = Arrays.stream(ex.getResponses())
-                    .filter(r -> !BatchItemResponse.PublishingStatus.SUBMITTED.equals(r.getPublishingStatus()))
-                    .map(BatchItemResponse::getEid)
-                    .toList();
-            return events.stream()
-                    .filter(e -> eids.contains(((Event) e).getMetadata().getEid()))
-                    .toList();
-        }
-        return events;
-    }
-
 
     /**
      * Create a subscription for a single event type.
