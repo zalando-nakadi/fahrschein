@@ -11,19 +11,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PublishingRetryStrategiesTest {
 
-    private EnrichedEventPersistenceException allFailed = new EnrichedEventPersistenceException(List.of("a","b", "c"), new EventPersistenceException(new BatchItemResponse[]{
+    private EventPersistenceException allFailed = new EventPersistenceException(List.of("a","b", "c"), new RawEventPersistenceException(new BatchItemResponse[]{
         new BatchItemResponse("a", BatchItemResponse.PublishingStatus.FAILED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("b", BatchItemResponse.PublishingStatus.FAILED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("c", BatchItemResponse.PublishingStatus.FAILED, BatchItemResponse.Step.PUBLISHING, ""),
     }));
 
-    private EnrichedEventPersistenceException someFailed = new EnrichedEventPersistenceException(List.of("a","b","c"), new EventPersistenceException(new BatchItemResponse[]{
+    private EventPersistenceException someFailed = new EventPersistenceException(List.of("a","b","c"), new RawEventPersistenceException(new BatchItemResponse[]{
             new BatchItemResponse("a", BatchItemResponse.PublishingStatus.SUBMITTED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("a", BatchItemResponse.PublishingStatus.FAILED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("b", BatchItemResponse.PublishingStatus.SUBMITTED, BatchItemResponse.Step.PUBLISHING, ""),
     }));
 
-    private EnrichedEventPersistenceException noneFailed = new EnrichedEventPersistenceException(List.of("a","b","c"), new EventPersistenceException(new BatchItemResponse[]{
+    private EventPersistenceException noneFailed = new EventPersistenceException(List.of("a","b","c"), new RawEventPersistenceException(new BatchItemResponse[]{
             new BatchItemResponse("a", BatchItemResponse.PublishingStatus.SUBMITTED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("a", BatchItemResponse.PublishingStatus.SUBMITTED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("b", BatchItemResponse.PublishingStatus.SUBMITTED, BatchItemResponse.Step.PUBLISHING, ""),

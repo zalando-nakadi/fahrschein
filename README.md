@@ -152,7 +152,7 @@ NakadiClient nakadiClient=NakadiClient.builder(NAKADI_URI,new JavaNetRequestFact
         .withPublishingRetryStrategyAndBackoff(PublishingRetryStrategies.FAILED_ONLY,new ExponentialBackoffStrategy()) //default retry configuration
         .build();
 
-nakadiClient.publishWithFullRetry("foobar",List.of(
+nakadiClient.publish("foobar",List.of(
         new SomeEvent("eid1",new Metadata("eid1",OffsetDateTime.now())),
         new SomeEvent("eid2",new Metadata("eid2",OffsetDateTime.now())),
         new SomeEvent("eid3",new Metadata("eid3",OffsetDateTime.now())))

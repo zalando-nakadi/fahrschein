@@ -15,7 +15,7 @@ import java.util.Locale;
  * which can also be used to identify the event.</p>
  *
  * <p>Based on the exception, the batch can be retried or not. Partially successfully published batches are
- * retryable (see {@link EventPersistenceException}), while batches rejected as unprocessable entities are not
+ * retryable (see {@link RawEventPersistenceException}), while batches rejected as unprocessable entities are not
  * (see {@link EventValidationException}).
  * </p>
  */

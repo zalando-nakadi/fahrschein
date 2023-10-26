@@ -8,13 +8,13 @@ import java.util.stream.IntStream;
 public enum PublishingRetryStrategies implements PublishingRetryStrategy {
     ALL {
         @Override
-        public <T> List<T> getEventsForRetry(final EnrichedEventPersistenceException ex) {
+        public <T> List<T> getEventsForRetry(final EventPersistenceException ex) {
             return (List<T>) ex.getInputEvents();
         }
 
     }, FAILED_ONLY {
         @Override
-        public <T> List<T> getEventsForRetry(final EnrichedEventPersistenceException ex) {
+        public <T> List<T> getEventsForRetry(final EventPersistenceException ex) {
             Preconditions.checkArgument(ex.getInputEvents().size() == ex.getResponses().length, "Invalid number of responses from Nakadi. It has to match size of the input batch");
             var x = (List<T>) IntStream.range(0, ex.getResponses().length)
                     .filter(i -> BatchItemResponse.PublishingStatus.FAILED == ex.getResponses()[i].getPublishingStatus())
@@ -24,7 +24,7 @@ public enum PublishingRetryStrategies implements PublishingRetryStrategy {
     },
     ALL_FROM_FIRST_FAILURE {
         @Override
-        public <T> List<T> getEventsForRetry(final EnrichedEventPersistenceException ex) {
+        public <T> List<T> getEventsForRetry(final EventPersistenceException ex) {
             Preconditions.checkArgument(ex.getInputEvents().size() == ex.getResponses().length, "Invalid number of responses from Nakadi. It has to match size of the input batch");
             var firstFailure = IntStream.range(0, ex.getResponses().length)
                     .filter(i -> BatchItemResponse.PublishingStatus.FAILED == ex.getResponses()[i].getPublishingStatus())
@@ -39,7 +39,7 @@ public enum PublishingRetryStrategies implements PublishingRetryStrategy {
     },
     NONE {
         @Override
-        public <T> List<T> getEventsForRetry(final EnrichedEventPersistenceException ex) {
+        public <T> List<T> getEventsForRetry(final EventPersistenceException ex) {
             return Collections.emptyList();
         }
     }

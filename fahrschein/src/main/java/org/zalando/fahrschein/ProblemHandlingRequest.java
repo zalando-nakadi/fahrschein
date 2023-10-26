@@ -110,7 +110,7 @@ class ProblemHandlingRequest implements Request {
         throw new IOProblem(DEFAULT_PROBLEM_TYPE, error, statusCode, description);
     }
 
-    private void handleBatchItemResponse(JsonNode rootNode, boolean clientError) throws EventValidationException, EventPersistenceException, JsonProcessingException {
+    private void handleBatchItemResponse(JsonNode rootNode, boolean clientError) throws EventValidationException, RawEventPersistenceException, JsonProcessingException {
         final BatchItemResponse[] responses = objectMapper.treeToValue(rootNode, BatchItemResponse[].class);
         for (BatchItemResponse batchItemResponse : responses) {
             if(batchItemResponse.getPublishingStatus() == BatchItemResponse.PublishingStatus.FAILED ||
@@ -118,7 +118,7 @@ class ProblemHandlingRequest implements Request {
                 if (clientError) {
                     throw new EventValidationException(responses);
                 }
-                throw new EventPersistenceException(responses);
+                throw new RawEventPersistenceException(responses);
             }
         }
     }
