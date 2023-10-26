@@ -33,7 +33,7 @@ public enum PublishingRetryStrategies implements PublishingRetryStrategy {
             if (firstFailure.isEmpty()) {
                 return Collections.emptyList();
             } else {
-                return (List<T>) ex.getInputEvents().subList(firstFailure.getAsInt(), ex.getInputEvents().size() - 1);
+                return (List<T>) ex.getInputEvents().subList(firstFailure.getAsInt(), ex.getInputEvents().size());
             }
         }
     },

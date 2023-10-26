@@ -167,9 +167,15 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestF
         .build();
 ```
 
-`PublishingRetryStrategy.FULL` To retry the entire batch regardless of which events in the batch have failed
-`PublishingRetryStrategy.PARTIAL` (default) To retry the events within a batch that have failed or been aborted
-`PublishingRetryStrategy.NONE` No retry
+* `PublishingRetryStrategies.ALL` to retry the entire batch regardless of which events in the batch have failed.
+* `PublishingRetryStrategies.FAILED_ONLY` (default) to retry only the events within a batch that have failed. This is  
+the recommended default for Nakadi clients, but there is a potential edge case, where within publishing of one batch
+Nakadi may recover, therefore the ordering guarantee for one partition may be potentially be broken.
+* `PublishingRetryStrategies.ALL_FROM_FIRST_FAILURE` to retry the events within a batch, starting with the first failure. 
+This strategy trades off write amplification with better order guarantees for the aforementioned edge case.
+* `PublishingRetryStrategies.NONE` No retry
+
+You may also provide your own `PublishingRetryStrategy` implementation.
 
 ## OAuth support
 
