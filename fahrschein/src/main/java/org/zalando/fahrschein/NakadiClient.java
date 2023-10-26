@@ -105,7 +105,7 @@ public class NakadiClient {
     /**
      * Writes the given events to the endpoint provided by the eventName.
      * <p>
-     * In case of {@link RawEventPersistenceException}`  which indicates a partial success, the method will retry only
+     * In case of {@link EventPersistenceException}`  which indicates a partial success, the method will retry only
      * the failed/aborted event with backoff strategy (default {@link ExponentialBackoffStrategy})
      * until there are no aborted/failed events or the retry is exhausted.
      * <p>
@@ -124,11 +124,11 @@ public class NakadiClient {
      * @throws IOException               in case of network errors when calling Nakadi.
      * @throws EventValidationException  in case Nakadi rejects the batch in event validation phase - should not be
      * retried until either the event type schema or the event payload has been corrected.
-     * @throws RawEventPersistenceException in case Nakadi fails to persist the batch (partially). Retryable (see
+     * @throws EventPersistenceException in case Nakadi fails to persist the batch (partially). Retryable (see
      * recommendation above).
      */
     public <T> void publish(String eventName, List<T> events) throws EventValidationException,
-            RawEventPersistenceException, IOException {
+            EventPersistenceException, IOException {
         try {
             try {
                 send(eventName, events);

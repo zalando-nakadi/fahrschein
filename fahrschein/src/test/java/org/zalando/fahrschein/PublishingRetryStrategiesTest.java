@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PublishingRetryStrategiesTest {
 
-    private EventPersistenceException allFailed = new EventPersistenceException(List.of("a","b", "c"), new RawEventPersistenceException(new BatchItemResponse[]{
+    private EventPersistenceException allFailed = new EventPersistenceException(List.of("a","b","c"), new RawEventPersistenceException(new BatchItemResponse[]{
         new BatchItemResponse("a", BatchItemResponse.PublishingStatus.FAILED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("b", BatchItemResponse.PublishingStatus.FAILED, BatchItemResponse.Step.PUBLISHING, ""),
             new BatchItemResponse("c", BatchItemResponse.PublishingStatus.FAILED, BatchItemResponse.Step.PUBLISHING, ""),

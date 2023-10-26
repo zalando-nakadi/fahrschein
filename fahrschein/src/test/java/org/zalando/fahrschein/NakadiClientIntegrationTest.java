@@ -215,7 +215,7 @@ class NakadiClientIntegrationTest {
                 ))
                 .build();
 
-        assertThrows(RawEventPersistenceException.class,
+        assertThrows(EventPersistenceException.class,
                 () -> client.publish("foobar", List.of(
                         new SomeEvent("eid1", new Metadata("eid1", OffsetDateTime.now())),
                         new SomeEvent("eid2", new Metadata("eid2", OffsetDateTime.now())),

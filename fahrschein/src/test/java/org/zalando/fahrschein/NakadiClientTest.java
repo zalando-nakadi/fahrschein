@@ -351,7 +351,7 @@ public class NakadiClientTest {
         String eventName = "foobar";
         List<SomeEvent> someEvents = asList(new SomeEvent("1"), new SomeEvent("2"));
 
-        RawEventPersistenceException expectedException = assertThrows(RawEventPersistenceException.class, () -> {
+        EventPersistenceException expectedException = assertThrows(EventPersistenceException.class, () -> {
             client.publish("foobar", someEvents);
         });
 
@@ -371,7 +371,7 @@ public class NakadiClientTest {
                 .andRespondWith(207, ContentType.APPLICATION_JSON, "[{\"eid\":\"event-one\",\"publishing_status\":\"failed\",\"step\":\"validating\",\"detail\":\"baz\"}]")
                 .setup();
 
-        RawEventPersistenceException expectedException = assertThrows(RawEventPersistenceException.class, () -> {
+        EventPersistenceException expectedException = assertThrows(EventPersistenceException.class, () -> {
             client.publish("foobar", asList(new SomeEvent("1"), new SomeEvent("2")));
         });
         server.verify();
