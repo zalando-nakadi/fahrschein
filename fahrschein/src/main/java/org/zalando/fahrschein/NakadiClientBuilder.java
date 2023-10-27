@@ -88,7 +88,7 @@ public final class NakadiClientBuilder {
     /**
      * Creates a new instance of {@code NakadiClient}. In case no {@code ObjectMapper} is provided, it's going to make
      * use of {@code DefaultObjectMapper} that is making use of
-     * {@code PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES}.
+     * {@code PropertyNamingStrategies.SNAKE_CASE}.
      * In case no {@code CursorManager} is provided it's going to make use of {@code ManagedCursorManager}.
      *
      * @return A fresh instance of {@code NakadiClient}

@@ -24,7 +24,3 @@ dependencies {
 }
 
 description = 'Fahrschein Example'
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 17
-}

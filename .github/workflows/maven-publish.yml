@@ -12,12 +12,12 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
       - name: Publish package
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 8.2.1
+          gradle-version: 8.4
           arguments: publish -Prelease
         env:
           NEXUS_USERNAME:  ${{ secrets.OSSRH_USERNAME }}

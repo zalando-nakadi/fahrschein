@@ -16,7 +16,7 @@ dependencies {
     testImplementation ('com.jayway.jsonpath:json-path:2.8.0') {
         exclude group: "org.ow2.asm", module: "asm"
     }
-    testImplementation("ch.qos.logback:logback-classic:1.4.8") {
+    testImplementation("ch.qos.logback:logback-classic:1.4.11") {
         because "we want to test logging output"
     }
 }
