@@ -1,15 +1,16 @@
 package org.zalando.fahrschein.http.apache;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpOptions;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpTrace;
-import org.apache.http.client.methods.HttpUriRequest;
+
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpHead;
+import org.apache.hc.client5.http.classic.methods.HttpOptions;
+import org.apache.hc.client5.http.classic.methods.HttpPatch;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpTrace;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequest;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Request;
 import org.zalando.fahrschein.http.api.RequestFactory;
@@ -85,27 +86,6 @@ public class HttpComponentsRequestFactory implements RequestFactory {
                 return new HttpTrace(uri);
             default:
                 throw new IllegalArgumentException("Invalid HTTP method: " + method);
-        }
-    }
-
-    /**
-     * An alternative to {@link org.apache.http.client.methods.HttpDelete} that
-     * extends {@link org.apache.http.client.methods.HttpEntityEnclosingRequestBase}
-     * rather than {@link org.apache.http.client.methods.HttpRequestBase} and
-     * hence allows HTTP delete with a request body. For use with the RestTemplate
-     * exchange methods which allow the combination of HTTP DELETE with entity.
-     * @since 4.1.2
-     */
-    static class HttpDelete extends HttpEntityEnclosingRequestBase {
-
-        HttpDelete(URI uri) {
-            super();
-            setURI(uri);
-        }
-
-        @Override
-        public String getMethod() {
-            return "DELETE";
         }
     }
 

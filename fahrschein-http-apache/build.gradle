@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api project(':fahrschein-http-api')
-    api "org.apache.httpcomponents:httpclient:${property('apachehttp.version')}"
+    api "org.apache.httpcomponents.client5:httpclient5:${property('apachehttp.version')}"
     testImplementation(testFixtures(project(':fahrschein-http-test-support')))
 }
 

@@ -1,8 +1,8 @@
 package org.zalando.fahrschein.http.apache;
 
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 
 @ExtendWith(MockitoExtension.class)
 public class HttpComponentsRequestFactoryTest extends AbstractRequestFactoryTest {
@@ -33,7 +34,7 @@ public class HttpComponentsRequestFactoryTest extends AbstractRequestFactoryTest
         });
 
         // when
-        RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(1).build();
+        RequestConfig requestConfig = RequestConfig.custom().setResponseTimeout(1, TimeUnit.MILLISECONDS).build();
         final CloseableHttpClient httpClient = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
         RequestFactory f = new HttpComponentsRequestFactory(httpClient, ContentEncoding.GZIP);
         Request r = f.createRequest(serverAddress.resolve("/timeout"), "GET");

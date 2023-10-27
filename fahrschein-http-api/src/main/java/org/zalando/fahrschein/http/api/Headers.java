@@ -8,6 +8,9 @@ public interface Headers {
 
     String AUTHORIZATION = "Authorization";
     String CONTENT_LENGTH = "Content-Length";
+
+    String TRANSFER_ENCODING = "Transfer-Encoding";
+
     String CONTENT_TYPE = "Content-Type";
     String CONTENT_ENCODING = "Content-Encoding";
     String ACCEPT_ENCODING = "Accept-Encoding";
