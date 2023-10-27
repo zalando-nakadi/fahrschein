@@ -50,4 +50,4 @@ fahrschein:
       - first.first-update
       subscription:
         enabled: true
-        subscriptionId: "test-id"
+        subscription-id: "test-id"
