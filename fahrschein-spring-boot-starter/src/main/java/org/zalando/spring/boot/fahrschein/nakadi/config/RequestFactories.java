@@ -37,7 +37,7 @@ public class RequestFactories {
     private static ClientHttpRequestFactorySettings httpConfigToClientHttpRequestFactorySettings(HttpConfig httpConfig) {
         return new ClientHttpRequestFactorySettings(
                 Duration.ofMillis((int) MILLISECONDS.convert(httpConfig.getConnectTimeout().getAmount(), httpConfig.getConnectTimeout().getUnit())),
-                Duration.ofMillis((int) MILLISECONDS.convert(httpConfig.getSocketTimeout().getAmount(), httpConfig.getSocketTimeout().getUnit())), false);
+                Duration.ofMillis((int) MILLISECONDS.convert(httpConfig.getSocketTimeout().getAmount(), httpConfig.getSocketTimeout().getUnit())), true);
     }
 
 }
