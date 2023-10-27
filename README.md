@@ -375,7 +375,7 @@ Although Fahrschein is using fixed dependency versions, it is integration-tested
 | Spring Core       | 6.0.0    | 6.+    |
 | Spring Boot       | 3.0.0    | 3.+    |
 | okHttp            | 3.3.0    | 4.+    |
-| Apache HttpClient | 5.1      | 5.+    |
+| Apache HttpClient | 5.0      | 5.+    |
 
 ## Content-Compression
 
