@@ -86,7 +86,7 @@ public final class NakadiClientBuilder {
     }
 
     public NakadiClientBuilder withPublishingRetryAndBackoffStrategy(final PublishingRetryStrategies publishingRetryStrategy, final BackoffStrategy backoffStrategy){
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers, backoffStrategy,publishingRetryStrategy);
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers, backoffStrategy, publishingRetryStrategy);
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
@@ -110,8 +110,8 @@ public final class NakadiClientBuilder {
         final RequestFactory clientHttpRequestFactory = wrapClientHttpRequestFactory(this.clientHttpRequestFactory, authorizationProvider);
         final CursorManager cursorManager = this.cursorManager != null ? this.cursorManager : new ManagedCursorManager(baseUri, clientHttpRequestFactory, true);
         final ObjectMapper objectMapper = this.objectMapper != null ? this.objectMapper : DefaultObjectMapper.INSTANCE;
-        final BackoffStrategy backoffStrategy = this.backoffStrategy != null ? this.backoffStrategy : new ExponentialBackoffStrategy();
-        final PublishingRetryStrategy publishingRetryStrategy = this.publishingRetryStrategy != null ? this.publishingRetryStrategy : PublishingRetryStrategies.FAILED_ONLY;
+        final BackoffStrategy backoffStrategy = this.backoffStrategy != null ? this.backoffStrategy : new NoBackoffStrategy();
+        final PublishingRetryStrategy publishingRetryStrategy = this.publishingRetryStrategy != null ? this.publishingRetryStrategy : PublishingRetryStrategies.NONE;
 
         return new NakadiClient(
                 baseUri,

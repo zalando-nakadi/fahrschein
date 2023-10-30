@@ -133,14 +133,15 @@ public class NakadiClient {
             try {
                 send(eventName, events);
             } catch (final EventPersistenceException ex) {
-                if (backoffStrategy instanceof NoBackoffStrategy) {
+                if (publishingRetryStrategy == PublishingRetryStrategies.NONE) {
                     throw ex;
                 }
+                checkArgument(!(backoffStrategy instanceof NoBackoffStrategy), "No backoffStrategy configured for retrying");
                 ExceptionAwareCallable<Void> retryableOperation = (retryCount, exception) -> {
                     send(eventName, publishingRetryStrategy.getEventsForRetry(exception));
                     return null;
                 };
-                backoffStrategy.call(ex, 0, retryableOperation);
+                backoffStrategy.call(0, ex, retryableOperation);
             }
         } catch (Throwable t) {
             eventPublishingHandlers.descendingIterator().forEachRemaining(handler -> handler.onError(Collections.emptyList(), t));

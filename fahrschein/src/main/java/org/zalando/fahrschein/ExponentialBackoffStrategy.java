@@ -83,14 +83,12 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
     }
 
     @Override
-    public <T> T call(final EventPersistenceException lastException, final int retryCount,
-                      final ExceptionAwareCallable<T> callable) throws BackoffException, InterruptedException {
+    public <T> T call(final int retryCount, EventPersistenceException lastException,
+            final ExceptionAwareCallable<T> callable) throws BackoffException, InterruptedException {
 
         checkMaxRetries(lastException, retryCount);
 
         int count = retryCount;
-        EventPersistenceException lastRetryException = lastException;
-
 
         if (count > 0) {
             sleepForRetries(count);
@@ -99,13 +97,13 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
         while (true) {
             try {
                 LOG.warn("Retrying to publish events. Retry count [{}]", count);
-                return callable.call(count, lastRetryException);
+                return callable.call(count, lastException);
             } catch (EventPersistenceException ex) {
                 LOG.warn("Retry on publishing [{}] failed, will retry again.", count);
                 count++;
                 checkMaxRetries(ex, count);
                 sleepForRetries(count);
-                lastRetryException = ex;
+                lastException = ex;
             } catch (IOException e) {
                 throw new BackoffException(e, count);
             }
