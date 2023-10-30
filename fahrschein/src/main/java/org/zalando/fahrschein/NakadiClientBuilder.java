@@ -85,8 +85,14 @@ public final class NakadiClientBuilder {
         return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers,backoffStrategy,publishingRetryStrategy);
     }
 
-    public NakadiClientBuilder withPublishingRetryAndBackoffStrategy(final PublishingRetryStrategies publishingRetryStrategy, final BackoffStrategy backoffStrategy){
-        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory, cursorManager, eventPublishingHandlers, backoffStrategy, publishingRetryStrategy);
+    public NakadiClientBuilder withPublishingRetryAndBackoffStrategy(final PublishingRetryStrategies publishingRetryStrategy, final BackoffStrategy backoffStrategy) {
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory,
+                cursorManager, eventPublishingHandlers, backoffStrategy, publishingRetryStrategy);
+    }
+
+    public NakadiClientBuilder disablePublishingRetry() {
+        return new NakadiClientBuilder(baseUri, objectMapper, authorizationProvider, clientHttpRequestFactory,
+                cursorManager, eventPublishingHandlers, new NoBackoffStrategy(), PublishingRetryStrategies.NONE);
     }
 
     static RequestFactory wrapClientHttpRequestFactory(RequestFactory delegate, @Nullable AuthorizationProvider authorizationProvider) {
