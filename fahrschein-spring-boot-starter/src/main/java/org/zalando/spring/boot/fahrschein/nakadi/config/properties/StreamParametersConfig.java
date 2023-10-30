@@ -1,6 +1,7 @@
 package org.zalando.spring.boot.fahrschein.nakadi.config.properties;
 
 import lombok.Data;
+import org.zalando.spring.boot.fahrschein.config.TimeSpan;
 
 import java.util.Optional;
 
@@ -8,9 +9,11 @@ import java.util.Optional;
 public class StreamParametersConfig {
     private Integer batchLimit;
     private Integer streamLimit;
-    private Integer batchFlushTimeout;
-    private Integer streamTimeout;
+    private TimeSpan batchFlushTimeout;
+    private TimeSpan streamTimeout;
     private Integer streamKeepAliveLimit;
+    private TimeSpan commitTimeout;
+    private TimeSpan batchTimespan;
 
     // Only used in the subscription api
     private Integer maxUncommittedEvents;
@@ -21,6 +24,8 @@ public class StreamParametersConfig {
         this.setBatchFlushTimeout(Optional.ofNullable(this.getBatchFlushTimeout()).orElse(defaultStreamParametersConfig.getBatchFlushTimeout()));
         this.setStreamTimeout(Optional.ofNullable(this.getStreamTimeout()).orElse(defaultStreamParametersConfig.getStreamTimeout()));
         this.setStreamKeepAliveLimit(Optional.ofNullable(this.getStreamKeepAliveLimit()).orElse(defaultStreamParametersConfig.getStreamKeepAliveLimit()));
+        this.setCommitTimeout(Optional.ofNullable(this.getCommitTimeout()).orElse(defaultStreamParametersConfig.getCommitTimeout()));
+        this.setBatchTimespan(Optional.ofNullable(this.getBatchTimespan()).orElse(defaultStreamParametersConfig.getBatchTimespan()));
         this.setMaxUncommittedEvents(Optional.ofNullable(this.getMaxUncommittedEvents()).orElse(defaultStreamParametersConfig.getMaxUncommittedEvents()));
     }
 

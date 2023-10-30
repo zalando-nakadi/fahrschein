@@ -108,8 +108,10 @@ public class ApplicationTest {
         assertThat(dc.getStreamParameters())
                 .hasFieldOrPropertyWithValue("batchLimit", 1)
                 .hasFieldOrPropertyWithValue("streamLimit", 1)
-                .hasFieldOrPropertyWithValue("batchFlushTimeout", 2)
-                .hasFieldOrPropertyWithValue("streamTimeout", 2)
+                .hasFieldOrPropertyWithValue("batchFlushTimeout", TimeSpan.of(2, SECONDS))
+                .hasFieldOrPropertyWithValue("streamTimeout", TimeSpan.of(2, SECONDS))
+                .hasFieldOrPropertyWithValue("commitTimeout", TimeSpan.of(60, SECONDS))
+                .hasFieldOrPropertyWithValue("streamKeepAliveLimit", 5)
                 .hasFieldOrPropertyWithValue("maxUncommittedEvents", 2)
                 .hasNoNullFieldsOrProperties();
 
