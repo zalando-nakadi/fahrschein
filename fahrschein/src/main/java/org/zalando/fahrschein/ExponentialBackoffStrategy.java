@@ -58,55 +58,46 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
     }
 
     @Override
-    public <T> T call(final int initialExceptionCount, final IOException initialException, final IOCallable<T> callable) throws BackoffException, InterruptedException{
-        checkMaxRetries(initialException, initialExceptionCount);
-
-        int count = initialExceptionCount;
-
-        if (count > 0) {
-            sleepForRetries(count);
-        }
-
-        while (true) {
-            try {
-                LOG.trace("Try [{}]", count);
-                return callable.call();
-            } catch (IOException e) {
-                LOG.warn("Got [{}] on retry [{}]", e.getClass().getSimpleName(), count, e);
-                count++;
-
-                checkMaxRetries(e, count);
-                sleepForRetries(count);
-            }
-        }
+    public <T> T call(final int initialExceptionCount, final IOException initialException,
+            final IOCallable<T> callable) throws BackoffException, InterruptedException {
+        return performRetry(initialExceptionCount, initialException, callable);
     }
 
     @Override
     public <T> T call(final int initialExceptionCount, final EventPersistenceException initialException,
             final ExceptionAwareCallable<T> callable) throws BackoffException, InterruptedException {
+        return performRetry(initialExceptionCount, initialException, callable);
+    }
 
+    private <T> T performRetry(final int initialExceptionCount, final IOException initialException,
+            final Object callable) throws BackoffException, InterruptedException {
         checkMaxRetries(initialException, initialExceptionCount);
-
         int count = initialExceptionCount;
-
         if (count > 0) {
             sleepForRetries(count);
         }
-
-        EventPersistenceException lastRetryException = initialException;
-
+        IOException lastRetryException = initialException;
         while (true) {
             try {
-                LOG.warn("Retrying to publish events. Retry count [{}]", count);
-                return callable.call(count, lastRetryException);
-            } catch (EventPersistenceException ex) {
-                LOG.warn("Retry on publishing [{}] failed, will retry again.", count);
-                count++;
-                checkMaxRetries(ex, count);
-                sleepForRetries(count);
-                lastRetryException = ex;
+                LOG.trace("Try [{}]", count);
+                if (callable instanceof ExceptionAwareCallable<?>) {
+                    return ((ExceptionAwareCallable<T>) callable).call(count,
+                            (EventPersistenceException) lastRetryException);
+                }
+                return ((IOCallable<T>) callable).call();
+            } catch (EventPersistenceException e) {
+                lastRetryException = e;
             } catch (IOException e) {
-                throw new BackoffException(e, count);
+                lastRetryException = e;
+                if (callable instanceof ExceptionAwareCallable<?>) {
+                    throw new BackoffException(e, count);
+                }
+            } finally {
+                LOG.warn("Got [{}] on retry [{}]", lastRetryException.getClass()
+                        .getSimpleName(), count, lastRetryException);
+                count++;
+                checkMaxRetries(lastRetryException, count);
+                sleepForRetries(count);
             }
         }
     }
