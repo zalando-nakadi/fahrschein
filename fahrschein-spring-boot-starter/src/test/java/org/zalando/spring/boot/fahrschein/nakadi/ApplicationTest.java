@@ -137,6 +137,7 @@ public class ApplicationTest {
                 .hasFieldOrPropertyWithValue("nakadiUrl", dc.getNakadiUrl())
                 .hasFieldOrPropertyWithValue("consumerGroup", dc.getConsumerGroup())
                 .hasFieldOrPropertyWithValue("readFrom", dc.getReadFrom())
+                .hasFieldOrPropertyWithValue("subscriptionById", "test-by-id")
                 .hasNoNullFieldsOrProperties();
 
         // consumer oauth config
@@ -162,11 +163,6 @@ public class ApplicationTest {
                 .hasFieldOrPropertyWithValue("requestTimeout", TimeSpan.of(60, SECONDS))
                 .hasFieldOrPropertyWithValue("contentEncoding", ContentEncoding.IDENTITY)
                 .hasNoNullFieldsOrProperties();
-
-        // consumer subscription config
-        assertThat(cc.getSubscription())
-                .hasFieldOrPropertyWithValue("enabled", true)
-                .hasFieldOrPropertyWithValue("subscriptionId", "test-id");
 
         // publisher config
         PublisherConfig pc = configProperties.getPublisher();

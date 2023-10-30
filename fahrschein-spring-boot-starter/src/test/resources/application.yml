@@ -48,6 +48,4 @@ fahrschein:
         content-encoding: identity
       topics:
       - first.first-update
-      subscription:
-        enabled: true
-        subscription-id: "test-id"
+      subscription-by-id: "test-by-id"

@@ -11,6 +11,7 @@ public class DefaultConsumerConfig extends AbstractConfig {
 
     public static final String FAHRSCHEIN_OBJECT_MAPPER_REF_NAME = "fahrscheinObjectMapper";
     private StreamParametersConfig streamParameters = new StreamParametersConfig();
+    private String subscriptionById = "";
 
     public DefaultConsumerConfig() {
         super();

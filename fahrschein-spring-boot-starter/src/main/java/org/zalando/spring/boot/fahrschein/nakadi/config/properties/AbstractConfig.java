@@ -24,6 +24,8 @@ public abstract class AbstractConfig {
 
     private String objectMapperRef;
 
+    private String subscriptionById;
+
     @NestedConfigurationProperty
     protected OAuthConfig oauth = OAuthConfig.defaultOAuthConfig();
 
@@ -37,8 +39,4 @@ public abstract class AbstractConfig {
     protected BackoffConfig backoff = BackoffConfig.defaultBackoffConfig();
 
     protected ThreadConfig threads = new ThreadConfig();
-
-    @NestedConfigurationProperty
-    protected SubscriptionConfig subscription = SubscriptionConfig.defaultSubscriptionConfig();
-
 }
