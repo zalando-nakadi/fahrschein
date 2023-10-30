@@ -163,15 +163,6 @@ nakadiClient.publish("foobar", List.of(
 );
 ```
 
-To disable retry on publishing : 
-
-```java
-
-NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestFactory(ContentEncoding.GZIP))
-        .disablePublishingRetry()
-        .build();
-```
-
 ### Available publishing retry strategies
 
 - `PublishingRetryStrategies.ALL` to retry the entire batch regardless of which events in the batch have failed.
