@@ -1,10 +1,8 @@
 package org.zalando.fahrschein;
 
-import java.util.concurrent.Callable;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 import static org.zalando.fahrschein.Preconditions.checkState;
 
