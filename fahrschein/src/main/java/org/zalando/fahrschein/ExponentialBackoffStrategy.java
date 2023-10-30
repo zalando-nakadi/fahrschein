@@ -1,5 +1,6 @@
 package org.zalando.fahrschein;
 
+import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,27 +84,29 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
     }
 
     @Override
-    public <T> T call(final int retryCount, EventPersistenceException lastException,
+    public <T> T call(final int initialExceptionCount, final EventPersistenceException initialException,
             final ExceptionAwareCallable<T> callable) throws BackoffException, InterruptedException {
 
-        checkMaxRetries(lastException, retryCount);
+        checkMaxRetries(initialException, initialExceptionCount);
 
-        int count = retryCount;
+        int count = initialExceptionCount;
 
         if (count > 0) {
             sleepForRetries(count);
         }
 
+        EventPersistenceException lastRetryException = initialException;
+
         while (true) {
             try {
                 LOG.warn("Retrying to publish events. Retry count [{}]", count);
-                return callable.call(count, lastException);
+                return callable.call(count, lastRetryException);
             } catch (EventPersistenceException ex) {
                 LOG.warn("Retry on publishing [{}] failed, will retry again.", count);
                 count++;
                 checkMaxRetries(ex, count);
                 sleepForRetries(count);
-                lastException = ex;
+                lastRetryException = ex;
             } catch (IOException e) {
                 throw new BackoffException(e, count);
             }

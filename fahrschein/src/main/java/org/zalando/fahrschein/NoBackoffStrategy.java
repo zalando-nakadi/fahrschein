@@ -9,8 +9,8 @@ public class NoBackoffStrategy implements BackoffStrategy {
     }
 
     @Override
-    public <T> T call(final int retryCount, final EventPersistenceException lastException,
+    public <T> T call(final int initialExceptionCount, final EventPersistenceException initialException,
             final ExceptionAwareCallable<T> callable) throws BackoffException {
-        throw new BackoffException(lastException, retryCount);
+        throw new BackoffException(initialException, initialExceptionCount);
     }
 }
