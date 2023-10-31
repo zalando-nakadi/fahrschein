@@ -22,17 +22,19 @@ public final class Metadata {
     private final String flowId;
     private final Map<String, String> spanCtx;
 
+    private final String partitionCompactionKey;
+
     @JsonCreator
     @Deprecated
-    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("partition") String partition, @JsonProperty("version") String version, @JsonProperty("published_by") String publishedBy, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId, @JsonProperty("span_ctx") Map<String, String> spanCtx) {
-        this(eventType, eid, occurredAt == null ? null : OffsetDateTime.parse(occurredAt), partition, version, publishedBy, receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId, spanCtx);
+    private Metadata(@JsonProperty("event_type") String eventType, @JsonProperty("eid") String eid, @JsonProperty("occurred_at") String occurredAt, @JsonProperty("partition") String partition, @JsonProperty("version") String version, @JsonProperty("published_by") String publishedBy, @JsonProperty("received_at") String receivedAt, @JsonProperty("flow_id") String flowId, @JsonProperty("span_ctx") Map<String, String> spanCtx, @JsonProperty("partition_compaction_key") String partitionCompactionKey) {
+        this(eventType, eid, occurredAt == null ? null : OffsetDateTime.parse(occurredAt), partition, version, publishedBy, receivedAt == null ? null : OffsetDateTime.parse(receivedAt), flowId, spanCtx, partitionCompactionKey);
     }
 
     public Metadata(String eventType, String eid, OffsetDateTime occurredAt, String partition, String version, String publishedBy, OffsetDateTime receivedAt, String flowId) {
-        this(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, null);
+        this(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, null,null);
     }
 
-    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, String partition, String version, String publishedBy, OffsetDateTime receivedAt, String flowId, Map<String, String> spanCtx) {
+    public Metadata(String eventType, String eid, OffsetDateTime occurredAt, String partition, String version, String publishedBy, OffsetDateTime receivedAt, String flowId, Map<String, String> spanCtx,String partitionCompactionKey) {
         this.eventType = eventType;
         this.eid = eid;
         this.occurredAt = occurredAt;
@@ -42,14 +44,15 @@ public final class Metadata {
         this.receivedAt = receivedAt;
         this.flowId = flowId;
         this.spanCtx = spanCtx == null ? Collections.emptyMap() : Collections.unmodifiableMap(new LinkedHashMap<>(spanCtx));
+        this.partitionCompactionKey = partitionCompactionKey;
     }
 
     public Metadata(String eid, OffsetDateTime occurredAt) {
-        this(null, eid, occurredAt, null, null,  null, null, null, null);
+        this(null, eid, occurredAt, null, null,  null, null, null, null,null);
     }
 
     public Metadata(String eid, OffsetDateTime occurredAt, String flowId, Map<String, String> spanCtx) {
-    	this(null, eid, occurredAt, null, null, null, null, flowId, spanCtx);
+    	this(null, eid, occurredAt, null, null, null, null, flowId, spanCtx,null);
     }
     
     public String getEventType() {
@@ -84,17 +87,32 @@ public final class Metadata {
         return publishedBy;
     }
 
+    public String getPartitionCompactionKey() {
+        return partitionCompactionKey;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Metadata metadata = (Metadata) o;
-        return Objects.equals(eventType, metadata.eventType) && Objects.equals(eid, metadata.eid) && Objects.equals(partition, metadata.partition) && Objects.equals(version, metadata.version) && Objects.equals(publishedBy, metadata.publishedBy) && Objects.equals(occurredAt, metadata.occurredAt) && Objects.equals(receivedAt, metadata.receivedAt) && Objects.equals(flowId, metadata.flowId) && Objects.equals(spanCtx, metadata.spanCtx);
+        return Objects.equals(eventType, metadata.eventType) && Objects.equals(eid, metadata.eid) && Objects.equals(partition, metadata.partition) && Objects.equals(version, metadata.version) && Objects.equals(publishedBy, metadata.publishedBy) && Objects.equals(occurredAt, metadata.occurredAt) && Objects.equals(receivedAt, metadata.receivedAt) && Objects.equals(flowId, metadata.flowId) && Objects.equals(spanCtx, metadata.spanCtx) && Objects.equals(partitionCompactionKey, metadata.partitionCompactionKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(eventType, eid, partition, version, publishedBy, occurredAt, receivedAt, flowId, spanCtx);
+        return Objects.hash(
+                eventType,
+                eid,
+                partition,
+                version,
+                publishedBy,
+                occurredAt,
+                receivedAt,
+                flowId,
+                spanCtx,
+                partitionCompactionKey
+        );
     }
 
     @Override
@@ -108,6 +126,7 @@ public final class Metadata {
                 ", publishedBy='" + publishedBy + '\'' +
                 ", receivedAt=" + receivedAt +
                 ", flowId='" + flowId + '\'' +
+                ", partitionCompactionKey='" + partitionCompactionKey + '\'' +
                 ", spanCtx=" + spanCtx.toString() +
                 '}';
     }
