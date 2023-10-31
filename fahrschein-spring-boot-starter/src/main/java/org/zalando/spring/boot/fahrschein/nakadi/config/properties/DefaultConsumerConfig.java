@@ -10,8 +10,8 @@ import org.springframework.validation.annotation.Validated;
 public class DefaultConsumerConfig extends AbstractConfig {
 
     public static final String FAHRSCHEIN_OBJECT_MAPPER_REF_NAME = "fahrscheinObjectMapper";
+    public static final String SUBSCRIPTION_BY_ID_DEFAULT = "subscription-by-id-default";
     private StreamParametersConfig streamParameters = new StreamParametersConfig();
-    private String subscriptionById = "";
 
     public DefaultConsumerConfig() {
         super();
@@ -21,6 +21,7 @@ public class DefaultConsumerConfig extends AbstractConfig {
         setReadFrom(Position.END);
         setRecordMetrics(Boolean.FALSE);
         setObjectMapperRef(FAHRSCHEIN_OBJECT_MAPPER_REF_NAME);
+        setSubscriptionById(SUBSCRIPTION_BY_ID_DEFAULT);
     }
 
 }

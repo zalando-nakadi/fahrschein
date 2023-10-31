@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.zalando.fahrschein.AuthorizationBuilder.authorization;
+import static org.zalando.spring.boot.fahrschein.nakadi.config.properties.DefaultConsumerConfig.SUBSCRIPTION_BY_ID_DEFAULT;
 import static org.zalando.spring.boot.fahrschein.nakadi.config.properties.Position.END;
 
 @RequiredArgsConstructor
@@ -137,7 +138,7 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
             sb = sb.readFromBegin();
         }
 
-        if (consumerConfig.getSubscriptionById() != null) {
+        if (consumerConfig.getSubscriptionById() != null && !consumerConfig.getSubscriptionById().equals(SUBSCRIPTION_BY_ID_DEFAULT)) {
             return sb.subscribe(consumerConfig.getSubscriptionById());
         } else {
             sb
