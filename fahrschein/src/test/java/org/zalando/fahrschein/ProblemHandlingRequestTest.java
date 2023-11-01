@@ -125,7 +125,7 @@ public class ProblemHandlingRequestTest {
 
         when(request.execute()).thenReturn(response);
 
-        assertThrows(EventPersistenceException.class, () -> {
+        assertThrows(RawEventPersistenceException.class, () -> {
             problemHandlingRequest.execute();
         });
     }

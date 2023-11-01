@@ -135,6 +135,53 @@ while (true) {
     nakadiClient.publish(ORDER_CREATED, events);
 }    
 ```
+## Publishing Events With Retry
+
+Nakadi publishing API accepts events in batches. It can fail to publish some events from the batch to underlying storage.
+In that case Nakadi publishing API will return error that batch was partially successful.
+Fahrschein offers retry mechanism complemented by customizable backoff strategies, allowing clients to make a choice between retrying the entire batch or opting for a partial retry as needed. 
+
+For added flexibility, NakadiClient allows configuration of various [backoff strategies](https://github.com/zalando-nakadi/fahrschein#backoff-strategies) for handling event publishing retries.
+
+Fahrschein has the capability to retry the entire batch or only the events within a batch that have failed
+(see [available publishing retry strategies below](#available-publishing-retry-strategies)). It will not
+retry aborted events, as they failed the event schema validation, and retrying without either changing the event or the 
+schema would be futile.
+
+Fahrschein does not enable auto-retry on publishing **by default**. To enable automatic retry on publishing:   
+
+```java
+
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI,new JavaNetRequestFactory(ContentEncoding.GZIP))
+        .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.FAILED_ONLY, new ExponentialBackoffStrategy()) //default retry configuration
+        .build();
+
+nakadiClient.publish("foobar", List.of(
+        new SomeEvent("eid1", new Metadata("eid1",OffsetDateTime.now())),
+        new SomeEvent("eid2", new Metadata("eid2",OffsetDateTime.now())),
+        new SomeEvent("eid3", new Metadata("eid3",OffsetDateTime.now())))
+);
+```
+
+### Available publishing retry strategies
+
+- `PublishingRetryStrategies.ALL` to retry the entire batch regardless of which events in the batch have failed.
+This strategy will lead to high write amplification on Nakadi's side in case of partial outages, and is discouraged.
+ 
+- `PublishingRetryStrategies.FAILED_ONLY` (default) to retry only the events within a batch that have failed. This is  
+the recommended default for Nakadi clients, but there is a potential edge case, where within publishing of one batch
+Nakadi recovers. If, for example in a batch of three events `[1,2,3]`, all belonging to the same partition, `[1]` fails,
+but `[2,3]` succeed, the ordering guarantee for one partition may be potentially be broken, leading to `[2,3,1]` after retry.
+For most API clients this is not an issue.
+ 
+- `PublishingRetryStrategies.ALL_FROM_FIRST_FAILURE` to retry the events within a batch, starting with the first failure. 
+This strategy trades off write amplification with better ordering guarantees for the aforementioned edge case.
+Taking the same example in a batch of three events `[1,2,3]`, all belonging to the same partition, `[1]` fails,
+  but `[2,3]` succeed, this retry strategy will retry the full batch of `[1,2,3]`. 
+
+- `PublishingRetryStrategies.NONE` to not retry.
+
+You may also provide your own `PublishingRetryStrategy` implementation.
 
 ## OAuth support
 

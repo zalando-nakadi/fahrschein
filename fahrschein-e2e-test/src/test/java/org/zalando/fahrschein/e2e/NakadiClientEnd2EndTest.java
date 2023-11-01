@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -189,12 +188,12 @@ public class NakadiClientEnd2EndTest extends NakadiTestWithDockerCompose {
                 }
                 return;
             });
-        List<String> eventOrderNumbers = publish(nakadiClient, testId).stream().map(e -> e.orderNumber).collect(toList());
+        List<String> eventOrderNumbers = publish(nakadiClient, testId).stream().map(e -> e.orderNumber).toList();
         // verifies that every order number that was published got consumed
         for (String on: eventOrderNumbers) {
             Mockito.verify(listener, timeout(10000).atLeastOnce()).accept(
                 argThat(streamedEvents -> 
-                    streamedEvents.stream().map(e -> e.orderNumber).collect(toList()).contains(on)));
+                    streamedEvents.stream().map(e -> e.orderNumber).toList().contains(on)));
         }
     }
 

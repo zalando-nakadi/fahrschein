@@ -1,9 +1,8 @@
 package org.zalando.fahrschein;
 
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 
 import static org.zalando.fahrschein.Preconditions.checkState;
 
@@ -42,7 +41,7 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
     }
 
     protected long calculateDelay(double count) {
-        return Math.min((long)(initialDelay*Math.pow(backoffFactor, count)), maxDelay);
+        return Math.min((long) (initialDelay * Math.pow(backoffFactor, count)), maxDelay);
     }
 
     private void sleepForRetries(final int count) throws InterruptedException {
@@ -81,4 +80,35 @@ public class ExponentialBackoffStrategy implements BackoffStrategy {
             }
         }
     }
+
+    @Override
+    public <T> T call(final int initialExceptionCount, final EventPersistenceException initialException,
+            final ExceptionAwareCallable<T> callable) throws BackoffException, InterruptedException {
+
+        checkMaxRetries(initialException, initialExceptionCount);
+
+        int count = initialExceptionCount;
+
+        if (count > 0) {
+            sleepForRetries(count);
+        }
+
+        EventPersistenceException lastRetryException = initialException;
+
+        while (true) {
+            try {
+                LOG.warn("Retrying to publish events. Retry count [{}]", count);
+                return callable.call(count, lastRetryException);
+            } catch (EventPersistenceException ex) {
+                LOG.warn("Retry on publishing [{}] failed, will retry again.", count);
+                count++;
+                checkMaxRetries(ex, count);
+                sleepForRetries(count);
+                lastRetryException = ex;
+            } catch (IOException e) {
+                throw new BackoffException(e, count);
+            }
+        }
+    }
+
 }
