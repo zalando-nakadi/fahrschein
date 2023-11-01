@@ -4,7 +4,7 @@
 client library into a Spring Boot environment. It sets up Nakadi clients and make them 
 configurable without writing boilerplate code.
 
-- **Technology stack**: Spring Boot (2.6.6 - 3.x), JDK 17
+- **Technology stack**: Spring Boot (3.x), JDK 17
 - **Status**:  Beta
 
 ## Example
@@ -81,124 +81,130 @@ Clients are identified by a *Client ID*, for instance `example` in the sample ab
 
 ### Reference
 
-For a complete overview of available properties, they type and default value please refer to the following table:
+For a complete overview of available properties, the type and default value, please refer to the following table:
 
-| Configuration                                 | Data type          | Default / Comment                                                                                  |
-|-----------------------------------------------|--------------------|----------------------------------------------------------------------------------------------------|
-| `fahrschein`                                  |                    |                                                                                                    |
-| `├── defaults`                                |                    |                                                                                                    |
-| `│   ├── nakadi-url`                          | `String`           | none                                                                                               |
-| `│   ├── application-name`                    | `String`           | none                                                                                               |
-| `│   ├── authorizations`                      |                    | none                                                                                               |
-| `│   │   ├── admins`                          |                    | none                                                                                               |
-| `│   │   │   ├── users`                       | `List<String>`     | none                                                                                               |
-| `│   │   │   ├── services`                    | `List<String>`     | none                                                                                               |
-| `│   │   │   └── teams`                       | `List<String>`     | none                                                                                               |
-| `│   │   ├── readers`                         |                    | none                                                                                               |
-| `│   │   │   ├── users`                       | `List<String>`     | none                                                                                               |
-| `│   │   │   ├── services`                    | `List<String>`     | none                                                                                               |
-| `│   │   │   └── teams`                       | `List<String>`     | none                                                                                               |
-| `│   │   └── writers`                         |                    | none                                                                                               |
-| `│   │       ├── users`                       | `List<String>`     | none                                                                                               |
-| `│   │       ├── services`                    | `List<String>`     | none                                                                                               |
-| `│   │       └── teams`                       | `List<String>`     | none                                                                                               |
-| `│   ├── consumer-group`                      | `String`           | none                                                                                               |
-| `│   ├── autostart-enabled`                   | `boolean`          | `true`                                                                                             |
-| `│   ├── record-metrics`                      | `boolean`          | `false`                                                                                            |
-| `│   ├── read-from`                           | `Position`         | `end` (`begin`)                                                                                    |
-| `│   ├── oauth`                               |                    |                                                                                                    |
-| `│   │   ├── enabled`                         | `boolean`          | `false`                                                                                            |
-| `│   │   └── access-token-id`                 | `String`           | none                                                                                               |
-| `│   ├── http`                                |                    |                                                                                                    |
-| `│   │   ├── socket-timeout`                  | `TimeSpan`         | `5 seconds`                                                                                        |
-| `│   │   ├── connect-timeout`                 | `TimeSpan`         | `5 seconds`                                                                                        |
-| `│   │   ├── connection-request-timeout`      | `TimeSpan`         | `5 seconds`                                                                                        |
-| `│   │   ├── content-encoding`                | `ContentEncoding`  | `gzip` (`identity`)                                                                                |
-| `│   │   ├── content-compression-enabled`     | `boolean`          | `false`                                                                                            |
-| `│   │   ├── buffer-size`                     | `int`              | `512`                                                                                              |
-| `│   │   ├── connection-time-to-live`         | `TimeSpan`         | `30 seconds`                                                                                       |
-| `│   │   ├── max-connections-total`           | `int`              | `3`                                                                                                |
-| `│   │   ├── max-connections-per-route`       | `int`              | `3`                                                                                                |
-| `│   │   ├── evict-expired-connections`       | `boolean`          | `true`                                                                                             |
-| `│   │   ├── evict-idle-connections`          | `boolean`          | `true`                                                                                             |
-| `│   │   └── max-idle-time`                   | `int`              | `10_000`                                                                                           |
-| `│   ├── backoff`                             |                    |                                                                                                    |
-| `│   │   ├── enabled`                         | `boolean`          | `false`                                                                                            |
-| `│   │   ├── intial-delay`                    | `TimeSpan`         | `500 milliseconds`                                                                                 |
-| `│   │   ├── max-delay`                       | `TimeSpan`         | `10 minutes`                                                                                       |
-| `│   │   ├── backoff-factor`                  | `double`           | `1.5`                                                                                              |
-| `│   │   ├── max-retries`                     | `int`              | `1`                                                                                                |
-| `│   │   └── jitter`                          |                    |                                                                                                    |
-| `│   │       ├── enabled`                     | `boolean`          | `false`                                                                                            |
-| `│   │       └── type`                        | `JitterType`       | `equal` (`full`)                                                                                   |
-| `│   ├── threads`                             |                    |                                                                                                    |
-| `│   │   └── listener-pool-size`              | `int`              | `1`                                                                                                |
-| `│   ├── oauth`                               |                    |                                                                                                    |
-| `│   │   ├── enabled`                         | `boolean`          | `false`                                                                                            |
-| `│   │   └── access-token-id`                 | `String`           | none                                                                                               |
-| `│   ├── stream-parameters`                   |                    |
-| `│   │    ├── batch-limit`                     |`int`                | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_limit)            |                                                                                               |
-| `│   │    ├── stream-limit`                    | `int`              | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_limit)            |                                                                                               |
-| `│   │    ├── batch-flush-timeout`             | `int`              | in seconds [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_flush_timeout) |                                                                                               |
-| `│   │    ├── stream-timeout`                  | `int`              | in seconds [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_timeout) |                                                                                               |
-| `│   │    └── max-uncommitted-events`          | `int`              | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*max_uncommitted_events)            |
-| `│`                                           |                    |                                                                                                    |
-| `└── consumers`                               |                    |                                                                                                    |
-| `    └── <id>`                                | `String`           |                                                                                                    |
-| `        ├── topics`                          | `List<String>`     |                                                                                                    |
-| `        ├── nakadi-url`                      | `String`           | none                                                                                               |
-| `        ├── application-name`                | `String`           | none                                                                                               |
-| `        ├── authorizations`                  |                    | none                                                                                               |
-| `        │   ├── admins`                      |                    | none                                                                                               |
-| `        │   │   ├── users`                   | `List<String>`     | none                                                                                               |
-| `        │   │   ├── services`                | `List<String>`     | none                                                                                               |
-| `        │   │   └── teams`                   | `List<String>`     | none                                                                                               |
-| `        │   ├── readers`                     |                    | none                                                                                               |
-| `        │   │   ├── users`                   | `List<String>`     | none                                                                                               |
-| `        │   │   ├── services`                | `List<String>`     | none                                                                                               |
-| `        │   │   └── teams`                   | `List<String>`     | none                                                                                               |
-| `        │   └── writers`                     |                    | none                                                                                               |
-| `        │       ├── users`                   | `List<String>`     | none                                                                                               |
-| `        │       ├── services`                | `List<String>`     | none                                                                                               |
-| `        │       └── teams`                   | `List<String>`     | none                                                                                               |
-| `        ├── consumer-group`                  | `String`           | none                                                                                               |
-| `        ├── autostart-enabled`               | `boolean`          | `true`                                                                                             |
-| `        ├── record-metrics`                  | `boolean`          | `false`                                                                                            |
-| `        ├── read-From`                       | `Position`         | `end` (`begin`)                                                                                    |
-| `        ├── oauth`                           |                    |                                                                                                    |
-| `        │   ├── enabled`                     | `boolean`          | `false`                                                                                            |
-| `        │   └── access-token-id`             | `String`           | none                                                                                               |
-| `        ├── http`                            |                    |                                                                                                    |
-| `        │   ├── socket-timeout`              | `TimeSpan`         | `5 seconds`                                                                                        |
-| `        │   ├── connect-timeout`             | `TimeSpan`         | `5 seconds`                                                                                        |
-| `        │   ├── connection-request-timeout`  | `TimeSpan`         | `5 seconds`                                                                                        |
-| `        │   ├── content-encoding`            | `ContentEncoding`  | `gzip` (`identity`)                                                                                |
-| `        │   ├── content-compression-enabled` | `boolean`          | `false`                                                                                            |
-| `        │   ├── buffer-size`                 | `int`              | `512`                                                                                              |
-| `        │   ├── connection-time-to-live`     | `TimeSpan`         | `30 seconds`                                                                                       |
-| `        │   ├── max-connections-total`       | `int`              | `3`                                                                                                |
-| `        │   ├── max-connections-per-route`   | `int`              | `3`                                                                                                |
-| `        │   ├── evict-expired-connections`   | `boolean`          | `true`                                                                                             |
-| `        │   ├── evict-idle-connections`      | `boolean`          | `true`                                                                                             |
-| `        │   └── max-idle-time`               | `int`              | `10_000`                                                                                           |
-| `        ├── backoff`                         |                    |                                                                                                    |
-| `        │   ├── enabled`                     | `boolean`          | `false`                                                                                            |
-| `        │   ├── intial-delay`                | `TimeSpan`         | `500 milliseconds`                                                                                 |
-| `        │   ├── max-delay`                   | `TimeSpan`         | `10 minutes`                                                                                       |
-| `        │   ├── backoff-factor`              | `double`           | `1.5`                                                                                              |
-| `        │   ├── max-retries`                 | `int`              | `1`                                                                                                |
-| `        │   └── jitter`                      |                    |                                                                                                    |
-| `        │       ├── enabled`                 | `boolean`          | `false`                                                                                            |
-| `        │       └── type`                    | `JitterType`       | `equal` (`full`)                                                                                   |
-| `        ├── threads`                         |                    |                                                                                                    |
-| `        │   └── listener-pool-size`          | `int`              | `1`                                                                                                |
-| `        ├── oauth`                           |                    |                                                                                                    |
-| `        │   ├── enabled`                     | `boolean`          | `false`                                                                                            |
-| `        │   └── access-token-id`             | `String`           | none                                                                                               |
-| `        └── stream-parameters`               |                    |
-| `        │   ├── batch-limit`                 | `int`              | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_limit)            |
-| `        │   ├── stream-limit`                | `int`              | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_limit)            |
-| `        │   ├── batch-flush-timeout`         | `int`              | in seconds [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_flush_timeout) |
-| `        │   ├── stream-timeout`              | `int`              | in seconds [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_timeout) |
-| `        │   └── max-uncommitted-events`      | `int`              | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*max_uncommitted_events)            |
-| `        └── subscription-by-id`              | `String`           | none                                                                                                                        |
+| Configuration                                 | Data type         | Default / Comment                                                                                                |
+|-----------------------------------------------|-------------------|------------------------------------------------------------------------------------------------------------------|
+| `fahrschein`                                  |                   |                                                                                                                  |
+| `├── defaults`                                |                   |                                                                                                                  |
+| `│   ├── nakadi-url`                          | `String`          | none                                                                                                             |
+| `│   ├── application-name`                    | `String`          | none                                                                                                             |
+| `│   ├── authorizations`                      |                   | none                                                                                                             |
+| `│   │   ├── admins`                          |                   | none                                                                                                             |
+| `│   │   │   ├── users`                       | `List<String>`    | none                                                                                                             |
+| `│   │   │   ├── services`                    | `List<String>`    | none                                                                                                             |
+| `│   │   │   └── teams`                       | `List<String>`    | none                                                                                                             |
+| `│   │   ├── readers`                         |                   | none                                                                                                             |
+| `│   │   │   ├── users`                       | `List<String>`    | none                                                                                                             |
+| `│   │   │   ├── services`                    | `List<String>`    | none                                                                                                             |
+| `│   │   │   └── teams`                       | `List<String>`    | none                                                                                                             |
+| `│   │   └── writers`                         |                   | none                                                                                                             |
+| `│   │       ├── users`                       | `List<String>`    | none                                                                                                             |
+| `│   │       ├── services`                    | `List<String>`    | none                                                                                                             |
+| `│   │       └── teams`                       | `List<String>`    | none                                                                                                             |
+| `│   ├── consumer-group`                      | `String`          | none                                                                                                             |
+| `│   ├── autostart-enabled`                   | `boolean`         | `true`                                                                                                           |
+| `│   ├── record-metrics`                      | `boolean`         | `false`                                                                                                          |
+| `│   ├── read-from`                           | `Position`        | `end` (`begin`)                                                                                                  |
+| `│   ├── oauth`                               |                   |                                                                                                                  |
+| `│   │   ├── enabled`                         | `boolean`         | `false`                                                                                                          |
+| `│   │   └── access-token-id`                 | `String`          | none                                                                                                             |
+| `│   ├── http`                                |                   |                                                                                                                  |
+| `│   │   ├── socket-timeout`                  | `TimeSpan`        | `5 seconds`                                                                                                      |
+| `│   │   ├── connect-timeout`                 | `TimeSpan`        | `5 seconds`                                                                                                      |
+| `│   │   ├── connection-request-timeout`      | `TimeSpan`        | `5 seconds`                                                                                                      |
+| `│   │   ├── content-encoding`                | `ContentEncoding` | `gzip` (`identity`)                                                                                              |
+| `│   │   ├── content-compression-enabled`     | `boolean`         | `false`                                                                                                          |
+| `│   │   ├── buffer-size`                     | `int`             | `512`                                                                                                            |
+| `│   │   ├── connection-time-to-live`         | `TimeSpan`        | `30 seconds`                                                                                                     |
+| `│   │   ├── max-connections-total`           | `int`             | `3`                                                                                                              |
+| `│   │   ├── max-connections-per-route`       | `int`             | `3`                                                                                                              |
+| `│   │   ├── evict-expired-connections`       | `boolean`         | `true`                                                                                                           |
+| `│   │   ├── evict-idle-connections`          | `boolean`         | `true`                                                                                                           |
+| `│   │   └── max-idle-time`                   | `int`             | `10_000`                                                                                                         |
+| `│   ├── backoff`                             |                   |                                                                                                                  |
+| `│   │   ├── enabled`                         | `boolean`         | `false`                                                                                                          |
+| `│   │   ├── intial-delay`                    | `TimeSpan`        | `500 milliseconds`                                                                                               |
+| `│   │   ├── max-delay`                       | `TimeSpan`        | `10 minutes`                                                                                                     |
+| `│   │   ├── backoff-factor`                  | `double`          | `1.5`                                                                                                            |
+| `│   │   ├── max-retries`                     | `int`             | `1`                                                                                                              |
+| `│   │   └── jitter`                          |                   |                                                                                                                  |
+| `│   │       ├── enabled`                     | `boolean`         | `false`                                                                                                          |
+| `│   │       └── type`                        | `JitterType`      | `equal` (`full`)                                                                                                 |
+| `│   ├── threads`                             |                   |                                                                                                                  |
+| `│   │   └── listener-pool-size`              | `int`             | `1`                                                                                                              |
+| `│   ├── oauth`                               |                   |                                                                                                                  |
+| `│   │   ├── enabled`                         | `boolean`         | `false`                                                                                                          |
+| `│   │   └── access-token-id`                 | `String`          | none                                                                                                             |
+| `│   └── stream-parameters`                   |                   |                                                                                                                  |
+| `│       ├── batch-limit`                     | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_limit)             |                                                                    
+| `│       ├── stream-limit`                    | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_limit)            |                                                                      
+| `│       ├── batch-flush-timeout`             | `TimeSpan`        | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_flush_timeout)     |
+| `│       ├── stream-timeout`                  | `TimeSpan`        | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_timeout)          |
+| `│       ├── commit-timeout`                  | `TimeSpan`        | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*commit_timeout)          |
+| `│       ├── stream-keep-alive-limit`         | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_keep_alive_limit) |
+| `│       ├── batch-timespan`                  | `TimeSpan`        | none                                                                                                             |
+| `│       └── max-uncommitted-events`          | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*max_uncommitted_events)  |
+| `│`                                           |                   |                                                                                                                  |
+| `└── consumers`                               |                   |                                                                                                                  |
+| `    └── <id>`                                | `String`          |                                                                                                                  |
+| `        ├── topics`                          | `List<String>`    |                                                                                                                  |
+| `        ├── nakadi-url`                      | `String`          | none                                                                                                             |
+| `        ├── application-name`                | `String`          | none                                                                                                             |
+| `        ├── authorizations`                  |                   | none                                                                                                             |
+| `        │   ├── admins`                      |                   | none                                                                                                             |
+| `        │   │   ├── users`                   | `List<String>`    | none                                                                                                             |
+| `        │   │   ├── services`                | `List<String>`    | none                                                                                                             |
+| `        │   │   └── teams`                   | `List<String>`    | none                                                                                                             |
+| `        │   ├── readers`                     |                   | none                                                                                                             |
+| `        │   │   ├── users`                   | `List<String>`    | none                                                                                                             |
+| `        │   │   ├── services`                | `List<String>`    | none                                                                                                             |
+| `        │   │   └── teams`                   | `List<String>`    | none                                                                                                             |
+| `        │   └── writers`                     |                   | none                                                                                                             |
+| `        │       ├── users`                   | `List<String>`    | none                                                                                                             |
+| `        │       ├── services`                | `List<String>`    | none                                                                                                             |
+| `        │       └── teams`                   | `List<String>`    | none                                                                                                             |
+| `        ├── consumer-group`                  | `String`          | none                                                                                                             |
+| `        ├── autostart-enabled`               | `boolean`         | `true`                                                                                                           |
+| `        ├── record-metrics`                  | `boolean`         | `false`                                                                                                          |
+| `        ├── read-from`                       | `Position`        | `end` (`begin`)                                                                                                  |
+| `        ├── oauth`                           |                   |                                                                                                                  |
+| `        │   ├── enabled`                     | `boolean`         | `false`                                                                                                          |
+| `        │   └── access-token-id`             | `String`          | none                                                                                                             |
+| `        ├── http`                            |                   |                                                                                                                  |
+| `        │   ├── socket-timeout`              | `TimeSpan`        | `5 seconds`                                                                                                      |
+| `        │   ├── connect-timeout`             | `TimeSpan`        | `5 seconds`                                                                                                      |
+| `        │   ├── connection-request-timeout`  | `TimeSpan`        | `5 seconds`                                                                                                      |
+| `        │   ├── content-encoding`            | `ContentEncoding` | `gzip` (`identity`)                                                                                              |
+| `        │   ├── content-compression-enabled` | `boolean`         | `false`                                                                                                          |
+| `        │   ├── buffer-size`                 | `int`             | `512`                                                                                                            |
+| `        │   ├── connection-time-to-live`     | `TimeSpan`        | `30 seconds`                                                                                                     |
+| `        │   ├── max-connections-total`       | `int`             | `3`                                                                                                              |
+| `        │   ├── max-connections-per-route`   | `int`             | `3`                                                                                                              |
+| `        │   ├── evict-expired-connections`   | `boolean`         | `true`                                                                                                           |
+| `        │   ├── evict-idle-connections`      | `boolean`         | `true`                                                                                                           |
+| `        │   └── max-idle-time`               | `int`             | `10_000`                                                                                                         |
+| `        ├── backoff`                         |                   |                                                                                                                  |
+| `        │   ├── enabled`                     | `boolean`         | `false`                                                                                                          |
+| `        │   ├── intial-delay`                | `TimeSpan`        | `500 milliseconds`                                                                                               |
+| `        │   ├── max-delay`                   | `TimeSpan`        | `10 minutes`                                                                                                     |
+| `        │   ├── backoff-factor`              | `double`          | `1.5`                                                                                                            |
+| `        │   ├── max-retries`                 | `int`             | `1`                                                                                                              |
+| `        │   └── jitter`                      |                   |                                                                                                                  |
+| `        │       ├── enabled`                 | `boolean`         | `false`                                                                                                          |
+| `        │       └── type`                    | `JitterType`      | `equal` (`full`)                                                                                                 |
+| `        ├── threads`                         |                   |                                                                                                                  |
+| `        │   └── listener-pool-size`          | `int`             | `1`                                                                                                              |
+| `        ├── oauth`                           |                   |                                                                                                                  |
+| `        │   ├── enabled`                     | `boolean`         | `false`                                                                                                          |
+| `        │   └── access-token-id`             | `String`          | none                                                                                                             |
+| `        ├── stream-parameters`               |                   |                                                                                                                  |
+| `        │   ├── batch-limit`                 | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_limit)             |
+| `        │   ├── stream-limit`                | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_limit)            |
+| `        │   ├── batch-flush-timeout`         | `TimeSpan`        | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*batch_flush_timeout)     |
+| `        │   ├── stream-timeout`              | `TimeSpan`        | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_timeout)          |
+| `        │   ├── commit-timeout`              | `TimeSpan`        | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*commit_timeout)          |
+| `        │   ├── stream-keep-alive-limit`     | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*stream_keep_alive_limit) |
+| `        │   ├── batch-timespan`              | `TimeSpan`        | none                                                                                                             |
+| `        │   └── max-uncommitted-events`      | `int`             | [default value](https://nakadi.io/manual.html#/subscriptions/subscription_id/events_get*max_uncommitted_events)  |
+| `        └── subscription-by-id`              | `String`          | none. (Existing subscription ID, takes precedence over registering a subscription by consumer group)             |

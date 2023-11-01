@@ -22,6 +22,8 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-actuator:${property('springboot.version')}"
 }
 
+publishing.publications.maven.pom.description = 'Fahrschein Spring Boot Starter'
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor

@@ -3,21 +3,11 @@ package org.zalando.fahrschein;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Test;
-import org.zalando.fahrschein.domain.AbstractDataChangeEvent;
-import org.zalando.fahrschein.domain.DataChangeEvent;
-import org.zalando.fahrschein.domain.DataOperation;
-import org.zalando.fahrschein.domain.Event;
-import org.zalando.fahrschein.domain.Metadata;
-import org.zalando.fahrschein.http.api.Request;
-import org.zalando.fahrschein.http.api.RequestFactory;
-import org.zalando.fahrschein.http.api.Response;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -28,6 +18,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Test;
+import org.zalando.fahrschein.domain.AbstractDataChangeEvent;
+import org.zalando.fahrschein.domain.DataChangeEvent;
+import org.zalando.fahrschein.domain.DataOperation;
+import org.zalando.fahrschein.domain.Event;
+import org.zalando.fahrschein.domain.Metadata;
+import org.zalando.fahrschein.http.api.Request;
+import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.http.api.Response;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -46,6 +46,7 @@ public class NakadiReaderDeserializationTest {
 
         objectMapper.registerModule(new Jdk8Module());
         objectMapper.registerModule(new ParameterNamesModule());
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
 
         objectMapper.registerSubtypes(CustomerChanged.class);
 
@@ -162,6 +163,7 @@ public class NakadiReaderDeserializationTest {
 
         final List<SalesOrderPlaced> events = readSingleBatch("sales-salesOrder-placed", SalesOrderPlaced.class);
 
+
         assertThat(events, Matchers.notNullValue());
         assertThat(events, hasSize(1));
         final SalesOrderPlaced event = events.get(0);
@@ -192,7 +194,29 @@ public class NakadiReaderDeserializationTest {
 
     @Test
     public void shouldDeserializeSpanCtxInBusinessEventMetadata() throws IOException {
-        setupResponse(1, 1, "{\"metadata\":{\"eid\":\"5678\",\"occurred_at\":\"2016-10-26T19:20:21.123Z\",\"received_at\":\"2016-10-26T20:21:22+01:00\",\"flow_id\":\"ABCD\",\"span_ctx\":{\"ot-tracer-spanid\":\"78cc5b6e96e8a5a2\",\"ot-tracer-traceid\":\"9df69e766320993f\",\"ot-tracer-sampled\":\"true\"}},\"sales_order\":{\"order_number\":\"1234\"}}");
+        setupResponse(
+                1,
+                1,
+                """
+                        {
+                          "metadata": {
+                            "eid": "5678",
+                            "occurred_at": "2016-10-26T19:20:21.123Z",
+                            "received_at": "2016-10-26T20:21:22+01:00",
+                            "partition_compaction_key" : "compaction_key",
+                            "flow_id": "ABCD",
+                            "span_ctx": {
+                              "ot-tracer-spanid": "78cc5b6e96e8a5a2",
+                              "ot-tracer-traceid": "9df69e766320993f",
+                              "ot-tracer-sampled": "true"
+                            }
+                          },
+                          "sales_order": {
+                            "order_number": "1234"
+                          }
+                        }
+                        """
+                );
 
         final List<SalesOrderPlaced> events = readSingleBatch("sales-salesOrder-placed", SalesOrderPlaced.class);
 
