@@ -81,7 +81,7 @@ Clients are identified by a *Client ID*, for instance `example` in the sample ab
 
 ### Reference
 
-For a complete overview of available properties, the type and default value, please refer to the following table:
+For a complete overview of available properties, their type and default value, please refer to the following table:
 
 | Configuration                                 | Data type         | Default / Comment                                                                                                |
 |-----------------------------------------------|-------------------|------------------------------------------------------------------------------------------------------------------|
