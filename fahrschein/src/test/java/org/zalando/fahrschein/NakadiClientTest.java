@@ -1,5 +1,11 @@
 package org.zalando.fahrschein;
 
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,13 +15,6 @@ import org.zalando.fahrschein.domain.Partition;
 import org.zalando.fahrschein.domain.Subscription;
 import org.zalando.fahrschein.domain.SubscriptionRequest;
 import org.zalando.fahrschein.http.api.ContentType;
-
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,6 +44,7 @@ public class NakadiClientTest {
 
         final NakadiClient nakadiClient = NakadiClient.builder(URI.create("http://example.com/"), clientHttpRequestFactory)
                 .withCursorManager(cursorManager)
+                .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.NONE, new NoBackoffStrategy())
                 .build();
 
         this.server = clientHttpRequestFactory;
@@ -345,6 +345,7 @@ public class NakadiClientTest {
         client = NakadiClient.builder(URI.create("http://example.com/"), server)
                 .withCursorManager(this.cursorManager)
                 .withRequestHandler(eventPublishingHandler)
+                .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.NONE, new NoBackoffStrategy())
                 .build();
 
         String eventName = "foobar";
