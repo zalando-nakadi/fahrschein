@@ -23,7 +23,8 @@ public class MetadataTest {
         final OffsetDateTime receivedAt = OffsetDateTime.now(ZoneOffset.UTC);
         final String flowId = UUID.randomUUID().toString();
 
-        final Metadata metadata = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, Collections.emptyMap());
+        final Metadata metadata = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy,
+                receivedAt, flowId, Collections.emptyMap(), "compactionKey");
 
         assertTrue(metadata.toString().contains(metadata.getEventType()));
         assertTrue(metadata.toString().contains(metadata.getEid()));
@@ -33,6 +34,7 @@ public class MetadataTest {
         assertTrue(metadata.toString().contains(metadata.getPublishedBy()));
         assertTrue(metadata.toString().contains(metadata.getReceivedAt().toString()));
         assertTrue(metadata.toString().contains(metadata.getFlowId()));
+        assertTrue(metadata.toString().contains(metadata.getPartitionCompactionKey()));
     }
 
     @Test
@@ -46,8 +48,10 @@ public class MetadataTest {
         final OffsetDateTime receivedAt = OffsetDateTime.now(ZoneOffset.UTC);
         final String flowId = UUID.randomUUID().toString();
 
-        final Metadata metadata1 = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, Collections.emptyMap());
-        final Metadata metadata2 = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy, receivedAt, flowId, Collections.emptyMap());
+        final Metadata metadata1 = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy,
+                receivedAt, flowId, Collections.emptyMap(), "compactionKey");
+        final Metadata metadata2 = new Metadata(eventType, eid, occurredAt, partition, version, publishedBy,
+                receivedAt, flowId, Collections.emptyMap(), "compactionKey");
 
         assertEquals(metadata1, metadata2);
     }
