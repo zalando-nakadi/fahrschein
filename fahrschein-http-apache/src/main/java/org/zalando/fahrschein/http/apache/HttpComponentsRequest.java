@@ -17,7 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -55,11 +54,7 @@ final class HttpComponentsRequest implements Request {
 
     @Override
     public URI getURI() {
-        try {
-            return this.httpRequest.getUri();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        return URI.create(this.httpRequest.getRequestUri());
     }
 
     private Response executeInternal(Headers headers) throws IOException {
