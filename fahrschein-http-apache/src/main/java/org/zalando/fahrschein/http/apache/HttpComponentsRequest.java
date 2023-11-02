@@ -1,13 +1,12 @@
 package org.zalando.fahrschein.http.apache;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.protocol.HTTP;
+import org.apache.hc.client5.http.classic.HttpClient;
+
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
@@ -34,14 +33,14 @@ import java.util.List;
 final class HttpComponentsRequest implements Request {
 
     private final HttpClient httpClient;
-    private final HttpUriRequest httpRequest;
+    private final ClassicHttpRequest httpRequest;
     private final ContentEncoding contentEncoding;
 
     private final Headers headers;
     private ByteArrayOutputStream bufferedOutput;
     private boolean executed;
 
-    HttpComponentsRequest(HttpClient client, HttpUriRequest request, ContentEncoding contentEncoding) {
+    HttpComponentsRequest(HttpClient client, ClassicHttpRequest request, ContentEncoding contentEncoding) {
         this.httpClient = client;
         this.httpRequest = request;
         this.contentEncoding = contentEncoding;
@@ -55,7 +54,7 @@ final class HttpComponentsRequest implements Request {
 
     @Override
     public URI getURI() {
-        return this.httpRequest.getURI();
+        return URI.create(this.httpRequest.getRequestUri());
     }
 
     private Response executeInternal(Headers headers) throws IOException {
@@ -67,20 +66,17 @@ final class HttpComponentsRequest implements Request {
 
         for (String headerName : headers.headerNames()) {
             final List<String> value = headers.get(headerName);
-            if (!HTTP.CONTENT_LEN.equalsIgnoreCase(headerName) && !HTTP.TRANSFER_ENCODING.equalsIgnoreCase(headerName)) {
+            if (! Headers.CONTENT_LENGTH.equalsIgnoreCase(headerName) && !Headers.TRANSFER_ENCODING.equalsIgnoreCase(headerName)) {
                 for (String headerValue : value) {
                     this.httpRequest.addHeader(headerName, headerValue);
                 }
             }
         }
 
-        if (this.httpRequest instanceof HttpEntityEnclosingRequest) {
-            HttpEntityEnclosingRequest entityEnclosingRequest = (HttpEntityEnclosingRequest) this.httpRequest;
-            HttpEntity requestEntity = new ByteArrayEntity(bytes);
-            entityEnclosingRequest.setEntity(requestEntity);
-        }
+        HttpEntity requestEntity = new ByteArrayEntity(bytes, ContentType.APPLICATION_JSON);
+        this.httpRequest.setEntity(requestEntity);
 
-        final HttpResponse httpResponse = this.httpClient.execute(this.httpRequest);
+        final ClassicHttpResponse httpResponse = (ClassicHttpResponse) this.httpClient.execute(this.httpRequest);
         final Response result = new HttpComponentsResponse(httpResponse);
         this.bufferedOutput = null;
 
@@ -101,7 +97,7 @@ final class HttpComponentsRequest implements Request {
                 // probably premature optimization, but we're omitting the unnecessary
                 // "Content-Encoding: identity" header
                 if (ContentEncoding.IDENTITY != this.contentEncoding) {
-                    this.httpRequest.setHeader(HttpHeaders.CONTENT_ENCODING, this.contentEncoding.value());
+                    this.httpRequest.setHeader(Headers.CONTENT_ENCODING, this.contentEncoding.value());
                 }
                 return this.contentEncoding.wrap(this.bufferedOutput);
             }

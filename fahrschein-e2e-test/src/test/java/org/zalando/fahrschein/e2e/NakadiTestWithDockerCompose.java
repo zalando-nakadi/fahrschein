@@ -1,12 +1,12 @@
 package org.zalando.fahrschein.e2e;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.hc.client5.http.HttpResponseException;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.DockerComposeContainer;
@@ -92,7 +92,14 @@ public abstract class NakadiTestWithDockerCompose {
         HttpPost post = new HttpPost(uri);
         post.setEntity(e);
         post.setHeader("Content-Type", "application/json");
-        return httpClient.execute(post, new BasicResponseHandler());
+        return httpClient.execute(post, response -> {
+            if (response.getCode() >= 300) {
+                EntityUtils.consume(response.getEntity());
+                throw new HttpResponseException(response.getCode(), response.getReasonPhrase());
+            } else {
+                return response.getEntity() == null ? null : EntityUtils.toString(response.getEntity());
+            }
+        });
     }
 
 }

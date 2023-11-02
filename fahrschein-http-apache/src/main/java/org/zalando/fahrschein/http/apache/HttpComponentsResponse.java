@@ -1,8 +1,8 @@
 package org.zalando.fahrschein.http.apache;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
 import org.zalando.fahrschein.http.api.Headers;
 import org.zalando.fahrschein.http.api.HeadersImpl;
 import org.zalando.fahrschein.http.api.Response;
@@ -25,29 +25,29 @@ import java.io.InputStream;
  */
 final class HttpComponentsResponse implements Response {
 
-    private final HttpResponse httpResponse;
+    private final ClassicHttpResponse httpResponse;
     private Headers headers;
     private InputStream responseStream;
 
-    HttpComponentsResponse(HttpResponse httpResponse) {
+    HttpComponentsResponse(ClassicHttpResponse httpResponse) {
         this.httpResponse = httpResponse;
     }
 
     @Override
     public int getStatusCode() throws IOException {
-        return this.httpResponse.getStatusLine().getStatusCode();
+        return this.httpResponse.getCode();
     }
 
     @Override
     public String getStatusText() throws IOException {
-        return this.httpResponse.getStatusLine().getReasonPhrase();
+        return this.httpResponse.getReasonPhrase();
     }
 
     @Override
     public Headers getHeaders() {
         if (this.headers == null) {
             this.headers = new HeadersImpl();
-            for (Header header : this.httpResponse.getAllHeaders()) {
+            for (Header header : this.httpResponse.getHeaders()) {
                 this.headers.add(header.getName(), header.getValue());
             }
         }
