@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api project(':fahrschein')
-    implementation "io.opentelemetry:opentelemetry-api:${property('opentelemetry.version')}"
+    api "io.opentelemetry:opentelemetry-api:${property('opentelemetry.version')}"
     testImplementation "io.opentelemetry:opentelemetry-sdk-testing:${property('opentelemetry.version')}"
     testImplementation "io.opentelemetry:opentelemetry-extension-trace-propagators:${property('opentelemetry.version')}"
     testImplementation("org.assertj:assertj-core:3.24.2")

@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -110,6 +111,15 @@ public class Registry {
         return list;
     }
 
+    public <T> Map<String, T> getBeansOfType(Class<T> clazz) {
+        if (registry instanceof DefaultListableBeanFactory) {
+            DefaultListableBeanFactory factory = (DefaultListableBeanFactory) registry;
+            return factory.getBeansOfType(clazz);
+        } else {
+            LOG.error("Unable to get beans of type {} from registry of type: ", clazz.getName(), registry.getClass().getName());
+        }
+        return Collections.emptyMap();
+    }
 
 	public void registerAliasesForNakadiListener() {
 		if (registry instanceof DefaultListableBeanFactory) {
