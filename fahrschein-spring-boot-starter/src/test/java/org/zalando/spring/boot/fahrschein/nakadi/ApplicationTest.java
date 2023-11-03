@@ -12,6 +12,7 @@ import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.zalando.fahrschein.AccessTokenProvider;
+import org.zalando.fahrschein.EventPublishingHandler;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.http.api.ContentEncoding;
 import org.zalando.spring.boot.fahrschein.config.TimeSpan;
@@ -47,6 +48,9 @@ public class ApplicationTest {
     private MeterRegistry meterRegistry;
 
     @Autowired
+    private List<EventPublishingHandler> publisherHandlers;
+
+    @Autowired
     @Qualifier("fahrscheinConfigProperties")
     private FahrscheinConfigProperties configProperties;
 
@@ -54,6 +58,7 @@ public class ApplicationTest {
     public void contextLoads() {
         assertThat(meterRegistry).isNotNull();
         assertThat(publisher).isNotNull();
+        assertThat(publisherHandlers).hasSize(1);
 
         Map<String, NakadiClient> clientBeans = aac.getBeansOfType(NakadiClient.class);
         assertThat(clientBeans).hasSize(2);
