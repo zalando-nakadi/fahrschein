@@ -130,19 +130,25 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
         }
 
         SubscriptionBuilder sb = nakadiClient
-                .subscription(consumerConfig.getApplicationName(), new HashSet<>(consumerConfig.getTopics()))
-                .withConsumerGroup(consumerConfig.getConsumerGroup())
-                .withAuthorization(authorization()
-                        .withAdmins(adminAttributes)
-                        .withReaders(readerAttributes)
-                        .build());
+                .subscription(consumerConfig.getApplicationName(), new HashSet<>(consumerConfig.getTopics()));
 
         if (END.equals(consumerConfig.getReadFrom())) {
             sb = sb.readFromEnd();
         } else {
             sb = sb.readFromBegin();
         }
-        return sb.subscribe();
+
+        if (consumerConfig.getSubscriptionById() != null && !consumerConfig.getSubscriptionById().isEmpty()) {
+            return sb.subscribe(consumerConfig.getSubscriptionById());
+        } else {
+            sb
+                .withConsumerGroup(consumerConfig.getConsumerGroup())
+                .withAuthorization(authorization()
+                        .withAdmins(adminAttributes)
+                        .withReaders(readerAttributes)
+                        .build());
+            return sb.subscribe();
+        }
     }
 
     protected StreamParameters getStreamParameters() {

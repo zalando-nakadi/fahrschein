@@ -50,3 +50,4 @@ fahrschein:
         content-encoding: identity
       topics:
       - first.first-update
+      subscription-by-id: "test-by-id"

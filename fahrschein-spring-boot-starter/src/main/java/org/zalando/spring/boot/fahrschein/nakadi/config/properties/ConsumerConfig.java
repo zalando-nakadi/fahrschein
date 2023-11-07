@@ -28,6 +28,7 @@ public class ConsumerConfig extends AbstractConfig {
         this.setReadFrom(ofNullable(this.getReadFrom()).orElse(defaultConsumerConfig.getReadFrom()));
         this.setRecordMetrics(ofNullable(this.getRecordMetrics()).orElse(defaultConsumerConfig.getRecordMetrics()));
         this.setObjectMapperRef(ofNullable(this.getObjectMapperRef()).orElse(defaultConsumerConfig.getObjectMapperRef()));
+        this.setSubscriptionById(merge(this.getSubscriptionById(), defaultConsumerConfig.getSubscriptionById()));
 
         // oauth
         if(defaultConsumerConfig.getOauth().getEnabled() && !this.getOauth().getEnabled()) {

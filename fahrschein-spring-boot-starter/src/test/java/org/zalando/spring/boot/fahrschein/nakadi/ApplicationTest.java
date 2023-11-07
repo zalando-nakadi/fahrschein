@@ -139,6 +139,7 @@ public class ApplicationTest {
                 .hasFieldOrPropertyWithValue("nakadiUrl", dc.getNakadiUrl())
                 .hasFieldOrPropertyWithValue("consumerGroup", dc.getConsumerGroup())
                 .hasFieldOrPropertyWithValue("readFrom", dc.getReadFrom())
+                .hasFieldOrPropertyWithValue("subscriptionById", "test-by-id")
                 .hasNoNullFieldsOrProperties();
 
         // consumer oauth config

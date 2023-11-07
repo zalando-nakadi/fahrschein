@@ -20,6 +20,7 @@ public class DefaultConsumerConfig extends AbstractConfig {
         setReadFrom(Position.END);
         setRecordMetrics(Boolean.FALSE);
         setObjectMapperRef(FAHRSCHEIN_OBJECT_MAPPER_REF_NAME);
+        setSubscriptionById("");
     }
 
 }

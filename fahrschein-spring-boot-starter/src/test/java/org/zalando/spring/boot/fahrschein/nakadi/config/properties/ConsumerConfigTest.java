@@ -24,6 +24,7 @@ public class ConsumerConfigTest {
     private static final String ACCESS_TOKEN_ID = "testAccessTokenId";
     private static final String NAKADI_URI = "http://localhost";
     private static final String APPLICATION_NAME = "TestApp";
+    private static final String SUBSCRIPTION_BY_ID = "test-by-id";
 
     @Test
     public void testInitialConsumerConfig() {
@@ -108,6 +109,7 @@ public class ConsumerConfigTest {
         assertThat(cc.getStreamParameters().getStreamTimeout()).isEqualTo(STREAM_TIMEOUT);
 
         assertThat(cc.getHttp().getContentEncoding()).isEqualTo(ContentEncoding.GZIP);
+        assertThat(cc.getSubscriptionById()).isEqualTo(SUBSCRIPTION_BY_ID);
     }
 
     private DefaultConsumerConfig getDefaultConsumerConfig() {
@@ -135,6 +137,7 @@ public class ConsumerConfigTest {
         dc.getStreamParameters().setStreamKeepAliveLimit(STREAM_KEEP_ALIVE_LIMIT);
         dc.getStreamParameters().setStreamLimit(STREAM_LIMIT);
         dc.getStreamParameters().setStreamTimeout(STREAM_TIMEOUT);
+        dc.setSubscriptionById(SUBSCRIPTION_BY_ID);
 
         return dc;
     }
