@@ -112,8 +112,7 @@ public class Registry {
     }
 
     public <T> Map<String, T> getBeansOfType(Class<T> clazz) {
-        if (registry instanceof DefaultListableBeanFactory) {
-            DefaultListableBeanFactory factory = (DefaultListableBeanFactory) registry;
+       if (registry instanceof DefaultListableBeanFactory factory) {
             return factory.getBeansOfType(clazz);
         } else {
            LOG.warn("Unable to get beans of type {} from registry of type: {}", clazz.getName(), registry.getClass().getName())
