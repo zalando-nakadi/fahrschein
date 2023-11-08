@@ -116,7 +116,7 @@ public class Registry {
             DefaultListableBeanFactory factory = (DefaultListableBeanFactory) registry;
             return factory.getBeansOfType(clazz);
         } else {
-            LOG.error("Unable to get beans of type {} from registry of type: ", clazz.getName(), registry.getClass().getName());
+           LOG.warn("Unable to get beans of type {} from registry of type: {}", clazz.getName(), registry.getClass().getName())
         }
         return Collections.emptyMap();
     }
