@@ -28,8 +28,4 @@ public class MeterRegistryAwareBeanPostProcessor implements BeanPostProcessor, B
         this.beanFactory = beanFactory;
     }
 
-    @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        return bean;
-    }
 }

@@ -9,6 +9,7 @@ dependencies {
     api project(':fahrschein')
     // optional dependency: will be used if it's found on the classpath.
     compileOnly project(':fahrschein-http-jdk11')
+    implementation project(':fahrschein-opentelemetry')
     implementation project(':fahrschein-http-spring')
     implementation project(':fahrschein-metrics-micrometer')
     implementation "org.springframework:spring-web:${property('spring.version')}"

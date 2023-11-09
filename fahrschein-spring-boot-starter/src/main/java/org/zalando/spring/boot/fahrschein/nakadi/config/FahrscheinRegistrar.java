@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.zalando.fahrschein.CursorManager;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.opentelemetry.InstrumentedPublishingHandler;
 import org.zalando.spring.boot.fahrschein.config.Registry;
 import org.zalando.spring.boot.fahrschein.nakadi.NakadiPublisher;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.AbstractConfig;
@@ -65,15 +66,16 @@ public class FahrscheinRegistrar implements NakadiClientsRegistrar {
         });
     }
 
-    private String registerNakadiClient(AbstractConfig consumerConfig, String type) {
-        return registry.registerIfAbsent(consumerConfig.getId() + "-" + type, NakadiClient.class, () -> {
-            log.info(LOG_PREFIX + "NakadiClient ...", consumerConfig.getId());
-            final String requestFactoryRef = registerRequestFactory(consumerConfig);
+    private String registerNakadiClient(AbstractConfig config, String type) {
+        return registry.registerIfAbsent(config.getId() + "-" + type, NakadiClient.class, () -> {
+            log.info(LOG_PREFIX + "NakadiClient ...", config.getId());
+            final String requestFactoryRef = registerRequestFactory(config);
             return genericBeanDefinition(FahrscheinNakadiClientFactory.class)
-                .addConstructorArgValue(consumerConfig)
-                .addConstructorArgReference(registerCursorManager(consumerConfig, requestFactoryRef))
-                .addConstructorArgReference(registerObjectMapper(consumerConfig))
+                .addConstructorArgValue(config)
+                .addConstructorArgReference(registerCursorManager(config, requestFactoryRef))
+                .addConstructorArgReference(registerObjectMapper(config))
                 .addConstructorArgReference(requestFactoryRef)
+                .addConstructorArgValue(registry.getBeansOfType(InstrumentedPublishingHandler.class).values().stream().toList())
                 .setFactoryMethod(CREATE);
         });
     }
