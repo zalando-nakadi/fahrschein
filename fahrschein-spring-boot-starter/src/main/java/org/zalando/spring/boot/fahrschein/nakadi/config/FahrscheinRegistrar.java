@@ -123,7 +123,6 @@ public class FahrscheinRegistrar implements NakadiClientsRegistrar {
         }
     }
 
-
     private void registerAliasesForNakadiListener() {
         registry.registerAliasesForNakadiListener();
     }
