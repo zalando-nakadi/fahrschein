@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.zalando.fahrschein.CursorManager;
-import org.zalando.fahrschein.EventPublishingHandler;
 import org.zalando.fahrschein.NakadiClient;
 import org.zalando.fahrschein.http.api.RequestFactory;
+import org.zalando.fahrschein.opentelemetry.InstrumentedPublishingHandler;
 import org.zalando.spring.boot.fahrschein.config.Registry;
 import org.zalando.spring.boot.fahrschein.nakadi.NakadiPublisher;
 import org.zalando.spring.boot.fahrschein.nakadi.config.properties.AbstractConfig;
@@ -75,7 +75,7 @@ public class FahrscheinRegistrar implements NakadiClientsRegistrar {
                 .addConstructorArgReference(registerCursorManager(config, requestFactoryRef))
                 .addConstructorArgReference(registerObjectMapper(config))
                 .addConstructorArgReference(requestFactoryRef)
-                .addConstructorArgValue(registry.getBeansOfType(EventPublishingHandler.class).values().stream().toList())
+                .addConstructorArgValue(registry.getBeansOfType(InstrumentedPublishingHandler.class).values().stream().toList())
                 .setFactoryMethod(CREATE);
         });
     }
