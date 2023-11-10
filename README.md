@@ -135,24 +135,27 @@ while (true) {
     nakadiClient.publish(ORDER_CREATED, events);
 }    
 ```
+
 ## Publishing Events With Retry
 
 Nakadi publishing API accepts events in batches. It can fail to publish some events from the batch to underlying storage.
-In that case Nakadi publishing API will return error that batch was partially successful.
-Fahrschein offers retry mechanism complemented by customizable backoff strategies, allowing clients to make a choice between retrying the entire batch or opting for a partial retry as needed. 
-
+In that case Nakadi publishing API will return error that batch was partially successful, indicated by an `EventPersistenceException`.
+For this situation, Fahrschein offers auto-retry mechanisms, allowing clients to make a choice between retrying the entire batch or opting for a partial retry as needed. 
 For added flexibility, NakadiClient allows configuration of various [backoff strategies](https://github.com/zalando-nakadi/fahrschein#backoff-strategies) for handling event publishing retries.
 
 Fahrschein has the capability to retry the entire batch or only the events within a batch that have failed
 (see [available publishing retry strategies below](#available-publishing-retry-strategies)). It will not
 retry aborted events, as they failed the event schema validation, and retrying without either changing the event or the 
-schema would be futile.
+schema would be futile. This is indicated by an `EventValidationException`. For generic `IOExceptions` like temporary network issues,
+custom retry code can be wrapped around the `NakadiClient.publish` call.
 
-Fahrschein does not enable auto-retry on publishing **by default**. To enable automatic retry on publishing:   
+Fahrschein does not enable auto-retry on publishing **by default**.
+
+To enable automatic retry on publishing:   
 
 ```java
 
-NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI,new JavaNetRequestFactory(ContentEncoding.GZIP))
+NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new JavaNetRequestFactory(ContentEncoding.GZIP))
         .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.FAILED_ONLY, new ExponentialBackoffStrategy()) // recommended retry configuration
         .build();
 
@@ -223,31 +226,18 @@ NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI, new SimpleRequestFa
 
 Exception handling while streaming events follows some simple rules
 
- - `IOException` and its subclasses are treated as temporary failures.If an `IOException` occurs while opening the initial connection, it is considered a temporary failure.Library will automatically recover from this type of failure by retrying processing attempt after time interval specified by the `BackoffStrategy`.
+ - `IOException` and its subclasses are treated as temporary failures.If an `IOException` occurs while opening the initial connection, it is considered a temporary failure. The library will automatically recover from this type of failure by retrying the processing attempt after time interval specified by the `BackoffStrategy`.
  - If `listener` throws `RuntimeException` streaming of events will be aborted. User is responsible for handling these exceptions.
  Library code itself will not throw `RuntimeException`s.
  - Exceptions in other client methods are not automatically retried
 
 ## Backoff Strategies
 
-Fahrschein supports different exponential backoff strategies when streaming events. All backoff values are configurable when passing your own instance in `StreamBuilder#withBackoffStrategy(BackoffStrategy)`.
+Fahrschein supports different exponential backoff strategies. All backoff values are configurable when passing your own instance in `StreamBuilder#withBackoffStrategy(BackoffStrategy)` and `NakadiClientBuilder#withPublishingRetryAndBackoffStrategy(PublishingRetryStrategy, BackoffStrategy)`.
 
 * `ExponentialBackoffStrategy` - Base implementation for exponential backoff without jitter. Initial delay is 500ms, backoff factor 1.5, maximum delay 10min, with no limit on the maximum number of retries.
 * `EqualJitterBackoffStrategy` (default) - extends `ExponentialBackoffStrategy` with the same defaults. For each delay it takes half of the delay value and adds the other half multiplied by a random factor [0..1).
 * `FullJitterBackoffStrategy` - extends `ExponentialBackoffStrategy` with the same defaults and multiplies each delay by a random factor [0..1).
-
-## Retries and exception handling for event publishing
-
-Fahrschein does not have sophisticated mechanisms for retry handling when publishing to Nakadi yet. The recommended way
-to handle exceptions when publishing is to create a retry-wrapper around the `NakadiClient.publish` method.
-
-In case of a partial success, Fahrschein will throw an `EventPersistenceException`, which is allowed to be retried.
-In case of validation errors - which are complete failures, and should not be retried - it will throw an `EventValidationException`.
-
-The exception also has the `BatchItemResponse`s included, as returned from Nakadi in the same order as your input. They also contain the event-ids of the failed events, a `publishingStatus` (failed/aborted/submitted), the step where they failed and a detail string. If your application keeps track of event-ids, this allows it to resend only the failed items later. Otherwise, you can correlate the failed events based on their position in the sequence.
-
-Recommendation: Implement a retry-with-backoff handler for `EventPersistenceException`s, which, depending on
-your ordering consistency requirements, either retries the full batch, or retries only the non-successful events.
 
 ## Stopping and resuming streams
 
