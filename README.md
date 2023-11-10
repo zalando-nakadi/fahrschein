@@ -153,7 +153,7 @@ Fahrschein does not enable auto-retry on publishing **by default**. To enable au
 ```java
 
 NakadiClient nakadiClient = NakadiClient.builder(NAKADI_URI,new JavaNetRequestFactory(ContentEncoding.GZIP))
-        .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.FAILED_ONLY, new ExponentialBackoffStrategy()) //default retry configuration
+        .withPublishingRetryAndBackoffStrategy(PublishingRetryStrategies.FAILED_ONLY, new ExponentialBackoffStrategy()) // recommended retry configuration
         .build();
 
 nakadiClient.publish("foobar", List.of(
