@@ -78,7 +78,7 @@ nakadiClient.stream(subscription)
         .listen(SalesOrderPlaced.class, listener);
 ```
 
-See [`ConsumerExample.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/ConsumerExample.java) and [`ProducerExample.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/ProducerExample.java) for an executable versions of the above code.
+See [`ConsumerExample.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/ConsumerExample.java) and [`ProducerExample.java`](fahrschein-example/src/main/java/org/zalando/fahrschein/example/ProducerExample.java) for executable versions of the above code.
 
 ### Subscribing to events with an existing subscription ID
 
