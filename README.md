@@ -139,7 +139,7 @@ while (true) {
 ## Publishing Events With Retry
 
 Nakadi publishing API accepts events in batches. It can fail to publish some events from the batch to underlying storage.
-In that case Nakadi publishing API will return error that batch was partially successful, indicated by an `EventPersistenceException`.
+In that case Nakadi publishing API will return error that batch was partially successful, indicated in Fahrschein by an `EventPersistenceException`.
 For this situation, Fahrschein offers auto-retry mechanisms, allowing clients to make a choice between retrying the entire batch or opting for a partial retry as needed. 
 For added flexibility, NakadiClient allows configuration of various [backoff strategies](https://github.com/zalando-nakadi/fahrschein#backoff-strategies) for handling event publishing retries.
 
