@@ -141,7 +141,7 @@ public class FahrscheinNakadiConsumer implements NakadiConsumer, MeterRegistryAw
         if (consumerConfig.getSubscriptionById() != null && !consumerConfig.getSubscriptionById().isEmpty()) {
             return sb.subscribe(consumerConfig.getSubscriptionById());
         } else {
-            sb
+            sb = sb
                 .withConsumerGroup(consumerConfig.getConsumerGroup())
                 .withAuthorization(authorization()
                         .withAdmins(adminAttributes)
