@@ -17,7 +17,7 @@ jobs:
           java-version: '21'
       - uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 8.4
+          gradle-version: 8.5
       - name: Test Default
         run: gradle build
       - name: codacy
