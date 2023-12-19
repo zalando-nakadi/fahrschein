@@ -17,7 +17,7 @@ jobs:
       - name: Publish package
         uses: gradle/gradle-build-action@v2
         with:
-          gradle-version: 8.4
+          gradle-version: 8.5
           arguments: publish -Prelease
         env:
           NEXUS_USERNAME:  ${{ secrets.OSSRH_USERNAME }}
