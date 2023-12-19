@@ -23,9 +23,17 @@ public class MicrometerMetricsCollectorTest {
         MicrometerMetricsCollector c = new MicrometerMetricsCollector(meterRegistry, id);
         assertEquals(10, meterRegistry.getMeters().size());
         c.markErrorWhileConsuming();
+        c.markMessageReceived();
+        c.markEventsReceived(10);
+        c.markEventsReceived(10);
+        c.markReconnection();
+        c.markMessageSuccessfullyProcessed();
         clock.addSeconds(1);
         assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.errors.while.consuming").getValue());
         assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.last.error.happened").getValue());
+        assertEquals(20, fetchValue(meterRegistry, "fahrschein.listener.test.events.received").getValue());
+        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.reconnections").getValue());
+        assertEquals(1, fetchValue(meterRegistry, "fahrschein.listener.test.messages.successfully.processed").getValue());
 
     }
 

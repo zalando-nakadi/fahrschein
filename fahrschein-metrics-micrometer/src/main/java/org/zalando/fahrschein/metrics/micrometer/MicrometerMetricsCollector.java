@@ -47,12 +47,12 @@ public class MicrometerMetricsCollector implements MetricsCollector {
 
     @Override
     public void markReconnection() {
-        this.markReconnection();
+        this.delegate.markReconnection();
     }
 
     @Override
     public void markMessageSuccessfullyProcessed() {
-        this.markMessageSuccessfullyProcessed();
+        this.delegate.markMessageSuccessfullyProcessed();
     }
 
     static String name(String name, String... names) {
