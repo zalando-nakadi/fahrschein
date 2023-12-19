@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api project(':fahrschein')
-    api 'io.micrometer:micrometer-core:1.11.5'
+    api 'io.micrometer:micrometer-core:1.12.1'
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein Metrics using Micrometer'
