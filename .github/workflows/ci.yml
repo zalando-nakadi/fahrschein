@@ -23,7 +23,12 @@ jobs:
       - name: codacy
         env:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ./build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
+        run: |
+          if [[ ! -z "${CODACY_PROJECT_TOKEN}" ]]; then
+            bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r ./build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
+          else
+            echo "Skipping codacy due to security restrictions for PRs from forks."
+          fi
       - uses: codecov/codecov-action@v3
         with:
           files: ./build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
