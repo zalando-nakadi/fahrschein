@@ -80,6 +80,12 @@ class NakadiReader<T> implements IORunnable {
         this.cursorHeaderWriter = DefaultObjectMapper.INSTANCE.writerFor(COLLECTION_OF_CURSORS);
     }
 
+    static final class EventReaderError {
+        private final IOException exception;
+        EventReaderError(IOException exception) { this.exception = exception; }
+        public IOException getException() { return exception; }
+    }
+
     static final class Batch<T> {
         private final Cursor cursor;
         private final List<T> events;
@@ -363,6 +369,7 @@ class NakadiReader<T> implements IORunnable {
 
         Cursor cursor = null;
         List<T> events = null;
+        EventReaderError eventReadingError = null;
 
         while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
             final String field = jsonParser.getCurrentName();
@@ -372,7 +379,16 @@ class NakadiReader<T> implements IORunnable {
                     break;
                 }
                 case "events": {
-                    events = eventReader.read(jsonParser);
+                    try {
+                        events = eventReader.read(jsonParser);
+                    } catch(IOException e) {
+                        /* In case there's an issue when reading events -
+                        it catches the exception to allow the cursor to be parsed in case it isn't parsed yet
+                        so, it can be logged to give visibility of the failing partition and offset */
+                        jsonParser.nextToken();
+                        jsonParser.skipChildren();
+                        eventReadingError = new EventReaderError(e);
+                    }
                     break;
                 }
                 case "info": {
@@ -411,8 +427,11 @@ class NakadiReader<T> implements IORunnable {
         if (cursor == null) {
             throw new IOException("Could not read cursor");
         }
-
         final String eventName = getCurrentEventName(cursor);
+        if (eventReadingError != null) {
+            LOG.warn("Event reader has failed for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
+            throw eventReadingError.getException();
+        }
         LOG.debug("Cursor for [{}] partition [{}] at offset [{}]", eventName, cursor.getPartition(), cursor.getOffset());
 
         if (events == null) {
