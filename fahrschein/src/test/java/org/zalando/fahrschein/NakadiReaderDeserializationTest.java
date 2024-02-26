@@ -1,5 +1,9 @@
 package org.zalando.fahrschein;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -18,8 +22,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.zalando.fahrschein.domain.AbstractDataChangeEvent;
 import org.zalando.fahrschein.domain.DataChangeEvent;
 import org.zalando.fahrschein.domain.DataOperation;
@@ -292,5 +299,25 @@ public class NakadiReaderDeserializationTest {
         assertThat(customer.get("name").asText(), Matchers.equalTo("Test"));
     }
 
+    @Test
+    public void shouldNotDeserialize() throws IOException {
+        Logger nakadiReaderLogger = (Logger) LoggerFactory.getLogger(NakadiReader.class);
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+        listAppender.start();
+        nakadiReaderLogger.addAppender(listAppender);
+
+        setupResponse(1, 1, "{\"data_type\":\"customer\",\"data_op\":\"C\",\"data\":{\"customer_number\":\"1234\",\"name\":\"Test\"}}");
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);
+        String expectedMessage = "Null value for creator property 'metadata' (index 0); `DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES` enabled\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 137] (through reference chain: org.zalando.fahrschein.NakadiReaderDeserializationTest$NodeChangedEvent[\"metadata\"])";
+        Exception exception = Assertions.assertThrows(IOException.class, () -> readSingleBatch("customer", NodeChangedEvent.class));
+        assertThat(expectedMessage, Matchers.equalTo(exception.getMessage()));
+
+        String expectedLogMessage = "Event reader has failed for [customer] partition [1] at offset [1]";
+        List<ILoggingEvent> logs = listAppender.list
+                .stream().filter(l -> l.getLevel().equals(Level.WARN)).toList();
+        assertThat(1, Matchers.equalTo(logs.size()));
+        assertThat(expectedLogMessage, Matchers.equalTo(logs.get(0).getFormattedMessage()));
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, false);
+    }
 
 }
