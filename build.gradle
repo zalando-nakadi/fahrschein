@@ -3,8 +3,8 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'jacoco-report-aggregation'
-    id 'com.github.ben-manes.versions' version '0.49.0'
-    id 'org.owasp.dependencycheck' version '9.0.7'
+    id 'com.github.ben-manes.versions' version '0.51.0'
+    id 'org.owasp.dependencycheck' version '9.0.9'
     id 'de.thetaphi.forbiddenapis' version '3.6'
 }
 

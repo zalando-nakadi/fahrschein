@@ -15,10 +15,10 @@ dependencies {
 
     testImplementation("org.mock-server:mockserver-junit-jupiter-no-dependencies:5.15.0")
 
-    testImplementation ('com.jayway.jsonpath:json-path:2.8.0') {
+    testImplementation ('com.jayway.jsonpath:json-path:2.9.0') {
         exclude group: "org.ow2.asm", module: "asm"
     }
-    testImplementation("ch.qos.logback:logback-classic:1.4.14") {
+    testImplementation("ch.qos.logback:logback-classic:1.5.3") {
         because "we want to test logging output"
     }
 }

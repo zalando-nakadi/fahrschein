@@ -8,7 +8,7 @@ dependencies {
     api "io.opentelemetry:opentelemetry-api:${property('opentelemetry.version')}"
     testImplementation "io.opentelemetry:opentelemetry-sdk-testing:${property('opentelemetry.version')}"
     testImplementation "io.opentelemetry:opentelemetry-extension-trace-propagators:${property('opentelemetry.version')}"
-    testImplementation("org.assertj:assertj-core:3.24.2")
+    testImplementation("org.assertj:assertj-core:3.25.3")
 }
 
 publishing.publications.maven.pom.description = 'Fahrschein OpenTelemetry Support'
