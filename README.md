@@ -1,4 +1,6 @@
-# Fahrschein
+# MOVED TO CLOSED-SOURCE. THE PUBLIC REPOSITORY HAS BEEN ARCHIVED 
+
+## Fahrschein
 
 > You need a fahrschein to use the [nakadi](https://github.com/zalando/nakadi) event bus.
 
